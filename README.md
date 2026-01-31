@@ -95,9 +95,15 @@ This package provides two variants for each workflow: **original** (more subagen
 
 For `-lite` workflows (recommended):
 ```bash
-pi install npm:pi-subagents      # For parallel reviews
-pi install npm:pi-model-switch   # For on-the-fly model switching
+pi install npm:pi-subagents              # For parallel reviews
+pi install npm:pi-model-switch           # For on-the-fly model switching
+pi install npm:pi-prompt-template-model  # For skill-based commands with frontmatter
 ```
+
+**Extension roles:**
+- `pi-prompt-template-model` - Reads `model:` and `skill:` frontmatter, handles initial model switch
+- `pi-model-switch` - Runtime model switches during workflow (implement → review → fix)
+- `pi-subagents` - Spawns parallel reviewer subagents
 
 For original workflows:
 ```bash

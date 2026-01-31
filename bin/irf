@@ -180,6 +180,7 @@ install_extensions() {
   if [ "$install_deps" = "true" ]; then
     pi install $SCOPE_FLAG npm:pi-subagents
     pi install $SCOPE_FLAG npm:pi-model-switch
+    pi install $SCOPE_FLAG npm:pi-prompt-template-model
   fi
   if [ "$install_optional" = "true" ]; then
     pi install $SCOPE_FLAG npm:pi-review-loop
@@ -414,6 +415,7 @@ doctor() {
 
   check_extension "pi-subagents"
   check_extension "pi-model-switch"
+  check_extension "pi-prompt-template-model"
 
   if command -v python3 >/dev/null 2>&1; then
     local cmds
@@ -977,7 +979,7 @@ case "$COMMAND" in
       esac
     fi
 
-    read -r -p "Install required Pi extensions (subagents, model-switch)? (Y/n) " yn
+    read -r -p "Install required Pi extensions (subagents, model-switch, prompt-template-model)? (Y/n) " yn
     install_deps=true
     case "$yn" in [Nn]*) install_deps=false ;; esac
 
