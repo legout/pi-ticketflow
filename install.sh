@@ -13,7 +13,7 @@ Options:
   --help                Show this help
 
 Notes:
-  This script only copies agents, prompts, and workflow config.
+  This script copies agents, skills, prompts, and workflow config.
   Use ./bin/irf setup for interactive setup (extensions + MCP).
 EOF
 }
@@ -59,40 +59,42 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-mkdir -p "$TARGET_BASE/agents" "$TARGET_BASE/prompts" "$TARGET_BASE/workflows/implement-review-fix-close"
+# Create directories
+mkdir -p "$TARGET_BASE/agents"
+mkdir -p "$TARGET_BASE/skills/irf-workflow"
+mkdir -p "$TARGET_BASE/skills/irf-planning"
+mkdir -p "$TARGET_BASE/skills/irf-config"
+mkdir -p "$TARGET_BASE/skills/ralph"
+mkdir -p "$TARGET_BASE/prompts"
+mkdir -p "$TARGET_BASE/workflows/implement-review-fix-close"
 
+# Copy agents (execution units for parallel reviews)
 cp "$SCRIPT_DIR/agents/implementer.md" "$TARGET_BASE/agents/"
 cp "$SCRIPT_DIR/agents/reviewer-general.md" "$TARGET_BASE/agents/"
 cp "$SCRIPT_DIR/agents/reviewer-spec-audit.md" "$TARGET_BASE/agents/"
 cp "$SCRIPT_DIR/agents/reviewer-second-opinion.md" "$TARGET_BASE/agents/"
-cp "$SCRIPT_DIR/agents/review-merge.md" "$TARGET_BASE/agents/"
 cp "$SCRIPT_DIR/agents/fixer.md" "$TARGET_BASE/agents/"
 cp "$SCRIPT_DIR/agents/closer.md" "$TARGET_BASE/agents/"
-cp "$SCRIPT_DIR/agents/researcher.md" "$TARGET_BASE/agents/"
-cp "$SCRIPT_DIR/agents/researcher-fetch.md" "$TARGET_BASE/agents/"
-cp "$SCRIPT_DIR/agents/simplifier.md" "$TARGET_BASE/agents/"
-cp "$SCRIPT_DIR/agents/simplify-ticket.md" "$TARGET_BASE/agents/"
-cp "$SCRIPT_DIR/agents/irf-planner.md" "$TARGET_BASE/agents/"
 
-# Original prompts
+# Copy skills (domain expertise)
+cp "$SCRIPT_DIR/skills/irf-workflow/SKILL.md" "$TARGET_BASE/skills/irf-workflow/"
+cp "$SCRIPT_DIR/skills/irf-planning/SKILL.md" "$TARGET_BASE/skills/irf-planning/"
+cp "$SCRIPT_DIR/skills/irf-config/SKILL.md" "$TARGET_BASE/skills/irf-config/"
+cp "$SCRIPT_DIR/skills/ralph/SKILL.md" "$TARGET_BASE/skills/ralph/"
+
+# Copy prompts (command entry points - skill-based)
 cp "$SCRIPT_DIR/prompts/irf.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-sync.md" "$TARGET_BASE/prompts/"
+cp "$SCRIPT_DIR/prompts/irf-lite.md" "$TARGET_BASE/prompts/"
 cp "$SCRIPT_DIR/prompts/irf-seed.md" "$TARGET_BASE/prompts/"
 cp "$SCRIPT_DIR/prompts/irf-backlog.md" "$TARGET_BASE/prompts/"
 cp "$SCRIPT_DIR/prompts/irf-spike.md" "$TARGET_BASE/prompts/"
 cp "$SCRIPT_DIR/prompts/irf-from-openspec.md" "$TARGET_BASE/prompts/"
 cp "$SCRIPT_DIR/prompts/irf-baseline.md" "$TARGET_BASE/prompts/"
 cp "$SCRIPT_DIR/prompts/irf-followups.md" "$TARGET_BASE/prompts/"
+cp "$SCRIPT_DIR/prompts/irf-sync.md" "$TARGET_BASE/prompts/"
+cp "$SCRIPT_DIR/prompts/ralph-start.md" "$TARGET_BASE/prompts/"
 
-# Lite prompts (recommended - fewer subagents)
-cp "$SCRIPT_DIR/prompts/irf-lite.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-seed-lite.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-backlog-lite.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-spike-lite.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-from-openspec-lite.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-baseline-lite.md" "$TARGET_BASE/prompts/"
-cp "$SCRIPT_DIR/prompts/irf-followups-lite.md" "$TARGET_BASE/prompts/"
-
+# Copy workflow config
 cp "$SCRIPT_DIR/workflows/implement-review-fix-close/config.json" \
    "$TARGET_BASE/workflows/implement-review-fix-close/"
 cp "$SCRIPT_DIR/workflows/implement-review-fix-close/README.md" \
@@ -107,6 +109,12 @@ if [ -f "$SCRIPT_DIR/docs/AGENTS.md.template" ] && [ ! -f "AGENTS.md" ]; then
 fi
 
 echo "Installed IRF workflow files to: $TARGET_BASE"
+echo ""
+echo "Installed components:"
+echo "  - 6 agents (execution units)"
+echo "  - 4 skills (domain expertise)"
+echo "  - 10 prompts (command entry points)"
+echo "  - 1 workflow config"
 echo ""
 echo "Next steps:"
 echo "  1. Review AGENTS.md (project patterns)"

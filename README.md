@@ -4,84 +4,72 @@ A reusable Pi workflow package for ticket implementation:
 
 **Implement → Review → Fix → Close**
 
-This package bundles the agents, prompts, and workflow config used by the `/irf` and `/irf-lite` commands.
+This package bundles the agents, skills, prompts, and workflow config used by the `/irf` and `/irf-lite` commands.
 
 ---
 
 ## What's included
 
 ```
-agents/
-  implementer.md
-  reviewer-general.md
-  reviewer-spec-audit.md
-  reviewer-second-opinion.md
-  review-merge.md
-  fixer.md
-  closer.md
-  researcher.md
-  researcher-fetch.md
-  simplifier.md
-  simplify-ticket.md
-  irf-planner.md
+agents/                         # Subagent execution units
+  implementer.md                # Core implementation agent
+  reviewer-general.md           # General code review
+  reviewer-spec-audit.md        # Specification audit
+  reviewer-second-opinion.md    # Second opinion review
+  fixer.md                      # Fix identified issues
+  closer.md                     # Close ticket and summarize
 
-prompts/
-  # Implementation workflows
-  irf.md                    # Original (6-8 subagents)
-  irf-lite.md               # Simplified (3 subagents) ← Recommended
+skills/                         # Domain expertise (skills inject into context)
+  irf-workflow/SKILL.md         # Core IRF implementation workflow
+  irf-planning/SKILL.md         # Research & planning activities
+  irf-config/SKILL.md           # Setup & configuration
+  ralph/SKILL.md                # Autonomous loop orchestration
 
-  # Planning workflows - Original
-  irf-seed.md
-  irf-backlog.md
-  irf-spike.md
-  irf-baseline.md
-  irf-followups.md
-  irf-from-openspec.md
-
-  # Planning workflows - Lite (no subagents) ← Recommended
-  irf-seed-lite.md
-  irf-backlog-lite.md
-  irf-spike-lite.md
-  irf-baseline-lite.md
-  irf-followups-lite.md
-  irf-from-openspec-lite.md
-
-  # Utilities
-  irf-sync.md
+prompts/                        # Command entry points (thin wrappers)
+  irf.md                        # Full workflow with subagents
+  irf-lite.md                   # Recommended - uses model-switch
+  irf-seed.md                   # Capture ideas into seed artifacts
+  irf-backlog.md                # Create tickets from seeds
+  irf-spike.md                  # Research spike
+  irf-baseline.md               # Capture project baseline
+  irf-followups.md              # Create tickets from review warnings
+  irf-from-openspec.md          # Bridge from OpenSpec
+  irf-sync.md                   # Sync configuration
+  ralph-start.md                # Start autonomous loop
 
 workflows/implement-review-fix-close/
-  config.json
-  README.md
+  config.json                   # Model & workflow configuration
+  README.md                     # Workflow-specific docs
 
 docs/
-  subagent-simplification.md  # Analysis of subagent reduction
+  SKILL_REFACTORING_SUMMARY.md  # Architecture overview
+  migration-to-skills.md        # Migration guide
+  subagent-simplification.md    # Subagent reduction analysis
 ```
 
 ---
 
-## Workflow Variants
+## Architecture
 
-This package provides two variants for each workflow: **original** (more subagents) and **lite** (fewer subagents, more reliable).
+This package uses a **skill-centric** architecture:
 
-### Implementation Workflows
+1. **Skills** contain domain expertise (`skills/*/SKILL.md`)
+2. **Commands** are thin wrappers with `model:` and `skill:` frontmatter
+3. **Agents** are execution units spawned by skills for parallel work
 
-| Command | Subagents | Description |
-|---------|-----------|-------------|
-| `/irf <ticket>` | 6-8 | Original full chain |
-| `/irf-lite <ticket>` | 3 | **Recommended** - Uses model-switch |
+### How it works
 
-### Planning Workflows
+```
+User types: /irf-lite ABC-123
 
-| Command | Subagents | Lite Equivalent |
-|---------|-----------|-----------------|
-| `/irf-seed <idea>` | 1 | `/irf-seed-lite` (0) |
-| `/irf-backlog <seed>` | 1 | `/irf-backlog-lite` (0) |
-| `/irf-spike <topic>` | 4 | `/irf-spike-lite` (0-3) |
-| `/irf-baseline [focus]` | 1 | `/irf-baseline-lite` (0) |
-| `/irf-followups <review>` | 1 | `/irf-followups-lite` (0) |
-| `/irf-from-openspec <id>` | 1 | `/irf-from-openspec-lite` (0) |
+1. Extension reads frontmatter:
+   model: chutes/moonshotai/Kimi-K2.5-TEE:high
+   skill: irf-workflow
 
-**Recommendation:** Use `-lite` variants for better reliability. See `docs/subagent-simplification.md` for the full analysis.
+2. Switches to specified model
+3. Injects skill content into system prompt
+4. Executes command body
+```
 
 ---
 
@@ -93,22 +81,16 @@ This package provides two variants for each workflow: **original** (more subagen
 
 ### Required Pi extensions
 
-For `-lite` workflows (recommended):
 ```bash
-pi install npm:pi-subagents              # For parallel reviews
-pi install npm:pi-model-switch           # For on-the-fly model switching
-pi install npm:pi-prompt-template-model  # For skill-based commands with frontmatter
+pi install npm:pi-prompt-template-model  # Entry model switch via frontmatter
+pi install npm:pi-model-switch           # Runtime model switching
+pi install npm:pi-subagents              # Parallel reviewer subagents
 ```
 
 **Extension roles:**
 - `pi-prompt-template-model` - Reads `model:` and `skill:` frontmatter, handles initial model switch
 - `pi-model-switch` - Runtime model switches during workflow (implement → review → fix)
 - `pi-subagents` - Spawns parallel reviewer subagents
-
-For original workflows:
-```bash
-pi install npm:pi-subagents
-```
 
 ### Optional extensions
 
@@ -156,6 +138,7 @@ This guides you through:
 
 Installs into:
 - `~/.pi/agent/agents`
+- `~/.pi/agent/skills`
 - `~/.pi/agent/prompts`
 - `~/.pi/agent/workflows/implement-review-fix-close`
 
@@ -167,6 +150,7 @@ Installs into:
 
 Installs into:
 - `/path/to/project/.pi/agents`
+- `/path/to/project/.pi/skills`
 - `/path/to/project/.pi/prompts`
 - `/path/to/project/.pi/workflows/implement-review-fix-close`
 
@@ -177,33 +161,34 @@ Installs into:
 ### Implementation Workflows
 
 ```bash
-# Recommended - fewer subagents, more reliable
+# Recommended - uses model-switch for sequential phases
 /irf-lite <ticket-id> [--auto] [--no-research] [--with-research]
 
-# Original - full subagent chain
+# Full workflow - uses subagents for each phase
 /irf <ticket-id> [flags]
 ```
 
-### Planning Workflows (Lite - Recommended)
+### Planning Workflows
 
 ```bash
-/irf-seed-lite <idea>                  # Capture idea into seed artifacts
-/irf-backlog-lite <seed-path>          # Create tickets from seed
-/irf-spike-lite <topic> [--parallel]   # Research spike
-/irf-baseline-lite [focus]             # Capture brownfield status quo
-/irf-followups-lite <review-path>      # Create follow-up tickets
-/irf-from-openspec-lite <change-id>    # Bridge from OpenSpec
+/irf-seed <idea>                  # Capture idea into seed artifacts
+/irf-backlog <seed-path>          # Create tickets from seed
+/irf-spike <topic> [--parallel]   # Research spike
+/irf-baseline [focus]             # Capture brownfield status quo
+/irf-followups <review-path>      # Create follow-up tickets
+/irf-from-openspec <change-id>    # Bridge from OpenSpec
 ```
 
-### Planning Workflows (Original)
+### Configuration
 
 ```bash
-/irf-seed <idea>
-/irf-backlog <seed-path>
-/irf-spike <topic>
-/irf-baseline [focus]
-/irf-followups <review-path>
-/irf-from-openspec <change-id>
+/irf-sync                         # Sync models from config
+```
+
+### Ralph Loop
+
+```bash
+/ralph-start [--max-iterations 50]  # Start autonomous processing
 ```
 
 ### Flags
@@ -213,7 +198,7 @@ Installs into:
 | `--auto` / `--no-clarify` | Run headless (no confirmation prompts) |
 | `--no-research` | Skip research step |
 | `--with-research` | Force enable research step |
-| `--parallel` | Use parallel subagents for research (/irf-spike-lite only) |
+| `--parallel` | Use parallel subagents for research (/irf-spike only) |
 
 ---
 
@@ -230,23 +215,13 @@ Installs into:
 ### Ralph Loop Commands
 
 ```bash
-./bin/irf ralph init           # Create .pi/ralph/ directory structure
-./bin/irf ralph status         # Show current loop state and statistics
-./bin/irf ralph reset          # Clear progress and lessons
+./bin/irf ralph init                  # Create .pi/ralph/ directory
+./bin/irf ralph status                # Show current loop state
+./bin/irf ralph reset                 # Clear progress and lessons
 ./bin/irf ralph reset --keep-lessons  # Clear progress, keep lessons
-./bin/irf ralph lessons        # Show lessons learned
+./bin/irf ralph lessons               # Show lessons learned
 ./bin/irf ralph lessons prune 20      # Keep only last 20 lessons
 ```
-
-### Starting a Ralph Loop
-
-After initializing with `./bin/irf ralph init`, start the loop in Pi:
-
-```
-/ralph-start [--max-iterations 50]
-```
-
-Or use the built-in `ralph_loop` tool for custom orchestration.
 
 ### Updating models
 
@@ -260,7 +235,7 @@ Edit `workflows/implement-review-fix-close/config.json` and run:
 
 ---
 
-## Architecture
+## Workflow Flows
 
 ### `/irf-lite` flow (recommended)
 
@@ -285,7 +260,25 @@ Edit `workflows/implement-review-fix-close/config.json` and run:
 
 **Ralph-Ready**: Automatically loads lessons from `.pi/ralph/AGENTS.md` and tracks progress.
 
-### Planning workflows (lite)
+### `/irf` flow (subagent-based)
+
+```
+researcher (optional subagent)
+    ↓
+implementer (subagent)
+    ↓
+┌─ reviewer-general ──────┐
+├─ reviewer-spec-audit ───┼─ (parallel subagents)
+└─ reviewer-second-opinion┘
+    ↓
+review-merge (main agent)
+    ↓
+fixer (main agent)
+    ↓
+closer (main agent)
+```
+
+### Planning workflows
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -296,25 +289,6 @@ Edit `workflows/implement-review-fix-close/config.json` and run:
 │  3. Write artifacts to knowledge base                       │
 │  4. [spike only, --parallel] Optional parallel research     │
 └─────────────────────────────────────────────────────────────┘
-```
-
-### `/irf` flow (original)
-
-```
-researcher (subagent)
-    └─ 3× researcher-fetch (parallel sub-subagents)
-         ↓
-implementer (subagent)
-         ↓
-┌─ reviewer-general ──────┐
-├─ reviewer-spec-audit ───┼─ (parallel subagents)
-└─ reviewer-second-opinion┘
-         ↓
-review-merge (subagent)
-         ↓
-fixer (subagent)
-         ↓
-closer (subagent)
 ```
 
 ---
@@ -334,7 +308,7 @@ Works standalone or in a Ralph loop—no configuration needed.
 
 ### Small, Self-Contained Tickets
 
-Planning workflows (`/irf-backlog-lite`, `/irf-from-openspec-lite`) create:
+Planning workflows (`/irf-backlog`, `/irf-from-openspec`) create:
 
 - **30 lines or less** per ticket description
 - **1-2 hours** estimated work
@@ -343,18 +317,19 @@ Planning workflows (`/irf-backlog-lite`, `/irf-from-openspec-lite`) create:
 
 ---
 
-## Subagent Comparison
+## Model Strategy
 
-| Workflow | Original | Lite | Reduction |
-|----------|----------|------|-----------|
-| `/irf` | 6-8 | 3 | ~60% |
-| `/irf-seed` | 1 | 0 | 100% |
-| `/irf-backlog` | 1 | 0 | 100% |
-| `/irf-spike` | 4 | 0-3 | 25-100% |
-| `/irf-baseline` | 1 | 0 | 100% |
-| `/irf-followups` | 1 | 0 | 100% |
-| `/irf-from-openspec` | 1 | 0 | 100% |
-| **Total (worst case)** | 14-17 | 3-6 | **~70%** |
+Models are configured in `workflows/implement-review-fix-close/config.json`:
+
+| Role | Default Model | Purpose |
+|------|---------------|---------|
+| implementer | Kimi-K2.5 / Sonnet | Deep reasoning for implementation |
+| reviewer-* | GPT-5.1-mini | Fast, capable review |
+| review-merge | GPT-5.1-mini | Deduplication and consolidation |
+| fixer | GLM-4.7 | Cheap fixes |
+| closer | GLM-4.7 | Cheap summarization |
+
+Run `/irf-sync` after editing config to apply changes.
 
 ---
 
@@ -407,15 +382,54 @@ The Ralph Loop enables autonomous ticket processing with re-anchoring and lesson
 3. **Progress Tracking**: External state in `.pi/ralph/progress.md` survives context resets
 4. **Promise Sigil**: Loop terminates when `<promise>COMPLETE</promise>` is output
 
-See `docs/ralph-loop.md` for usage guide and `docs/ralph-integration-plan.md` for implementation details.
+---
+
+## Skills Reference
+
+### irf-workflow
+
+Core implementation workflow. Contains procedures for:
+- Re-anchor context (loading lessons, knowledge)
+- Research (optional, MCP tools)
+- Implement (model-switch)
+- Parallel reviews (subagent orchestration)
+- Merge reviews (deduplication)
+- Fix issues (quality checks)
+- Close ticket (tk integration)
+- Ralph integration (progress, lessons)
+
+### irf-planning
+
+Research & planning activities. Contains procedures for:
+- Seed capture (idea → artifacts)
+- Backlog generation (seed → tickets)
+- Research spike (sequential/parallel)
+- Baseline capture (project analysis)
+- Follow-up creation (review → tickets)
+- OpenSpec bridge (spec → tickets)
+
+### irf-config
+
+Setup & maintenance. Contains procedures for:
+- Verifying extensions installed
+- Syncing models to agent files
+- Generating model aliases
+- Checking MCP configuration
+
+### ralph
+
+Autonomous loop orchestration. Contains procedures for:
+- Initializing Ralph directory
+- Starting autonomous loop
+- Extracting lessons
+- Updating progress
+- Pruning old lessons
 
 ---
 
 ## Notes
 
-- Config is read at runtime by the prompt and agents
+- Config is read at runtime by the skills
 - Models are applied via `/irf-sync` (updates agent frontmatter)
 - MCP config is written to `<target>/.pi/mcp.json` when you run `./bin/irf setup`
-- `-lite` workflows write artifacts to cwd; original workflows use chain_dir
-- Original agents (`irf-planner`, `researcher`, etc.) are kept as fallback
-
+- All workflows write artifacts to current working directory
