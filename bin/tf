@@ -239,7 +239,6 @@ configure_mcp() {
     ignore_project="true"
   fi
 
-  local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
   local args=(
     "$CONFIG_HELPER"
     configure-mcp
@@ -256,7 +255,7 @@ configure_mcp() {
     fi
   fi
 
-  "${env_vars[@]}" "${python_cmd[@]}" "${args[@]}"
+  TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "${python_cmd[@]}" "${args[@]}"
 }
 
 track_file() {
@@ -346,7 +345,6 @@ doctor() {
     fi
 
     local cmds
-    local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
     local args=("$CONFIG_HELPER" checker-tools)
     if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
       args+=(--base "$TARGET_BASE")
@@ -354,7 +352,7 @@ doctor() {
         args+=(--ignore-project)
       fi
     fi
-    cmds=$("${env_vars[@]}" "${python_cmd[@]}" "${args[@]}")
+    cmds=$(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "${python_cmd[@]}" "${args[@]}")
 
     if [ -n "$cmds" ]; then
       echo "Checker tools:"
@@ -1347,7 +1345,6 @@ backlog_ls() {
     ignore_project="true"
   fi
 
-  local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
   local args=("$CONFIG_HELPER" knowledge-dir)
   if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
     args+=(--base "$TARGET_BASE")
@@ -1357,7 +1354,7 @@ backlog_ls() {
   fi
 
   local knowledge_dir
-  knowledge_dir=$("${env_vars[@]}" "$python_bin" "${args[@]}")
+  knowledge_dir=$(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "$python_bin" "${args[@]}")
 
   KNOWLEDGE_DIR="$knowledge_dir" TOPIC="$topic" \
     "$python_bin" - <<'PY'
@@ -1503,8 +1500,6 @@ sync_models() {
     ignore_project="true"
   fi
 
-  local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
-
   echo "Syncing models from meta-model configuration..."
   local args=("$CONFIG_HELPER" sync-models)
   if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
@@ -1513,7 +1508,7 @@ sync_models() {
       args+=(--ignore-project)
     fi
   fi
-  "${env_vars[@]}" "${python_cmd[@]}" "${args[@]}"
+  TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "${python_cmd[@]}" "${args[@]}"
 }
 
 case "$COMMAND" in
