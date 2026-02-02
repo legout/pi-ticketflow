@@ -234,7 +234,7 @@ install_local() {
   fi
 
   echo ""
-  echo "Installed IRF workflow files to: $target_base"
+  echo "Installed TF workflow files to: $target_base"
   echo ""
   echo "Installed components:"
   echo "  - tf CLI (command-line tool)"

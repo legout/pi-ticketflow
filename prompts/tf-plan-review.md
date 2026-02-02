@@ -29,7 +29,7 @@ Validate a plan with high-precision checks. Updates the same `plan.md`.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Plan Review (High-Accuracy)" procedure:
+Follow the **TF Planning Skill** "Plan Review (High-Accuracy)" procedure:
 
 1. Locate plan directory
 2. Read `plan.md`

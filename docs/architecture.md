@@ -1,12 +1,12 @@
 # Architecture
 
-How pi-ticketflow is structured and how it works.
+How pi-tickerflow is structured and how it works.
 
 ---
 
 ## Overview
 
-pi-ticketflow uses a **skill-centric** architecture where:
+pi-tickerflow uses a **skill-centric** architecture where:
 
 - **Skills** contain domain expertise and procedures
 - **Commands** are thin wrappers with `model:` and `skill:` frontmatter
@@ -46,7 +46,7 @@ User types: /tf ABC-123
          │
          ▼
 ┌─────────────────┐
-│  Skill Procedures│ Follow IRF workflow:
+│  Skill Procedures│ Follow TF workflow:
 │                 │   1. Re-anchor context
 │                 │   2. Research (optional)
 │                 │   3. Implement (model-switch)
@@ -76,10 +76,10 @@ Skills are the core expertise containers. They live in `skills/*/SKILL.md`.
 ```markdown
 ---
 name: tf-workflow
-description: Core IRF implementation workflow
+description: Core TF implementation workflow
 ---
 
-# IRF Workflow Skill
+# TF Workflow Skill
 
 ## Overview
 Brief description of what this skill does.
@@ -121,9 +121,9 @@ skill: tf-workflow
 
 # /tf
 
-Execute the IRF workflow for ticket: $@
+Execute the TF workflow for ticket: $@
 
-Follow the **IRF Workflow Skill** procedures.
+Follow the **TF Workflow Skill** procedures.
 ```
 
 ### Command Categories

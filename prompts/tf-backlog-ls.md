@@ -32,7 +32,7 @@ Show backlog status and corresponding tickets for seed/baseline/plan topics.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Backlog Listing" procedure:
+Follow the **TF Planning Skill** "Backlog Listing" procedure:
 
 1. Resolve `knowledgeDir`
 2. If topic provided: show full backlog table + summary

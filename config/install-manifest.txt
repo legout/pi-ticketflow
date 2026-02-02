@@ -17,9 +17,9 @@ agents/researcher-fetch.md
 agents/fixer.md
 agents/closer.md
 
-skills/irf-workflow/SKILL.md
-skills/irf-planning/SKILL.md
-skills/irf-config/SKILL.md
+skills/tf-workflow/SKILL.md
+skills/tf-planning/SKILL.md
+skills/tf-config/SKILL.md
 skills/ralph/SKILL.md
 
 prompts/tf.md
@@ -38,5 +38,5 @@ prompts/tf-followups.md
 prompts/tf-sync.md
 prompts/ralph-start.md
 
-workflows/irf/config.json
-workflows/irf/README.md
+workflows/tf/config.json
+workflows/tf/README.md

@@ -1,6 +1,6 @@
 # Configuration
 
-Setting up pi-ticketflow, models, extensions, and MCP servers.
+Setting up pi-tickerflow, models, extensions, and MCP servers.
 
 ---
 
@@ -260,7 +260,7 @@ After installation:
 ├── skills/
 ├── prompts/
 └── workflows/
-    └── irf/
+    └── tf/
         └── config.json
 
 # Project install
@@ -269,7 +269,7 @@ After installation:
 ├── skills/
 ├── prompts/
 ├── workflows/
-│   └── irf/
+│   └── tf/
 │       └── config.json
 ├── mcp.json              # (if configured)
 ├── ralph/                # (if initialized)

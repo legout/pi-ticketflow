@@ -28,7 +28,7 @@ Capture a status-quo baseline for an existing project.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Baseline Capture" procedure:
+Follow the **TF Planning Skill** "Baseline Capture" procedure:
 
 1. Determine topic ID: `baseline-{repo-name}`
 2. Scan project:

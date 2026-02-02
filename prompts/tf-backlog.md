@@ -31,7 +31,7 @@ Generate small, actionable implementation tickets from seed (greenfield), baseli
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" procedure:
+Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" procedure:
 
 1. Locate topic directory
 2. Detect mode (seed vs baseline vs plan)

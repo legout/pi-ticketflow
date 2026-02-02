@@ -7,7 +7,7 @@ skill: tf-planning
 
 # /tf-from-openspec
 
-Create small, self-contained IRF tickets from an OpenSpec change.
+Create small, self-contained TF tickets from an OpenSpec change.
 
 ## Usage
 
@@ -28,7 +28,7 @@ Create small, self-contained IRF tickets from an OpenSpec change.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "OpenSpec Bridge" procedure:
+Follow the **TF Planning Skill** "OpenSpec Bridge" procedure:
 
 1. Locate change:
    - Try `openspec/changes/{id}/`

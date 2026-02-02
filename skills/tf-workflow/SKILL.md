@@ -3,7 +3,7 @@ name: tf-workflow
 description: Execute the Implement → Review → Fix → Close workflow for ticket implementation. Use when implementing any ticket, whether standalone or in a Ralph loop.
 ---
 
-# IRF Workflow Skill
+# TF Workflow Skill
 
 Core expertise for the Implement → Review → Fix → Close cycle.
 

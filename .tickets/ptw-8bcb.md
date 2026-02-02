@@ -7,9 +7,9 @@ created: 2026-01-29T09:15:56Z
 type: feature
 priority: 2
 assignee: legout
-tags: [irf, workflow]
+tags: [tf, workflow]
 ---
-# Add summary.json artifact for IRF runs
+# Add summary.json artifact for TF runs
 
 Emit a machine-readable summary.json at an absolute path (e.g., {chain_dir}/summary.json) with ticket id, flags, review counts, files changed, tests run, and timestamps.
 

@@ -66,7 +66,7 @@ Generates 5-15 small tickets in `tk`, each:
 /tf TICKET-123
 ```
 
-Runs the full IRF cycle on each ticket.
+Runs the full TF cycle on each ticket.
 
 ### 5. Autonomous Processing (Optional)
 

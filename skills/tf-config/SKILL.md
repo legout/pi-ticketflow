@@ -3,13 +3,13 @@ name: tf-config
 description: Setup, configuration, and maintenance for IRF workflow. Use for installing extensions, syncing models, verifying setup, and managing workflow configuration.
 ---
 
-# IRF Configuration Skill
+# TF Configuration Skill
 
-Expertise for setup, maintenance, and synchronization of the IRF workflow.
+Expertise for setup, maintenance, and synchronization of the TF workflow.
 
 ## When to Use This Skill
 
-- First-time setup of IRF workflow
+- First-time setup of TF workflow
 - Updating models in agent files
 - Verifying extensions are installed
 - Troubleshooting configuration issues
@@ -250,7 +250,7 @@ Always provide clear status report:
 - tf-plan.md: openai-codex/gpt-5.1-codex-mini → openai-codex/gpt-5.1-codex-mini:medium
 
 ## Prompt Models Unchanged
-- irf.md: chutes/moonshotai/Kimi-K2.5-TEE:high
+- tf.md: chutes/moonshotai/Kimi-K2.5-TEE:high
 
 ## Recommendations
 - Consider installing pi-mcp-adapter for research capabilities

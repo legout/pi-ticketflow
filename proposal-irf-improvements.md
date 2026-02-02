@@ -1,7 +1,7 @@
-# Proposal: IRF Workflow Improvements
+# Proposal: TF Workflow Improvements
 
 ## Background
-The current IRF workflow provides a strong end‑to‑end chain (Research → Implement → Parallel Review → Merge → Fix → Close). The improvements below focus on reliability, configurability, and better automation—while keeping the workflow safe for parallel ticket work.
+The current TF workflow provides a strong end‑to‑end chain (Research → Implement → Parallel Review → Merge → Fix → Close). The improvements below focus on reliability, configurability, and better automation—while keeping the workflow safe for parallel ticket work.
 
 ## Goals
 - Improve robustness and operator confidence (preflight checks, plan mode).
@@ -25,7 +25,7 @@ The current IRF workflow provides a strong end‑to‑end chain (Research → Im
 **What:** Maintain a per‑run change ledger in the subagent **chain artifacts directory** (`{chain_dir}`; fixed by pi‑subagents). Use **absolute paths** when writing (e.g., `${chain_dir}/files_changed.txt`). Provide a helper (`./bin/tf track <path>`) and update agents to call it after each edit/write. This keeps `files_changed.txt` **session‑accurate** and isolated from other tickets.
 
 ### 3) Follow‑up tickets behind a flag
-**What:** Add `--create-followups` to run a dedicated **`/irf-followups`** command after review merge. The command parses `review.md`, creates follow‑up tickets via `tk create` (tagged, e.g. `followup`), and writes `followups.md` as a run artifact. Default behavior remains unchanged (no follow‑ups).
+**What:** Add `--create-followups` to run a dedicated **`/tf-followups`** command after review merge. The command parses `review.md`, creates follow‑up tickets via `tk create` (tagged, e.g. `followup`), and writes `followups.md` as a run artifact. Default behavior remains unchanged (no follow‑ups).
 
 ### 4) Quality Gate step + `quality.md`
 **What:** Add an optional step that runs checkers/tests (using workflow config) and writes `quality.md` to an **absolute path** (e.g., `${chain_dir}/quality.md`). This can run after fixer (if any), or after review merge when fixer is skipped.
@@ -64,9 +64,9 @@ The current IRF workflow provides a strong end‑to‑end chain (Research → Im
 - Parallel ticket runs do **not** contaminate each other’s `files_changed.txt`.
 
 ### 3) Follow‑up tickets behind a flag
-- With `--create-followups`, `/irf-followups` runs after review merge and creates tickets for Warnings/Suggestions via `tk create` **with a follow‑up tag** (default: `followup`).
+- With `--create-followups`, `/tf-followups` runs after review merge and creates tickets for Warnings/Suggestions via `tk create` **with a follow‑up tag** (default: `followup`).
 - The created ticket IDs and summaries are recorded in `followups.md` at an absolute path (e.g., `${chain_dir}/followups.md`).
-- Without the flag, **no** follow‑up tickets are created and `/irf-followups` is not invoked.
+- Without the flag, **no** follow‑up tickets are created and `/tf-followups` is not invoked.
 
 ### 4) Quality Gate step
 - When enabled, the workflow writes `quality.md` with lint/format/typecheck/test commands and results to an **absolute path** (e.g., `${chain_dir}/quality.md`).
@@ -103,7 +103,7 @@ The current IRF workflow provides a strong end‑to‑end chain (Research → Im
 ## Suggested Files to Update
 - `prompts/tf.md`
 - `prompts/tf-followups.md` (new command)
-- `workflows/irf/config.json`
+- `workflows/tf/config.json`
 - `bin/tf`
 - Agent files (`implementer.md`, `review-merge.md`, `fixer.md`, `closer.md`) where needed for new artifacts
 

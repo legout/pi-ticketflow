@@ -29,7 +29,7 @@ Create follow-up tickets from Warnings and Suggestions in a review.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Follow-up Creation" procedure:
+Follow the **TF Planning Skill** "Follow-up Creation" procedure:
 
 1. Resolve review path:
    - If path: use directly

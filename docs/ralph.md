@@ -6,7 +6,7 @@ Autonomous ticket processing for pi-ticketflow.
 
 ## What is Ralph?
 
-Ralph is an orchestration layer that runs the IRF workflow in a loop, processing tickets until your backlog is empty.
+Ralph is an orchestration layer that runs the TF workflow in a loop, processing tickets until your backlog is empty.
 
 **Key Features:**
 - **Re-anchoring**: Fresh context for each ticket
@@ -41,7 +41,7 @@ Create root `AGENTS.md` for project patterns:
 If `.pi/ralph/AGENTS.md` exists, read it for lessons learned.
 ```
 
-### 3. Run IRF (Ralph-Ready by Default)
+### 3. Run TF (Ralph-Ready by Default)
 
 ```
 /tf <ticket-id> [--auto]

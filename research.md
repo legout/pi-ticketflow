@@ -10,8 +10,8 @@
 
 ## Sources
 - README.md
-- workflows/irf/README.md
-- workflows/irf/config.json
+- workflows/tf/README.md
+- workflows/tf/config.json
 - prompts/tf.md
 - bin/tf
 - agents/researcher.md

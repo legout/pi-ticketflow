@@ -27,7 +27,7 @@ Create a single plan document for a project, feature, or refactor.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Plan Interview (Planner)" procedure:
+Follow the **TF Planning Skill** "Plan Interview (Planner)" procedure:
 
 1. Create `plan-*` topic ID
 2. Create `.pi/knowledge/topics/{topic-id}/`

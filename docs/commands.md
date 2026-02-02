@@ -1,6 +1,6 @@
 # Command Reference
 
-Complete reference for all pi-ticketflow commands.
+Complete reference for all pi-tickerflow commands.
 
 ---
 
@@ -346,7 +346,7 @@ tf sync                           # Sync models from config
 tf doctor                         # Preflight checks
 
 # Backlog
-irf backlog-ls [topic]             # List backlog status
+tf backlog-ls [topic]             # List backlog status
 
 # Track changes
 tf track <path>                   # Append to files_changed.txt

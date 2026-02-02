@@ -1,4 +1,4 @@
-# Implement → Review → Fix → Close (IRF) Workflow
+# Implement → Review → Fix → Close (TF) Workflow
 
 This workflow runs a full ticket implementation chain:
 

@@ -1,5 +1,5 @@
 ---
-description: Sync IRF configuration [tf-config +GLM-4.7]
+description: Sync TF configuration [tf-config +GLM-4.7]
 model: zai/glm-4.7
 thinking: medium
 skill: tf-config

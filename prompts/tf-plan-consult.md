@@ -28,7 +28,7 @@ Review a plan for gaps, ambiguities, and over-engineering. Updates the same `pla
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Plan Consultant (Gap Detection)" procedure:
+Follow the **TF Planning Skill** "Plan Consultant (Gap Detection)" procedure:
 
 1. Locate plan directory
 2. Read `plan.md`

@@ -97,7 +97,7 @@ Creates structured artifacts in `.pi/knowledge/topics/seed-build-a-cli/`.
 
 Generates 5-15 small, actionable tickets (1-2 hours each) linked to your seed.
 
-### 3. Run the IRF Workflow
+### 3. Run the TF Workflow
 
 ```
 /tf TICKET-123
@@ -289,7 +289,7 @@ Suggestions)
 
 | Command | Purpose |
 |---------|---------|
-| `/tf <ticket>` | Execute IRF workflow (Implement → Review → Fix → Close) |
+| `/tf <ticket>` | Execute TF workflow (Implement → Review → Fix → Close) |
 | `/ralph-start` | Start autonomous ticket processing loop |
 
 ### Planning & Design
@@ -340,7 +340,7 @@ skills/              # Domain expertise (reusable)
   ralph/             # Autonomous loop orchestration
 
 prompts/             # Command entry points (thin wrappers)
-  irf.md             # References tf-workflow skill
+  tf.md              # References tf-workflow skill
   tf-seed.md        # References tf-planning skill
   ...
 

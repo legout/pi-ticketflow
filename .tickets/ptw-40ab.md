@@ -7,7 +7,7 @@ created: 2026-01-29T09:15:56Z
 type: feature
 priority: 2
 assignee: legout
-tags: [irf, workflow]
+tags: [tf, workflow]
 ---
 # Skip fixer when no actionable issues
 

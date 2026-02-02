@@ -28,7 +28,7 @@ Revise a plan based on consultant/reviewer feedback. Updates the same `plan.md`.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Plan Revision" procedure:
+Follow the **TF Planning Skill** "Plan Revision" procedure:
 
 1. Locate plan directory
 2. Read `plan.md` + notes

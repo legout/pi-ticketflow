@@ -34,7 +34,7 @@ Run a focused research spike on a topic and store results.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Research Spike" procedure:
+Follow the **TF Planning Skill** "Research Spike" procedure:
 
 1. Parse topic from `$@` (excluding --parallel)
 2. Create topic ID: `spike-{slug}`

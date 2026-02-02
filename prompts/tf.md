@@ -35,7 +35,7 @@ Execute the standard Implement → Review → Fix → Close workflow for a ticke
 
 ## Execution
 
-Follow the **IRF Workflow Skill** procedures:
+Follow the **TF Workflow Skill** procedures:
 
 1. **Re-Anchor Context** - Load AGENTS.md, lessons, ticket details
 2. **Research** (optional) - MCP tools for knowledge gathering

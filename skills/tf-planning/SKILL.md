@@ -3,7 +3,7 @@ name: tf-planning
 description: Research and planning activities for IRF workflow. Use for capturing ideas, creating tickets, research spikes, and bridging from external specs. Includes seed capture, backlog generation, baseline analysis, and OpenSpec integration.
 ---
 
-# IRF Planning Skill
+# TF Planning Skill
 
 Expertise for upstream planning activities - everything that happens BEFORE implementation.
 
@@ -362,7 +362,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags irf,backlog \
+      --tags tf,backlog \
      --type task \
      --priority 2 \
      --external-ref "{topic-id}"
@@ -372,7 +372,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags irf,backlog,baseline \
+      --tags tf,backlog,baseline \
      --type task \
      --priority 2 \
      --external-ref "{topic-id}"
@@ -382,7 +382,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags irf,backlog,plan \
+      --tags tf,backlog,plan \
      --type task \
      --priority 2 \
      --external-ref "{topic-id}"
@@ -533,7 +533,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
    ```bash
    tk create "<title>" \
      --description "## Origin\nFrom review of: {ticket}\nFile: {file}\nLine: {line}\n\n## Issue\n{description}" \
-     --tags irf,followup \
+      --tags tf,followup \
      --priority 3
    ```
 
@@ -543,7 +543,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
 
 ### Procedure: OpenSpec Bridge
 
-**Purpose**: Convert OpenSpec change into IRF tickets.
+**Purpose**: Convert OpenSpec change into TF tickets.
 
 **Input**: Change ID or path
 
@@ -588,7 +588,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags irf,openspec \
+      --tags tf,openspec \
      --type task \
      --priority 2 \
      --external-ref "openspec-{change_id}"
@@ -617,7 +617,7 @@ For example, for `/tf-plan`:
 ```bash
 tk create "<title>" \
   --description "<markdown description>" \
-  --tags irf,<tag> \
+   --tags tf,<tag> \
   --type task \
   --priority <1-5> \
   --external-ref "<source-id>"   # e.g., plan-foo, seed-bar, openspec-baz

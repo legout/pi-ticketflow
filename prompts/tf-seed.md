@@ -27,7 +27,7 @@ Capture an initial idea into structured seed artifacts.
 
 ## Execution
 
-Follow the **IRF Planning Skill** "Seed Capture" procedure:
+Follow the **TF Planning Skill** "Seed Capture" procedure:
 
 1. Parse idea from `$@`
 2. Create topic ID: `seed-{slug}`
