@@ -239,21 +239,20 @@ configure_mcp() {
     ignore_project="true"
   fi
 
-  local args=(
-    "$CONFIG_HELPER"
-    configure-mcp
-    --mcp-file "$mcp_file"
-    --zai-key "$zai_key"
-    --ctx7-key "$ctx7_key"
-    --exa-key "$exa_key"
-  )
-
+  local args=("$CONFIG_HELPER")
   if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
     args+=(--base "$TARGET_BASE")
     if [ "$ignore_project" = "true" ]; then
       args+=(--ignore-project)
     fi
   fi
+  args+=(
+    configure-mcp
+    --mcp-file "$mcp_file"
+    --zai-key "$zai_key"
+    --ctx7-key "$ctx7_key"
+    --exa-key "$exa_key"
+  )
 
   TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "${python_cmd[@]}" "${args[@]}"
 }
@@ -345,13 +344,14 @@ doctor() {
     fi
 
     local cmds
-    local args=("$CONFIG_HELPER" checker-tools)
+    local args=("$CONFIG_HELPER")
     if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
       args+=(--base "$TARGET_BASE")
       if [ "$ignore_project" = "true" ]; then
         args+=(--ignore-project)
       fi
     fi
+    args+=(checker-tools)
     cmds=$(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "${python_cmd[@]}" "${args[@]}")
 
     if [ -n "$cmds" ]; then
@@ -1345,13 +1345,14 @@ backlog_ls() {
     ignore_project="true"
   fi
 
-  local args=("$CONFIG_HELPER" knowledge-dir)
+  local args=("$CONFIG_HELPER")
   if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
     args+=(--base "$TARGET_BASE")
     if [ "$ignore_project" = "true" ]; then
       args+=(--ignore-project)
     fi
   fi
+  args+=(knowledge-dir)
 
   local knowledge_dir
   knowledge_dir=$(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "$python_bin" "${args[@]}")
@@ -1501,13 +1502,14 @@ sync_models() {
   fi
 
   echo "Syncing models from meta-model configuration..."
-  local args=("$CONFIG_HELPER" sync-models)
+  local args=("$CONFIG_HELPER")
   if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
     args+=(--base "$TARGET_BASE")
     if [ "$ignore_project" = "true" ]; then
       args+=(--ignore-project)
     fi
   fi
+  args+=(sync-models)
   TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project" "${python_cmd[@]}" "${args[@]}"
 }
 
