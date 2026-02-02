@@ -28,25 +28,43 @@ pi install npm:pi-model-switch           # Runtime model switching
 pi install npm:pi-subagents              # Parallel reviewer subagents
 ```
 
-### Interactive Setup (Recommended)
+### Quick Install (via curl)
+
+```bash
+# Global install
+curl -fsSL https://raw.githubusercontent.com/legout/pi-tk-workflow/main/install.sh | bash -s -- --global
+
+# Project install (current directory)
+curl -fsSL https://raw.githubusercontent.com/legout/pi-tk-workflow/main/install.sh | bash
+
+# Project install (specific path)
+curl -fsSL https://raw.githubusercontent.com/legout/pi-tk-workflow/main/install.sh | bash -s -- --project /path/to/project
+```
+
+### Interactive Setup (Recommended after install)
 
 ```bash
 ./bin/irf setup
 ```
 
-This guides you through global vs project install, optional extensions, and MCP configuration.
+This guides you through optional extensions and MCP configuration.
 
-### Manual Install
+### Manual Install (from cloned repo)
 
 ```bash
-# Global install (recommended)
+# Clone first
+git clone https://github.com/legout/pi-tk-workflow.git
+cd pi-tk-workflow
+
+# Global install
 ./install.sh --global
 
 # Project install
 ./install.sh --project /path/to/project
 ```
 
-Files are installed to:
+### Installation Locations
+
 - **Global**: `~/.pi/agent/{agents,skills,prompts,workflows}/`
 - **Project**: `.pi/{agents,skills,prompts,workflows}/`
 
@@ -345,8 +363,13 @@ Models are configured in `workflows/implement-review-fix-close/config.json`:
 Apply changes with:
 
 ```bash
+# If installed via curl (project install)
+./.pi/bin/irf sync
+
+# If installed from cloned repo
 ./bin/irf sync
-# or
+
+# Or via Pi prompt
 /irf-sync
 ```
 
@@ -363,14 +386,23 @@ Ralph enables autonomous ticket processing with:
 - **Progress Tracking**: External state survives resets
 
 ```bash
-# Initialize Ralph directory
-./bin/irf ralph init
+# Initialize Ralph directory (after install, the CLI is at ./.pi/bin/irf for project installs)
+./.pi/bin/irf ralph init
+
+# Or manually create the structure:
+mkdir -p .pi/ralph
+cat > .pi/ralph/config.json << 'EOF'
+{
+  "maxIterations": 50,
+  "promiseOnComplete": true
+}
+EOF
 
 # Start loop
 /ralph-start --max-iterations 50
 
-# Check status
-./bin/irf ralph status
+# Check status (from another terminal)
+./.pi/bin/irf ralph status
 ```
 
 See [docs/ralph.md](docs/ralph.md) for the complete guide.
