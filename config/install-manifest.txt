@@ -1,6 +1,9 @@
 # Paths to install into ~/.pi/agent or <project>/.pi
 # Each entry is copied to the same relative path under the target base.
 
+# CLI tool (will be installed to bin/irf)
+bin/irf
+
 agents/implementer.md
 agents/reviewer-general.md
 agents/reviewer-spec-audit.md

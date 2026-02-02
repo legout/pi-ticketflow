@@ -31,7 +31,7 @@ pi install npm:pi-subagents              # Parallel reviewer subagents
 ### Quick Install (via curl)
 
 ```bash
-# Global install
+# Global install (installs irf CLI to ~/.local/bin/)
 curl -fsSL https://raw.githubusercontent.com/legout/pi-tk-workflow/main/install.sh | bash -s -- --global
 
 # Project install (current directory)
@@ -43,11 +43,17 @@ curl -fsSL https://raw.githubusercontent.com/legout/pi-tk-workflow/main/install.
 
 ### Interactive Setup (Recommended after install)
 
+After global install, the `irf` CLI is available:
+
 ```bash
-./bin/irf setup
+# Interactive setup (installs extensions, configures MCP)
+irf setup
+
+# Sync models from config
+irf sync
 ```
 
-This guides you through optional extensions and MCP configuration.
+For project installs, use `./.pi/bin/irf` instead.
 
 ### Manual Install (from cloned repo)
 
@@ -56,7 +62,7 @@ This guides you through optional extensions and MCP configuration.
 git clone https://github.com/legout/pi-tk-workflow.git
 cd pi-tk-workflow
 
-# Global install
+# Global install (adds irf to ~/.local/bin/)
 ./install.sh --global
 
 # Project install
@@ -65,8 +71,11 @@ cd pi-tk-workflow
 
 ### Installation Locations
 
-- **Global**: `~/.pi/agent/{agents,skills,prompts,workflows}/`
-- **Project**: `.pi/{agents,skills,prompts,workflows}/`
+| Component | Global Install | Project Install |
+|-----------|---------------|-----------------|
+| Agents, Skills, Prompts | `~/.pi/agent/` | `.pi/` |
+| irf CLI | `~/.local/bin/irf` | `.pi/bin/irf` |
+| Config | `~/.pi/agent/workflows/` | `.pi/workflows/` |
 
 ---
 
@@ -363,11 +372,11 @@ Models are configured in `workflows/implement-review-fix-close/config.json`:
 Apply changes with:
 
 ```bash
-# If installed via curl (project install)
-./.pi/bin/irf sync
+# Global install
+irf sync
 
-# If installed from cloned repo
-./bin/irf sync
+# Project install
+./.pi/bin/irf sync
 
 # Or via Pi prompt
 /irf-sync
@@ -386,23 +395,17 @@ Ralph enables autonomous ticket processing with:
 - **Progress Tracking**: External state survives resets
 
 ```bash
-# Initialize Ralph directory (after install, the CLI is at ./.pi/bin/irf for project installs)
+# After global install:
+irf ralph init          # Initialize Ralph
+irf ralph status        # Check status
+irf ralph lessons       # View lessons
+
+# After project install:
 ./.pi/bin/irf ralph init
-
-# Or manually create the structure:
-mkdir -p .pi/ralph
-cat > .pi/ralph/config.json << 'EOF'
-{
-  "maxIterations": 50,
-  "promiseOnComplete": true
-}
-EOF
-
-# Start loop
-/ralph-start --max-iterations 50
-
-# Check status (from another terminal)
 ./.pi/bin/irf ralph status
+
+# Start loop (in Pi)
+/ralph-start --max-iterations 50
 ```
 
 See [docs/ralph.md](docs/ralph.md) for the complete guide.

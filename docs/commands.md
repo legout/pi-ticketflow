@@ -331,35 +331,47 @@ Updates `model:` frontmatter in all agent and prompt files based on `workflows/i
 
 ## CLI Reference
 
-The `./bin/irf` script provides additional utilities:
+The `irf` CLI is installed during setup and provides utilities for workflow management.
+
+### Global Install (CLI at `~/.local/bin/irf`)
 
 ```bash
 # Setup
-./bin/irf setup                    # Interactive install + extensions + MCP
+irf setup                          # Interactive install + extensions + MCP
 
 # Sync
-./bin/irf sync                     # Sync models from config
+irf sync                           # Sync models from config
 
 # Diagnostics
-./bin/irf doctor                   # Preflight checks
+irf doctor                         # Preflight checks
 
 # Backlog
-./bin/irf backlog-ls [topic]       # List backlog status
+irf backlog-ls [topic]             # List backlog status
 
 # Track changes
-./bin/irf track <path>             # Append to files_changed.txt
+irf track <path>                   # Append to files_changed.txt
 
 # Ralph Loop
-./bin/irf ralph init               # Create .pi/ralph/ directory
-./bin/irf ralph status             # Show current loop state
-./bin/irf ralph reset              # Clear progress
-./bin/irf ralph reset --keep-lessons  # Clear progress, keep lessons
-./bin/irf ralph lessons            # Show lessons learned
-./bin/irf ralph lessons prune 20   # Keep only last 20 lessons
+irf ralph init                     # Create .pi/ralph/ directory
+irf ralph status                   # Show current loop state
+irf ralph reset                    # Clear progress
+irf ralph reset --keep-lessons     # Clear progress, keep lessons
+irf ralph lessons                  # Show lessons learned
+irf ralph lessons prune 20         # Keep only last 20 lessons
 
 # AGENTS.md Management
-./bin/irf agentsmd init            # Create minimal AGENTS.md
-./bin/irf agentsmd status          # Show AGENTS.md overview
-./bin/irf agentsmd validate        # Check for bloat, stale paths
-./bin/irf agentsmd fix             # Auto-fix common issues
+irf agentsmd init                  # Create minimal AGENTS.md
+irf agentsmd status                # Show AGENTS.md overview
+irf agentsmd validate              # Check for bloat, stale paths
+irf agentsmd fix                   # Auto-fix common issues
+```
+
+### Project Install (CLI at `.pi/bin/irf`)
+
+Use `./.pi/bin/irf` instead of `irf` for project installs.
+
+```bash
+./.pi/bin/irf setup
+./.pi/bin/irf sync
+./.pi/bin/irf ralph init
 ```

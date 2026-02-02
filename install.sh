@@ -22,14 +22,14 @@ Usage:
   curl -fsSL https://raw.githubusercontent.com/legout/pi-tk-workflow/main/install.sh | bash -s -- --project /path/to/project
 
 Options:
-  --global              Install into ~/.pi/agent
+  --global              Install into ~/.pi/agent and ~/.local/bin/irf
   --project <path>      Install into <path>/.pi (defaults to current dir)
   --remote              Force remote mode (download from GitHub)
   --help                Show this help
 
 Notes:
-  This script copies agents, skills, prompts, and workflow config.
-  Use ./bin/irf setup for interactive setup (extensions + MCP).
+  This script installs agents, skills, prompts, workflow config, and the irf CLI.
+  After install, use 'irf setup' (global) or './.pi/bin/irf setup' (project) for interactive setup.
 EOF
 }
 
@@ -58,9 +58,59 @@ download_file() {
   fi
 }
 
+# Install the CLI binary
+install_cli() {
+  local source_file="$1"
+  local target_dir="$2"
+  local is_global="$3"
+
+  # Make CLI executable
+  chmod +x "$source_file"
+
+  if [ "$is_global" = true ]; then
+    # Global install: try to install to ~/.local/bin/irf
+    local global_bin="${HOME}/.local/bin/irf"
+
+    # Create ~/.local/bin if needed
+    if ! mkdir -p "${HOME}/.local/bin" 2>/dev/null; then
+      log "WARNING: Cannot create ${HOME}/.local/bin"
+      log "          Installing CLI to $target_dir/bin/irf instead"
+      cp "$source_file" "$target_dir/bin/irf"
+      return 1
+    fi
+
+    # Copy CLI to ~/.local/bin/irf
+    if cp "$source_file" "$global_bin" 2>/dev/null; then
+      log "Installed CLI to: $global_bin"
+
+      # Check if ~/.local/bin is in PATH
+      if [[ ":$PATH:" != *":${HOME}/.local/bin:"* ]]; then
+        echo ""
+        echo "WARNING: ${HOME}/.local/bin is not in your PATH"
+        echo "Add this to your shell profile (.bashrc, .zshrc, etc.):"
+        echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+      fi
+      return 0
+    else
+      log "WARNING: Cannot install to $global_bin (permission denied?)"
+      log "          Installing CLI to $target_dir/bin/irf instead"
+      mkdir -p "$target_dir/bin"
+      cp "$source_file" "$target_dir/bin/irf"
+      return 1
+    fi
+  else
+    # Project install: install to .pi/bin/irf
+    mkdir -p "$target_dir/bin"
+    cp "$source_file" "$target_dir/bin/irf"
+    log "Installed CLI to: $target_dir/bin/irf"
+    return 0
+  fi
+}
+
 # Remote install: download all files from GitHub
 install_remote() {
   local target_base="$1"
+  local is_global="$2"
   local temp_dir
   temp_dir="$(mktemp -d)"
 
@@ -76,12 +126,28 @@ install_remote() {
     exit 1
   fi
 
+  # Download CLI first
+  local cli_url="$REPO_URL/bin/irf"
+  local cli_temp="$temp_dir/irf-cli"
+
+  if download_file "$cli_url" "$cli_temp"; then
+    install_cli "$cli_temp" "$target_base" "$is_global"
+  else
+    log "WARNING: Failed to download CLI"
+  fi
+
   # Download each file in manifest
   local count=0
   local errors=0
   while IFS= read -r line || [ -n "$line" ]; do
     line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
     if [ -z "$line" ] || [[ "$line" == \#* ]]; then
+      continue
+    fi
+
+    # Skip CLI (already handled)
+    if [[ "$line" == "bin/irf" ]]; then
+      count=$((count + 1))
       continue
     fi
 
@@ -113,6 +179,7 @@ install_remote() {
 # Local install: copy files from repo
 install_local() {
   local target_base="$1"
+  local is_global="$2"
   local script_dir
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -121,6 +188,11 @@ install_local() {
   if [ ! -f "$manifest" ]; then
     log "ERROR: Install manifest not found: $manifest"
     exit 1
+  fi
+
+  # Install CLI first
+  if [ -f "$script_dir/bin/irf" ]; then
+    install_cli "$script_dir/bin/irf" "$target_base" "$is_global"
   fi
 
   local agents_count=0
@@ -133,6 +205,12 @@ install_local() {
     if [ -z "$line" ] || [[ "$line" == \#* ]]; then
       continue
     fi
+
+    # Skip CLI (already handled)
+    if [[ "$line" == "bin/irf" ]]; then
+      continue
+    fi
+
     if [ ! -f "$script_dir/$line" ]; then
       log "WARNING: Missing file: $script_dir/$line"
       continue
@@ -149,7 +227,7 @@ install_local() {
 
   # Create root AGENTS.md for project installs
   if [ -f "$script_dir/docs/AGENTS.md.template" ] && [ ! -f "AGENTS.md" ]; then
-    if [[ "$target_base" != "$HOME/.pi/agent" ]]; then
+    if [ "$is_global" = false ]; then
       cp "$script_dir/docs/AGENTS.md.template" "AGENTS.md"
       log "Created AGENTS.md in project root"
     fi
@@ -159,6 +237,7 @@ install_local() {
   echo "Installed IRF workflow files to: $target_base"
   echo ""
   echo "Installed components:"
+  echo "  - irf CLI (command-line tool)"
   echo "  - $agents_count agents (execution units)"
   echo "  - $skills_count skills (domain expertise)"
   echo "  - $prompts_count prompts (command entry points)"
@@ -168,6 +247,7 @@ install_local() {
 # Main
 main() {
   local target_base=""
+  local is_global=false
   local use_remote=false
 
   # Check if being piped
@@ -180,6 +260,7 @@ main() {
     case "$1" in
       --global)
         target_base="$HOME/.pi/agent"
+        is_global=true
         shift
         ;;
       --project)
@@ -188,6 +269,7 @@ main() {
           exit 1
         fi
         target_base="$2/.pi"
+        is_global=false
         shift 2
         ;;
       --remote)
@@ -210,6 +292,7 @@ main() {
   if [ -z "$target_base" ]; then
     # If not global, default to current directory
     target_base="$(pwd)/.pi"
+    is_global=false
   fi
 
   # Create target directory
@@ -221,23 +304,66 @@ main() {
 
   # Install
   if [ "$use_remote" = true ]; then
-    install_remote "$target_base"
+    install_remote "$target_base" "$is_global"
     echo ""
-    echo "Next steps:"
-    echo "  1. Install required Pi extensions:"
-    echo "     pi install npm:pi-prompt-template-model"
-    echo "     pi install npm:pi-model-switch"
-    echo "     pi install npm:pi-subagents"
-    echo "  2. Run setup: pi '/irf-sync'"
-    echo "  3. Initialize Ralph: pi '/ralph init' (or manually create .pi/ralph/)"
-    echo "  4. Start working: /irf <ticket>"
+    if [ "$is_global" = true ]; then
+      echo "Next steps:"
+      echo "  1. Ensure ~/.local/bin is in your PATH:"
+      echo "     export PATH=\"\$HOME/.local/bin:\$PATH\""
+      echo "  2. Install required Pi extensions:"
+      echo "     pi install npm:pi-prompt-template-model"
+      echo "     pi install npm:pi-model-switch"
+      echo "     pi install npm:pi-subagents"
+      echo "  3. Run interactive setup:"
+      echo "     irf setup"
+      echo "  4. Sync configuration:"
+      echo "     irf sync"
+      echo "  5. Initialize Ralph:"
+      echo "     irf ralph init"
+      echo "  6. Start working:"
+      echo "     /irf <ticket>"
+    else
+      echo "Next steps:"
+      echo "  1. Install required Pi extensions:"
+      echo "     pi install npm:pi-prompt-template-model"
+      echo "     pi install npm:pi-model-switch"
+      echo "     pi install npm:pi-subagents"
+      echo "  2. Run interactive setup:"
+      echo "     ./.pi/bin/irf setup"
+      echo "  3. Sync configuration:"
+      echo "     ./.pi/bin/irf sync"
+      echo "  4. Initialize Ralph:"
+      echo "     ./.pi/bin/irf ralph init"
+      echo "  5. Start working:"
+      echo "     /irf <ticket>"
+    fi
   else
-    install_local "$target_base"
+    install_local "$target_base" "$is_global"
     echo ""
-    echo "Next steps:"
-    echo "  1. Review AGENTS.md (project patterns)"
-    echo "  2. Initialize Ralph: ./bin/irf ralph init"
-    echo "  3. Start working: /irf <ticket>"
+    if [ "$is_global" = true ]; then
+      echo "Next steps:"
+      echo "  1. Ensure ~/.local/bin is in your PATH:"
+      echo "     export PATH=\"\$HOME/.local/bin:\$PATH\""
+      echo "  2. Run interactive setup:"
+      echo "     irf setup"
+      echo "  3. Sync configuration:"
+      echo "     irf sync"
+      echo "  4. Initialize Ralph:"
+      echo "     irf ralph init"
+      echo "  5. Start working:"
+      echo "     /irf <ticket>"
+    else
+      echo "Next steps:"
+      echo "  1. Run interactive setup:"
+      echo "     ./.pi/bin/irf setup"
+      echo "  2. Sync configuration:"
+      echo "     ./.pi/bin/irf sync"
+      echo "  3. Review AGENTS.md (project patterns)"
+      echo "  4. Initialize Ralph:"
+      echo "     ./.pi/bin/irf ralph init"
+      echo "  5. Start working:"
+      echo "     /irf <ticket>"
+    fi
   fi
 }
 
