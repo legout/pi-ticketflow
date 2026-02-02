@@ -4,6 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG_HELPER="$ROOT_DIR/scripts/tf_config.py"
+CONFIG_HELPER_SUPPORTS_FLAGS=false
+if [ -f "$CONFIG_HELPER" ] && grep -q 'add_argument("--base"' "$CONFIG_HELPER"; then
+  CONFIG_HELPER_SUPPORTS_FLAGS=true
+fi
 
 usage() {
   cat <<'EOF'
@@ -235,21 +239,24 @@ configure_mcp() {
     ignore_project="true"
   fi
 
+  local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
   local args=(
     "$CONFIG_HELPER"
     configure-mcp
     --mcp-file "$mcp_file"
-    --base "$TARGET_BASE"
     --zai-key "$zai_key"
     --ctx7-key "$ctx7_key"
     --exa-key "$exa_key"
   )
 
-  if [ "$ignore_project" = "true" ]; then
-    args+=(--ignore-project)
+  if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
+    args+=(--base "$TARGET_BASE")
+    if [ "$ignore_project" = "true" ]; then
+      args+=(--ignore-project)
+    fi
   fi
 
-  "${python_cmd[@]}" "${args[@]}"
+  "${env_vars[@]}" "${python_cmd[@]}" "${args[@]}"
 }
 
 track_file() {
@@ -339,11 +346,15 @@ doctor() {
     fi
 
     local cmds
-    local args=("$CONFIG_HELPER" checker-tools --base "$TARGET_BASE")
-    if [ "$ignore_project" = "true" ]; then
-      args+=(--ignore-project)
+    local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
+    local args=("$CONFIG_HELPER" checker-tools)
+    if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
+      args+=(--base "$TARGET_BASE")
+      if [ "$ignore_project" = "true" ]; then
+        args+=(--ignore-project)
+      fi
     fi
-    cmds=$("${python_cmd[@]}" "${args[@]}")
+    cmds=$("${env_vars[@]}" "${python_cmd[@]}" "${args[@]}")
 
     if [ -n "$cmds" ]; then
       echo "Checker tools:"
@@ -476,7 +487,7 @@ PROGRESS_EOF
   "completionCheck": "tk ready | grep -q .",
   "sleepBetweenTickets": 5000,
   "sleepBetweenRetries": 10000,
-  "workflow": "/irf",
+  "workflow": "/tf",
   "workflowFlags": "--auto",
   "includeKnowledgeBase": true,
   "includePlanningDocs": true,
@@ -1336,13 +1347,17 @@ backlog_ls() {
     ignore_project="true"
   fi
 
-  local args=("$CONFIG_HELPER" knowledge-dir --base "$TARGET_BASE")
-  if [ "$ignore_project" = "true" ]; then
-    args+=(--ignore-project)
+  local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
+  local args=("$CONFIG_HELPER" knowledge-dir)
+  if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
+    args+=(--base "$TARGET_BASE")
+    if [ "$ignore_project" = "true" ]; then
+      args+=(--ignore-project)
+    fi
   fi
 
   local knowledge_dir
-  knowledge_dir=$("$python_bin" "${args[@]}")
+  knowledge_dir=$("${env_vars[@]}" "$python_bin" "${args[@]}")
 
   KNOWLEDGE_DIR="$knowledge_dir" TOPIC="$topic" \
     "$python_bin" - <<'PY'
@@ -1461,7 +1476,7 @@ if len(topics) == 1:
             print(f"| {row[0]} | {row[1]} | {est} |")
     else:
         print("Backlog: no (unticketed)")
-        print(f"Run: /irf-backlog {topic.name}")
+        print(f"Run: /tf-backlog {topic.name}")
 else:
     print("| Topic | Type | Backlog | Tickets |")
     print("|-------|------|---------|---------|")
@@ -1488,8 +1503,17 @@ sync_models() {
     ignore_project="true"
   fi
 
+  local env_vars=(TARGET_BASE="$TARGET_BASE" IGNORE_PROJECT_CONFIG="$ignore_project")
+
   echo "Syncing models from meta-model configuration..."
-  "${python_cmd[@]}" "$CONFIG_HELPER" sync-models --base "$TARGET_BASE" ${ignore_project:+--ignore-project}
+  local args=("$CONFIG_HELPER" sync-models)
+  if [ "$CONFIG_HELPER_SUPPORTS_FLAGS" = true ]; then
+    args+=(--base "$TARGET_BASE")
+    if [ "$ignore_project" = "true" ]; then
+      args+=(--ignore-project)
+    fi
+  fi
+  "${env_vars[@]}" "${python_cmd[@]}" "${args[@]}"
 }
 
 case "$COMMAND" in
