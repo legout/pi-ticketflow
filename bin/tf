@@ -26,6 +26,7 @@ Usage:
   tf sync [--project <path>]
   tf update [--global|--project <path>]
   tf doctor [--project <path>]
+  tf next [--project <path>]
   tf backlog-ls [topic-id-or-path] [--project <path>]
   tf track <path> [--file <files_changed_path>]
   tf ralph <subcommand> [options]
@@ -37,6 +38,7 @@ Commands:
   sync        Sync agent models from workflow config into agent files
   update      Download latest agents, skills, and prompts
   doctor      Preflight checks for tk/pi/extensions/checkers
+  next        Print the next open and ready ticket id
   backlog-ls  List backlog status and tickets for seed/baseline topics
   track       Append file paths to files_changed.txt (deduped)
   ralph       Ralph loop management (see below)
@@ -241,6 +243,7 @@ skills/tf-config/SKILL.md
 skills/ralph/SKILL.md
 
 prompts/tf.md
+prompts/tf-next.md
 prompts/tf-lite.md
 prompts/tf-plan.md
 prompts/tf-plan-consult.md
@@ -634,6 +637,7 @@ write_default_settings_json() {
   },
   "prompts": {
     "tf": "worker",
+    "tf-next": "general",
     "tf-lite": "worker",
     "tf-plan": "planning",
     "tf-plan-consult": "planning",
@@ -2497,6 +2501,67 @@ agentsmd_cmd() {
   esac
 }
 
+next_ticket() {
+  local query="tk ready | head -1 | awk '{print $1}'"
+  local ralph_config=""
+
+  if [ -n "$TF_BASE" ] && [ -f "$TF_BASE/ralph/config.json" ]; then
+    ralph_config="$TF_BASE/ralph/config.json"
+  elif [ -f ".tf/ralph/config.json" ]; then
+    ralph_config="$(pwd)/.tf/ralph/config.json"
+  fi
+
+  if [ -n "$ralph_config" ]; then
+    local python_bin=""
+    if command -v python3 >/dev/null 2>&1; then
+      python_bin="python3"
+    elif command -v python >/dev/null 2>&1; then
+      python_bin="python"
+    fi
+
+    if [ -n "$python_bin" ]; then
+      local config_query
+      config_query=$(RALPH_CONFIG="$ralph_config" "$python_bin" - <<'PY'
+import json
+import os
+import sys
+
+path = os.environ.get("RALPH_CONFIG", "").strip()
+if not path:
+    sys.exit(0)
+
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(0)
+
+query = str(data.get("ticketQuery", "") or "").strip()
+if query:
+    print(query)
+PY
+)
+      if [ -n "$config_query" ]; then
+        query="$config_query"
+      fi
+    fi
+  fi
+
+  if ! command -v tk >/dev/null 2>&1; then
+    echo "tk not found in PATH; cannot query tickets." >&2
+    exit 1
+  fi
+
+  local ticket
+  ticket=$(eval "$query" 2>/dev/null | head -1 | awk '{print $1}')
+  if [ -z "$ticket" ]; then
+    echo "No ready tickets found." >&2
+    exit 1
+  fi
+
+  echo "$ticket"
+}
+
 backlog_ls() {
   require_project_tf
 
@@ -2884,6 +2949,13 @@ case "$COMMAND" in
     ;;
   doctor)
     doctor
+    ;;
+  next)
+    if [ "${#ARGS[@]}" -gt 0 ]; then
+      echo "Too many arguments for next" >&2
+      exit 1
+    fi
+    next_ticket
     ;;
   backlog-ls)
     if [ "${#ARGS[@]}" -gt 1 ]; then

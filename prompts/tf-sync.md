@@ -50,6 +50,7 @@ Config key → Agent file mapping:
 
 Config key → Prompt file mapping:
 - `models.planning` → `prompts/tf-plan.md`, `prompts/tf-plan-consult.md`, `prompts/tf-plan-revise.md`, `prompts/tf-plan-review.md`, `prompts/tf-seed.md`, `prompts/tf-backlog.md`, `prompts/tf-backlog-ls.md`, `prompts/tf-spike.md`, `prompts/tf-backlog-from-openspec.md`, `prompts/tf-baseline.md`, `prompts/tf-followups.md`
+- `models.general` → `prompts/tf-next.md`
 - `models.config` → `prompts/tf-sync.md`
 
 ## Configuration Sources

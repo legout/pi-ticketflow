@@ -339,6 +339,7 @@ Suggestions)
 | Command | Purpose |
 |---------|---------|
 | `/tf <ticket>` | Execute TF workflow (Implement → Review → Fix → Close) |
+| `/tf-next` | Print next open and ready ticket id |
 | `/ralph-start` | Start autonomous ticket processing loop |
 
 ### Planning & Design

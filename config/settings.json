@@ -54,6 +54,7 @@
   },
   "prompts": {
     "tf": "worker",
+    "tf-next": "general",
     "tf-lite": "worker",
     "tf-plan": "planning",
     "tf-plan-consult": "planning",

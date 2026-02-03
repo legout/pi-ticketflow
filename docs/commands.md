@@ -55,6 +55,22 @@ Execute the Implement → Review → Fix → Close workflow on a ticket.
 
 ---
 
+### `/tf-next`
+
+Print the next open and ready ticket id.
+
+```
+/tf-next
+```
+
+**Behavior:**
+- If `.tf/ralph/config.json` exists and defines `ticketQuery`, that command is used.
+- Otherwise falls back to: `tk ready | head -1 | awk '{print $1}'`.
+
+Outputs a single ticket id or "No ready tickets found.".
+
+---
+
 ### `/ralph-start`
 
 Start autonomous ticket processing loop.
@@ -361,6 +377,9 @@ tf update                         # Download latest agents/skills/prompts
 # Diagnostics
 tf doctor                         # Preflight checks
 
+# Queue
+tf next                           # Print next open and ready ticket id
+
 # Backlog
 tf backlog-ls [topic]             # List backlog status
 
@@ -391,5 +410,6 @@ Use `./.tf/bin/tf` for project installs (or the global `tf`).
 ./.tf/bin/tf init
 ./.tf/bin/tf sync
 ./.tf/bin/tf update
+./.tf/bin/tf next
 ./.tf/bin/tf ralph init
 ```
