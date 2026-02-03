@@ -2502,7 +2502,7 @@ agentsmd_cmd() {
 }
 
 next_ticket() {
-  local query="tk ready | head -1 | awk '{print $1}'"
+  local query="tk ready | head -1 | awk '{print \$1}'"
   local ralph_config=""
 
   if [ -n "$TF_BASE" ] && [ -f "$TF_BASE/ralph/config.json" ]; then
