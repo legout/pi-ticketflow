@@ -36,8 +36,13 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
 1. Locate topic directory
 2. Detect mode (seed vs baseline vs plan)
 3. Read relevant artifacts and plan status (warn if plan not approved)
-4. Create 5-15 small tickets (1-2 hours each, 30 lines max)
-5. Create via `tk create`:
+4. Load existing tickets to avoid duplicates:
+   - Read `backlog.md` if it exists
+   - Read `existing-tickets.md` if present (from `/tf-baseline`)
+   - Run `tk list --help` (or `tk help`) to discover listing/search options
+   - If `tk` supports listing/search, pull open tickets with tags like `tf`, `baseline`, or `backlog`
+5. Create 5-15 small tickets (1-2 hours each, 30 lines max), skipping duplicates (record skipped items in backlog.md)
+6. Create via `tk create`:
 
    **Seed:**
    ```bash
@@ -68,13 +73,13 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
      --priority 2 \
      --external-ref "{topic-id}"
    ```
-6. Infer dependencies (plan only):
+7. Infer dependencies (plan only):
    - Use Work Plan phases or ordered steps to determine sequencing
    - For phase-based plans: each ticket in phase N depends on all tickets in phase N-1
    - For ordered lists without phases: chain each ticket to the previous one
    - Skip dependencies for seed/baseline unless explicitly stated
    - Apply with `tk dep <id> <dep-id>`
-7. Write `backlog.md` with ticket summary (include dependencies)
+8. Write `backlog.md` with ticket summary (include dependencies)
 
 ## Ticket Templates
 

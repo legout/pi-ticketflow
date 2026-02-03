@@ -211,6 +211,7 @@ Capture status-quo of an existing project.
 - `risk-map.md` - Technical, dependency, knowledge risks
 - `test-inventory.md` - Test structure and gaps
 - `dependency-map.md` - Dependencies and external services
+- `existing-tickets.md` - Current tickets (from `tk` when available)
 - `sources.md` - Files scanned
 
 **Examples:**
@@ -236,7 +237,7 @@ Create tickets from seeds, baselines, or plans.
 /tf-backlog <seed|baseline|plan>
 ```
 
-Generates 5-15 small tickets:
+Generates 5-15 small tickets (skipping duplicates already listed in `backlog.md` or `existing-tickets.md`):
 - **30 lines or less** in description
 - **1-2 hours** estimated work
 - **Self-contained** - no need to load full planning docs

@@ -275,24 +275,34 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
    - If both/neither, ask user to clarify
    - If plan mode: read frontmatter `status`; if not `approved`, **warn** but continue
 
-3. **Seed mode**:
+3. **Load existing tickets to avoid duplicates**:
+   - Read `backlog.md` if it exists (capture existing IDs + titles)
+   - Read `existing-tickets.md` if present (from `/tf-baseline`)
+   - Run `tk list --help` (or `tk help`) to discover listing/search options
+   - If `tk` supports listing/search, pull open tickets with tags like `tf`, `baseline`, or `backlog`
+   - Build a de-dupe set by normalized title + ID
+
+4. **Seed mode**:
    - Read `seed.md` (required)
    - Read `mvp-scope.md`, `success-metrics.md`, `constraints.md` (if exist)
    - Derive 5-15 small tickets from the seed
 
-4. **Baseline mode**:
+5. **Baseline mode**:
    - Read `baseline.md` (required)
    - Read `risk-map.md`, `test-inventory.md`, `dependency-map.md`, `overview.md` (if exist)
    - Derive 5-15 small tickets from risks, test gaps, dependency issues, and architectural hotspots
    - Split large refactors into 1-2 hour chunks
 
-5. **Plan mode**:
+6. **Plan mode**:
    - Read `plan.md` (required)
    - Extract Summary, Requirements, Constraints, Acceptance Criteria, and Work Plan items
    - Derive 5-15 small tickets from Work Plan entries
    - Split large phases into 1-2 hour chunks
 
-6. **Create tickets** (1-2 hours each, 30 lines max):
+7. **Create tickets** (1-2 hours each, 30 lines max):
+   - Skip any ticket whose normalized title matches an existing ticket from backlog/existing list
+   - If a ticket overlaps an existing one, note it in backlog.md as skipped (do not create)
+
 
    **Seed ticket template:**
    ```markdown
@@ -355,7 +365,7 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
    - Plan: <topic-id>
    ```
 
-7. **Create via `tk`**:
+8. **Create via `tk`**:
 
    **Seed:**
    ```bash
@@ -387,7 +397,7 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
      --external-ref "{topic-id}"
    ```
 
-8. **Infer dependencies (plan mode only)**:
+9. **Infer dependencies (plan mode only)**:
    - Track created ticket IDs with their phase/order
    - Use Work Plan phases/headings to group tickets into phases
    - For phase-based plans: each ticket in phase N depends on **all** tickets in phase N-1
@@ -395,7 +405,7 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
    - Skip dependencies for seed/baseline unless explicitly stated in source docs
    - Apply with `tk dep <id> <dep-id>` (one command per dependency)
 
-9. **Write backlog.md**:
+10. **Write backlog.md**:
    ```markdown
    # Backlog: {topic-id}
    | ID | Title | Est. Hours | Depends On |
@@ -509,12 +519,19 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
    - Find entry points: `find . -name "main.*" -o -name "app.*"`
    - Find tests: `find . -type d -name "test*"`
 
-3. **Write artifacts**:
+3. **Capture existing tickets (if `tk` available)**:
+   - Run `tk list --help` to discover supported filters
+   - Prefer listing open tickets with tags like `tf`, `baseline`, or `backlog` (if supported)
+   - If listing is unavailable, capture `tk ready` output
+   - Write `existing-tickets.md` with a table: ID | Title | Status | Tags | Notes
+
+4. **Write artifacts**:
    - **overview.md**: Summary
    - **baseline.md**: Architecture, components, entry points
    - **risk-map.md**: Technical, dependency, knowledge risks
    - **test-inventory.md**: Test directories, commands, coverage gaps
    - **dependency-map.md**: Runtime/dev dependencies, external services
+   - **existing-tickets.md**: Current tickets (from `tk`)
    - **sources.md**: Files scanned
 
 ---

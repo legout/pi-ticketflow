@@ -241,6 +241,7 @@ Creates `.tf/knowledge/topics/baseline-myapp/` with:
 - `risk-map.md` - Technical risks and fragile areas
 - `test-inventory.md` - Test coverage gaps
 - `dependency-map.md` - External dependencies
+- `existing-tickets.md` - Current open tickets (from `tk` if available)
 
 ### 2. Create Improvement Tickets
 
@@ -253,6 +254,7 @@ Generates tickets from:
 - Test coverage gaps
 - Dependency issues
 - Architectural hotspots
+- Skips duplicates already present in `backlog.md` or `existing-tickets.md`
 
 ### 3. Implement
 

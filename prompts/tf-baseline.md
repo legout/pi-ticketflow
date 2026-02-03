@@ -34,15 +34,21 @@ Follow the **TF Planning Skill** "Baseline Capture" procedure:
 2. Scan project:
    - Read high-signal files (README.md, package.json, etc.)
    - Find entry points, tests, source directories
-3. If focus area specified: prioritize scanning that area
-4. Write artifacts:
+3. Capture existing tickets (if `tk` is available):
+   - Run `tk list --help` to see supported filters
+   - Prefer listing open tickets for this repo (tags like `tf`, `baseline`, or `backlog` if supported)
+   - If no list command exists, capture `tk ready` output instead
+   - Write `existing-tickets.md` with a table of ticket IDs, titles, status, and tags
+4. If focus area specified: prioritize scanning that area
+5. Write artifacts:
    - `overview.md` - Project summary
    - `baseline.md` - Architecture, components, entry points
    - `risk-map.md` - Technical, dependency, knowledge risks
    - `test-inventory.md` - Test structure and gaps
    - `dependency-map.md` - Dependencies and external services
+   - `existing-tickets.md` - Current tickets (from `tk`)
    - `sources.md` - Files scanned
-5. Update `index.json`
+6. Update `index.json`
 
 ## Output
 
@@ -52,6 +58,7 @@ Created artifacts in `.tf/knowledge/topics/{topic-id}/`:
 - risk-map.md
 - test-inventory.md
 - dependency-map.md
+- existing-tickets.md
 - sources.md
 
 ## Use Cases
