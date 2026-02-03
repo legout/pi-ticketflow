@@ -355,6 +355,9 @@ tf init                           # Create .tf/ directories in the project
 # Sync
 tf sync                           # Sync models from config
 
+# Update
+tf update                         # Download latest agents/skills/prompts
+
 # Diagnostics
 tf doctor                         # Preflight checks
 
@@ -387,5 +390,6 @@ Use `./.tf/bin/tf` for project installs (or the global `tf`).
 ./.tf/bin/tf setup
 ./.tf/bin/tf init
 ./.tf/bin/tf sync
+./.tf/bin/tf update
 ./.tf/bin/tf ralph init
 ```

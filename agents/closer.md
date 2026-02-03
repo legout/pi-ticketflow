@@ -92,27 +92,30 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   fi
 fi
 
-tk add-note "$ticket_id" "Implementation complete.
+note=$(printf '%s\n' \
+"Implementation complete." \
+"" \
+"**Summary:**" \
+"<summary from implementation.md>" \
+"" \
+"**Review Findings:**" \
+"- Critical: <critical_count>" \
+"- Major: <major_count>" \
+"- Minor: <minor_count>" \
+"- Warnings (follow-up): <warning_count>" \
+"- Suggestions (follow-up): <suggestion_count>" \
+"" \
+"**Fixes Applied:**" \
+"<summary from fixes.md or 'No fixes needed'>" \
+"" \
+"**Follow-up Tickets:**" \
+"<warning/suggestion summary if any>" \
+"" \
+"**Commit:** $commit_hash" \
+"" \
+"**Status:** Ready for use.")
 
-**Summary:**
-<summary from implementation.md>
-
-**Review Findings:**
-- Critical: <critical_count>
-- Major: <major_count>
-- Minor: <minor_count>
-- Warnings (follow-up): <warning_count>
-- Suggestions (follow-up): <suggestion_count>
-
-**Fixes Applied:**
-<summary from fixes.md or 'No fixes needed'>
-
-**Follow-up Tickets:**
-<warning/suggestion summary if any>
-
-**Commit:** $commit_hash
-
-**Status:** Ready for use."
+tk add-note "$ticket_id" "$note"
 
 # Close the ticket
 tk close "$ticket_id"

@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_URL="https://raw.githubusercontent.com/legout/pi-ticketflow/main"
 CONFIG_HELPER=""
 CONFIG_HELPER_SUPPORTS_FLAGS=false
 
@@ -23,6 +24,7 @@ Usage:
   tf init [--project <path>]
   tf login [--global|--project <path>]
   tf sync [--project <path>]
+  tf update [--global|--project <path>]
   tf doctor [--project <path>]
   tf backlog-ls [topic-id-or-path] [--project <path>]
   tf track <path> [--file <files_changed_path>]
@@ -33,6 +35,7 @@ Commands:
   init        Scaffold .tf/ directories (config, knowledge, ralph)
   login       Configure API keys (Perplexity, Context7, Exa, ZAI)
   sync        Sync agent models from workflow config into agent files
+  update      Download latest agents, skills, and prompts
   doctor      Preflight checks for tk/pi/extensions/checkers
   backlog-ls  List backlog status and tickets for seed/baseline topics
   track       Append file paths to files_changed.txt (deduped)
@@ -159,6 +162,19 @@ if [ -z "$TARGET_BASE" ] && [ "$COMMAND" != "track" ]; then
     login)
       if [ -d ".pi" ]; then
         TARGET_BASE="$(pwd)/.pi"
+        SCOPE_FLAG="-l"
+        IS_GLOBAL=false
+      else
+        TARGET_BASE="$HOME/.pi/agent"
+        IS_GLOBAL=true
+      fi
+      ;;
+    update)
+      if [ -d ".pi" ]; then
+        TARGET_BASE="$(pwd)/.pi"
+        if [ -d ".tf" ]; then
+          TF_BASE="$(pwd)/.tf"
+        fi
         SCOPE_FLAG="-l"
         IS_GLOBAL=false
       else
@@ -298,6 +314,157 @@ EOF
   else
     echo "Installed TF runtime/config files to: $TF_BASE"
     echo "Installed files: $((pi_count + tf_count)) (pi: $pi_count, tf: $tf_count)"
+  fi
+}
+
+download_file() {
+  local url="$1"
+  local output="$2"
+  local dir
+  dir="$(dirname "$output")"
+
+  mkdir -p "$dir" 2>/dev/null || {
+    echo "ERROR: Cannot create directory $dir" >&2
+    return 1
+  }
+
+  if command -v curl >/dev/null 2>&1; then
+    if ! curl -fsSL "$url" -o "$output"; then
+      return 1
+    fi
+  elif command -v wget >/dev/null 2>&1; then
+    if ! wget -q "$url" -O "$output"; then
+      return 1
+    fi
+  else
+    echo "ERROR: curl or wget required" >&2
+    return 1
+  fi
+}
+
+update_assets() {
+  if [ -z "$TARGET_BASE" ]; then
+    echo "Target base not set; use --global or --project <path>." >&2
+    exit 1
+  fi
+
+  local temp_dir
+  temp_dir="$(mktemp -d)"
+
+  local manifest_url="$REPO_URL/config/install-manifest.txt"
+  local manifest_file="$temp_dir/install-manifest.txt"
+
+  if ! download_file "$manifest_url" "$manifest_file"; then
+    echo "Failed to download manifest from $manifest_url" >&2
+    rm -rf "$temp_dir"
+    exit 1
+  fi
+
+  local new_files=()
+  local existing_files=()
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    if [ -z "$line" ] || [[ "$line" == \#* ]]; then
+      continue
+    fi
+    case "$line" in
+      agents/*|skills/*|prompts/*) ;;
+      *) continue ;;
+    esac
+
+    local dest="$TARGET_BASE/$line"
+    if [ -f "$dest" ]; then
+      existing_files+=("$line")
+    else
+      new_files+=("$line")
+    fi
+  done < "$manifest_file"
+
+  if [ "${#new_files[@]}" -eq 0 ] && [ "${#existing_files[@]}" -eq 0 ]; then
+    echo "No agent/skill/prompt entries found in manifest."
+    rm -rf "$temp_dir"
+    return 0
+  fi
+
+  local downloaded=0
+  local updated=0
+  local errors=0
+
+  if [ "${#new_files[@]}" -gt 0 ]; then
+    echo "New files available:"
+    for file in "${new_files[@]}"; do
+      echo "  - $file"
+    done
+    read -r -p "Download ${#new_files[@]} new files into $TARGET_BASE? (Y/n) " yn
+    case "$yn" in
+      [Nn]*) ;;
+      *)
+        for file in "${new_files[@]}"; do
+          if download_file "$REPO_URL/$file" "$TARGET_BASE/$file"; then
+            downloaded=$((downloaded + 1))
+          else
+            echo "WARNING: Failed to download $file" >&2
+            errors=$((errors + 1))
+          fi
+        done
+        ;;
+    esac
+  else
+    echo "No new files to download."
+  fi
+
+  if [ "${#existing_files[@]}" -gt 0 ]; then
+    read -r -p "Check for updates to existing files? (y/N) " yn
+    case "$yn" in
+      [Yy]*)
+        local update_files=()
+        for file in "${existing_files[@]}"; do
+          local temp_file="$temp_dir/$file"
+          if download_file "$REPO_URL/$file" "$temp_file"; then
+            if ! cmp -s "$temp_file" "$TARGET_BASE/$file"; then
+              update_files+=("$file")
+            fi
+          else
+            echo "WARNING: Failed to download $file" >&2
+            errors=$((errors + 1))
+          fi
+        done
+
+        if [ "${#update_files[@]}" -gt 0 ]; then
+          echo "Updates available:"
+          for file in "${update_files[@]}"; do
+            echo "  - $file"
+          done
+          read -r -p "Overwrite ${#update_files[@]} existing files? (y/N) " yn2
+          case "$yn2" in
+            [Yy]*)
+              for file in "${update_files[@]}"; do
+                local temp_file="$temp_dir/$file"
+                mkdir -p "$TARGET_BASE/$(dirname "$file")"
+                if cp "$temp_file" "$TARGET_BASE/$file"; then
+                  updated=$((updated + 1))
+                else
+                  echo "WARNING: Failed to overwrite $file" >&2
+                  errors=$((errors + 1))
+                fi
+              done
+              ;;
+          esac
+        else
+          echo "No updates found for existing files."
+        fi
+        ;;
+    esac
+  fi
+
+  rm -rf "$temp_dir"
+
+  echo "Update complete."
+  echo "  New files downloaded: $downloaded"
+  echo "  Existing files updated: $updated"
+  if [ "$errors" -gt 0 ]; then
+    echo "  Warnings: $errors"
   fi
 }
 
@@ -2646,6 +2813,9 @@ case "$COMMAND" in
     ;;
   sync)
     sync_models
+    ;;
+  update)
+    update_assets
     ;;
   doctor)
     doctor
