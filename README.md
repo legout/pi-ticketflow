@@ -301,7 +301,7 @@ Dependencies are inferred from task ordering/headings and applied with `tk dep`.
 │  <ticket>  │    │  review.md   │    │   <followup>   │    │  -start  │
 └────────────┘    └─────────────┘    └────────────────┘    │(optional)│
      ↓                                                      └──────────┘
- review.md
+ review.md (from .pi/knowledge/tickets/<ticket>/)
  (Warnings +
 Suggestions)
 ```
@@ -414,7 +414,16 @@ All planning and research artifacts are stored in `.pi/knowledge/`:
 .pi/knowledge/
 ├── index.json                    # Registry of all topics
 ├── tickets/
-│   └── {ticket-id}.md           # Per-ticket research
+│   └── {ticket-id}/
+│       ├── research.md           # Per-ticket research
+│       ├── implementation.md
+│       ├── review.md
+│       ├── fixes.md
+│       ├── followups.md
+│       ├── close-summary.md
+│       ├── chain-summary.md
+│       ├── files_changed.txt
+│       └── ticket_id.txt
 └── topics/
     └── {topic-id}/
         ├── overview.md           # Summary + keywords

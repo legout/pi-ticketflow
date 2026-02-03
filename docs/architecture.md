@@ -170,7 +170,16 @@ All planning and research artifacts are stored in `.pi/knowledge/`:
 .pi/knowledge/
 ├── index.json                    # Registry of all topics
 ├── tickets/
-│   └── {ticket-id}.md           # Per-ticket research
+│   └── {ticket-id}/
+│       ├── research.md           # Per-ticket research
+│       ├── implementation.md
+│       ├── review.md
+│       ├── fixes.md
+│       ├── followups.md
+│       ├── close-summary.md
+│       ├── chain-summary.md
+│       ├── files_changed.txt
+│       └── ticket_id.txt
 └── topics/
     └── {topic-id}/
         ├── overview.md           # Summary + keywords
@@ -247,11 +256,11 @@ Used by skills to switch between phases:
 ├─────────────────────────────────────────────────────────────┤
 │  1. Research (optional)                                     │
 │     - MCP tools (context7, exa, grep_app)                   │
-│     - Write to .pi/knowledge/tickets/{id}.md                │
+│     - Write to .pi/knowledge/tickets/{id}/research.md       │
 ├─────────────────────────────────────────────────────────────┤
 │  2. Implement (model-switch)                                │
 │     - Switch to implementer model                           │
-│     - Write implementation.md                               │
+│     - Write implementation.md (ticket artifact dir)         │
 ├─────────────────────────────────────────────────────────────┤
 │  3. Parallel Reviews (subagents)                            │
 │     - reviewer-general                                      │
@@ -261,11 +270,11 @@ Used by skills to switch between phases:
 │  4. Merge Reviews (model-switch)                            │
 │     - Switch to cheap model                                 │
 │     - Deduplicate issues                                    │
-│     - Write review.md                                       │
+│     - Write review.md (ticket artifact dir)                 │
 ├─────────────────────────────────────────────────────────────┤
 │  5. Fix Issues                                              │
 │     - Fix Critical/Major/Minor                              │
-│     - Write fixes.md                                        │
+│     - Write fixes.md (ticket artifact dir)                  │
 ├─────────────────────────────────────────────────────────────┤
 │  6. Follow-ups (optional, --create-followups)               │
 │     - Create tickets from Warnings/Suggestions              │
@@ -273,7 +282,7 @@ Used by skills to switch between phases:
 │  7. Close Ticket                                            │
 │     - Add note to tk                                        │
 │     - Close ticket                                          │
-│     - Write close-summary.md                                │
+│     - Write close-summary.md (ticket artifact dir)          │
 ├─────────────────────────────────────────────────────────────┤
 │  8. Ralph Integration (if .pi/ralph/ exists)                │
 │     - Update progress.md                                    │

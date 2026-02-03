@@ -33,8 +33,8 @@ Follow the **TF Planning Skill** "Follow-up Creation" procedure:
 
 1. Resolve review path:
    - If path: use directly
-   - If ticket ID: search `/tmp/pi-chain-runs` for matching review
-   - If empty: check `./review.md`
+   - If ticket ID: prefer `.pi/knowledge/tickets/{ticket-id}/review.md` when it exists; otherwise search `/tmp/pi-chain-runs`
+   - If empty: check `./review.md` (or the current ticket artifact directory)
 2. Parse review:
    - Extract Warnings section
    - Extract Suggestions section
@@ -45,7 +45,7 @@ Follow the **TF Planning Skill** "Follow-up Creation" procedure:
      --tags tf,followup \
      --priority 3
    ```
-4. Write `followups.md` documenting created tickets
+4. Write `followups.md` documenting created tickets (same directory as the review when possible)
 
 ## Ticket Description Template
 
@@ -70,7 +70,7 @@ Line: {line_number}
 ## Output
 
 - Tickets created in `tk` (tagged: tf, followup)
-- `followups.md` with summary
+- `followups.md` with summary (written in the ticket artifact directory when available)
 
 ## Notes
 

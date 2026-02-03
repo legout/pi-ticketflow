@@ -530,8 +530,8 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
 
 1. **Resolve review path**:
    - If path: use directly
-   - If ticket ID: search `/tmp/pi-chain-runs` for matching review
-   - If empty: use `./review.md` if exists
+   - If ticket ID: prefer `{knowledgeDir}/tickets/{ticket-id}/review.md` when it exists; otherwise search `/tmp/pi-chain-runs`
+   - If empty: use `./review.md` if exists (or the current ticket artifact directory)
 
 2. **Parse review**:
    - Extract Warnings section
@@ -545,7 +545,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
      --priority 3
    ```
 
-4. **Write followups.md** documenting created tickets
+4. **Write followups.md** documenting created tickets (prefer the same directory as the review file or the ticket artifact directory)
 
 ---
 
@@ -643,7 +643,16 @@ tk create "<title>" \
 .pi/knowledge/
 ├── index.json              # Registry of all topics
 ├── tickets/
-│   └── {ticket-id}.md      # Per-ticket research
+│   └── {ticket-id}/
+│       ├── research.md     # Per-ticket research
+│       ├── implementation.md
+│       ├── review.md
+│       ├── fixes.md
+│       ├── followups.md
+│       ├── close-summary.md
+│       ├── chain-summary.md
+│       ├── files_changed.txt
+│       └── ticket_id.txt
 └── topics/
     └── {topic-id}/
         ├── plan.md

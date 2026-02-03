@@ -51,10 +51,16 @@ Follow the **TF Workflow Skill** procedures:
 
 ## Output Artifacts
 
+Written under `.pi/knowledge/tickets/<ticket-id>/`:
+- `research.md` - Ticket research (if any)
 - `implementation.md` - Implementation summary
 - `review.md` - Consolidated review
 - `fixes.md` - Fixes applied
+- `followups.md` - Follow-up tickets (if `--create-followups`)
 - `close-summary.md` - Final summary
+- `chain-summary.md` - Artifact index (closer)
+- `files_changed.txt` - Tracked changed files
+- `ticket_id.txt` - Ticket ID
 
 Ralph files (if `.pi/ralph/` exists):
 - `.pi/ralph/progress.md` - Updated
@@ -64,4 +70,5 @@ Ralph files (if `.pi/ralph/` exists):
 
 - This is the standard workflow (model-switch for sequential phases)
 - Only the parallel review step spawns subagents
+- The close step stages/commits only paths from `files_changed.txt` plus the ticket artifact directory
 - `/tf-lite` is a deprecated alias that runs the same workflow

@@ -515,7 +515,16 @@ All ticket creation follows these principles:
 .pi/knowledge/
 ├── index.json                    # Registry
 ├── tickets/
-│   └── TICKET-123.md            # Per-ticket research
+│   └── TICKET-123/
+│       ├── research.md           # Per-ticket research
+│       ├── implementation.md
+│       ├── review.md
+│       ├── fixes.md
+│       ├── followups.md
+│       ├── close-summary.md
+│       ├── chain-summary.md
+│       ├── files_changed.txt
+│       └── ticket_id.txt
 └── topics/
     ├── seed-my-feature/         # Greenfield ideas
     ├── baseline-myapp/          # Brownfield analysis

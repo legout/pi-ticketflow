@@ -38,12 +38,20 @@ Execute the Implement → Review → Fix → Close workflow on a ticket.
 8. Close ticket
 9. Ralph integration (if active)
 
-**Output Artifacts:**
+**Output Artifacts (written under `.pi/knowledge/tickets/<ticket-id>/`):**
+- `research.md` - Ticket research (if any)
 - `implementation.md` - Implementation summary
 - `review.md` - Consolidated review
 - `fixes.md` - Fixes applied
+- `followups.md` - Follow-up tickets (if created)
 - `close-summary.md` - Final summary
+- `chain-summary.md` - Artifact index
+- `files_changed.txt` - Tracked changed files
+- `ticket_id.txt` - Ticket ID
 - `.pi/ralph/progress.md` - Updated (if Ralph active)
+
+**Close step behavior:**
+- Stages and commits only files listed in `files_changed.txt` before closing the ticket.
 
 ---
 

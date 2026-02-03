@@ -156,15 +156,24 @@ Example (partial):
 
 ## Knowledge storage
 
-Research is stored in:
+Research and ticket artifacts are stored in:
 ```
 .pi/knowledge/
   index.json
   topics/<topic-id>/
-  tickets/<ticket-id>.md   # ticket brief (links to topics)
+  tickets/<ticket-id>/
+    research.md            # ticket research
+    implementation.md
+    review.md
+    fixes.md
+    followups.md
+    close-summary.md
+    chain-summary.md
+    files_changed.txt
+    ticket_id.txt
 ```
 
-Per-ticket briefs reference shared topics to avoid duplication.
+Per-ticket research can reference shared topics to avoid duplication.
 
 ---
 
@@ -184,4 +193,5 @@ This updates the `model:` frontmatter in workflow agent **and prompt** files.
 - Agents must live in `~/.pi/agent/agents` or `.pi/agents` for Pi to discover them.
 - Prompt templates load from `~/.pi/agent/prompts` or `.pi/prompts`.
 - Config files are read manually by the prompt/agents (Pi does not auto‑apply custom settings).
-- `chain-summary.md` is written in the chain artifact directory by the closer.
+- `chain-summary.md` is written in `.pi/knowledge/tickets/<ticket-id>/` by the closer.
+- The close step stages/commits only paths listed in `files_changed.txt`.

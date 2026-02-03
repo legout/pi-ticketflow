@@ -18,14 +18,15 @@ Implement the ticket described in the Task input (ticket ID).
 ## Required Steps
 
 1. **Get ticket details**: Run `tk show <ticket-id>` (ticket ID provided in the Task input)
-2. **Check knowledge base**: Read relevant docs from `.pi/knowledge/` (ticket-specific or topic summaries) and `docs/dev/knowledge/` if they exist
-3. **Explore codebase**: Use find/grep to locate relevant files
-4. **Track file changes**: After every `edit` or `write`, run `tf track <path>` to append the file path (deduped) to `files_changed.txt`. Prefer an absolute tracking file path:
-   - If the task provides a chain dir, use `tf track <path> --file {chain_dir}/files_changed.txt`
-   - Otherwise, place `files_changed.txt` next to `implementation.md`
+2. **Prepare ticket artifact directory**: Create `.pi/knowledge/tickets/<ticket-id>/` and write outputs there (`implementation.md`, `ticket_id.txt`, `files_changed.txt`).
+3. **Check knowledge base**: Read relevant docs from `.pi/knowledge/` (ticket-specific or topic summaries) and `docs/dev/knowledge/` if they exist
+4. **Explore codebase**: Use find/grep to locate relevant files
+5. **Track file changes**: After every `edit` or `write`, run `tf track <path>` to append the file path (deduped) to `files_changed.txt`. Prefer an absolute tracking file path:
+   - If the task provides an artifact or chain dir, use `tf track <path> --file {artifactDir}/files_changed.txt`
+   - Otherwise, place `files_changed.txt` next to `implementation.md` (expected under `.pi/knowledge/tickets/<ticket-id>/`)
    - If `tf` is not in PATH but `./bin/tf` exists, use `./bin/tf track ...` instead
-5. **Implement**: Make changes following existing project patterns
-6. **Code Quality Checks** (run BEFORE tests):
+6. **Implement**: Make changes following existing project patterns
+7. **Code Quality Checks** (run BEFORE tests):
    - **A. Load workflow config (preferred)**:
      - Check for `.pi/workflows/tf/config.json` (project override) and `~/.pi/agent/workflows/tf/config.json` (global).
      - If both exist, merge with project settings taking precedence.
@@ -94,8 +95,8 @@ Implement the ticket described in the Task input (ticket ID).
      - Lint/format tools usually auto-fix
      - Document any typecheck errors that need manual fixing
 
-7. **Test**: Run relevant tests to verify implementation
-8. **Document**: Write comprehensive summary to `implementation.md`
+8. **Test**: Run relevant tests to verify implementation
+9. **Document**: Write comprehensive summary to `implementation.md`
 
 ## Output Format (implementation.md)
 
@@ -119,7 +120,7 @@ Brief description of what was implemented.
 - How to verify the implementation works
 ```
 
-Also create `ticket_id.txt` alongside `implementation.md`, containing just the ticket ID from the Task input (e.g., `mme-d47a`).
+Also create `ticket_id.txt` alongside `implementation.md` (in the ticket artifact directory), containing just the ticket ID from the Task input (e.g., `mme-d47a`).
 
 ## Rules
 

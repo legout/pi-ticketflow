@@ -60,7 +60,7 @@ Model resolution order:
 - `workflow.enableCloser` - Whether to run close step
 - `workflow.enableQualityGate` - Whether to enforce fail-on severities
 - `workflow.failOn` - List of severities that block closing
-- `workflow.knowledgeDir` - Where to store knowledge artifacts
+- `workflow.knowledgeDir` - Base directory for knowledge/artifacts (artifactDir = `{knowledgeDir}/tickets/{ticket-id}/`)
 
 ## Flag Handling
 
@@ -83,14 +83,19 @@ Run this at the start of EVERY ticket implementation to prevent context rot.
    - Check if it references `.pi/ralph/AGENTS.md`
    - If referenced, read `.pi/ralph/AGENTS.md` for lessons learned
 
-2. **Read knowledge base**
-   - Check `{knowledgeDir}/tickets/{ticket}.md` for ticket-specific research
-   - Read if exists
+2. **Prepare ticket artifact directory**
+   - Resolve `knowledgeDir` from config (default `.pi/knowledge`)
+   - Set `artifactDir = {knowledgeDir}/tickets/{ticket-id}/`
+   - `mkdir -p {artifactDir}`
 
-3. **Get ticket details**
+3. **Read knowledge base**
+   - Prefer `{artifactDir}/research.md` for ticket-specific research
+   - Back-compat: if `{knowledgeDir}/tickets/{ticket}.md` exists, read it and (optionally) migrate to `{artifactDir}/research.md`
+
+4. **Get ticket details**
    - Run `tk show {ticket}` to get full ticket description
 
-4. **Parse planning references** (note, don't load yet):
+5. **Parse planning references** (note, don't load yet):
    - "OpenSpec Change: {id}" → `openspec/changes/{id}/`
    - "IRF Seed: {topic}" → `{knowledgeDir}/topics/{topic}/`
    - "Spike: {topic}" → `{knowledgeDir}/topics/{topic}/`
@@ -101,13 +106,14 @@ Run this at the start of EVERY ticket implementation to prevent context rot.
 Skip if: `--no-research` flag OR (`workflow.enableResearcher` is false AND `--with-research` not set)
 
 **With existing research:**
-- If `{knowledgeDir}/tickets/{ticket}.md` exists and is sufficient, use it
+- If `{artifactDir}/research.md` exists and is sufficient, use it
+- Back-compat: if `{knowledgeDir}/tickets/{ticket}.md` exists, read it and migrate to `{artifactDir}/research.md`
 
 **Fresh research:**
 1. Check available MCP tools (context7, exa, grep_app, zai-web-search)
 2. If `workflow.researchParallelAgents` > 1 and `researcher-fetch` is available, spawn parallel fetches (docs/web/code). Otherwise, query sequentially.
 3. Synthesize findings
-4. Write to `{knowledgeDir}/tickets/{ticket}.md`
+4. Write to `{artifactDir}/research.md`
 
 ### Procedure: Implement
 
@@ -139,7 +145,7 @@ Skip if: `--no-research` flag OR (`workflow.enableResearcher` is false AND `--wi
    - Execute relevant tests
    - Verify implementation
 
-7. **Write `implementation.md`**:
+7. **Write `{artifactDir}/implementation.md`**:
    ```markdown
    # Implementation: {ticket-id}
 
@@ -158,6 +164,8 @@ Skip if: `--no-research` flag OR (`workflow.enableResearcher` is false AND `--wi
    ## Verification
    - How to verify it works
    ```
+   Also write `{artifactDir}/ticket_id.txt` containing only the ticket ID.
+   Ensure `{artifactDir}/files_changed.txt` is updated via `tf track ... --file {artifactDir}/files_changed.txt`.
 
 ### Procedure: Parallel Reviews
 
@@ -166,7 +174,7 @@ This is the ONLY step requiring subagents.
 **Determine reviewers**:
 - If `workflow.enableReviewers` is set, use that list in order.
 - If not set, default to: `reviewer-general`, `reviewer-spec-audit`, `reviewer-second-opinion`.
-- If the list is empty, skip reviews and write a stub `review.md` with "No reviews run" in Critical.
+- If the list is empty, skip reviews and write a stub `{artifactDir}/review.md` with "No reviews run" in Critical.
 
 Each reviewer uses a different meta-model:
 - `reviewer-general` → `metaModels.review-general.model`
@@ -177,9 +185,9 @@ Each reviewer uses a different meta-model:
 ```json
 {
   "tasks": [
-    {"agent": "reviewer-general", "task": "{ticket}"},
-    {"agent": "reviewer-spec-audit", "task": "{ticket}"},
-    {"agent": "reviewer-second-opinion", "task": "{ticket}"}
+    {"agent": "reviewer-general", "task": "{ticket}", "cwd": "{artifactDir}"},
+    {"agent": "reviewer-spec-audit", "task": "{ticket}", "cwd": "{artifactDir}"},
+    {"agent": "reviewer-second-opinion", "task": "{ticket}", "cwd": "{artifactDir}"}
   ]
 }
 ```
@@ -189,7 +197,7 @@ Store returned paths for next step.
 ### Procedure: Merge Reviews
 
 1. **Handle skipped reviews**:
-   - If no reviewer outputs exist (reviews disabled), write a stub `review.md` with "No reviews run" in Critical and zero counts, then return.
+   - If no reviewer outputs exist (reviews disabled), write a stub `{artifactDir}/review.md` with "No reviews run" in Critical and zero counts, then return.
 
 2. **Switch to review-merge model**:
    - Look up `agents.review-merge` in config → get meta-model key ("fast")
@@ -198,14 +206,14 @@ Store returned paths for next step.
      switch_model action="switch" search="{metaModels.fast.model}"
      ```
 
-3. **Read available review outputs**
+3. **Read available review outputs** from `{artifactDir}/review-general.md`, `{artifactDir}/review-spec.md`, `{artifactDir}/review-second.md` when present
 
 4. **Deduplicate issues**:
    - Match by file path + line number + description similarity
    - Keep highest severity when duplicates found
    - Note source reviewer(s)
 
-5. **Write consolidated `review.md`**:
+5. **Write consolidated `{artifactDir}/review.md`**:
    ```markdown
    # Review: {ticket-id}
 
@@ -235,7 +243,7 @@ Store returned paths for next step.
 ### Procedure: Fix Issues
 
 1. **Check if fixer is enabled**:
-   - If `workflow.enableFixer` is false, write `fixes.md` noting the fixer is disabled and skip this step.
+   - If `workflow.enableFixer` is false, write `{artifactDir}/fixes.md` noting the fixer is disabled and skip this step.
 
 2. **Switch to fixer model** (if different):
    - Look up `agents.fixer` in config → get meta-model key ("fast")
@@ -245,44 +253,59 @@ Store returned paths for next step.
      ```
 
 3. **Check review issues**:
-   - If zero Critical/Major/Minor: write "No fixes needed" to `fixes.md`, skip to Close
+   - If zero Critical/Major/Minor: write "No fixes needed" to `{artifactDir}/fixes.md`, skip to Close
 
 4. **Fix issues**:
    - Fix all Critical issues (required)
    - Fix all Major issues (should do)
    - Fix Minor issues if low effort
    - Do NOT fix Warnings/Suggestions (these become follow-up tickets)
+   - Track edits via `tf track ... --file {artifactDir}/files_changed.txt`
 
 5. **Re-run tests** after fixes
 
-6. **Write `fixes.md`** documenting what was fixed
+6. **Write `{artifactDir}/fixes.md`** documenting what was fixed
 
 ### Procedure: Follow-up Tickets (Optional)
 
 Run only when `--create-followups` is provided.
 
-1. **Use merged review**: Ensure `review.md` exists.
-2. **Create follow-ups**: Run `/tf-followups <review.md>` or follow the IRF Planning "Follow-up Creation" procedure.
-3. **Write `followups.md`** documenting created tickets or "No follow-ups needed".
+1. **Use merged review**: Ensure `{artifactDir}/review.md` exists.
+2. **Create follow-ups**: Run `/tf-followups {artifactDir}/review.md` or follow the IRF Planning "Follow-up Creation" procedure.
+3. **Write `{artifactDir}/followups.md`** documenting created tickets or "No follow-ups needed".
 
 ### Procedure: Close Ticket
 
 No model switch needed - stay on current model.
 
 1. **Check close gating**:
-   - Parse `review.md` counts (Critical/Major/Minor/Warnings/Suggestions).
-   - If `workflow.enableCloser` is false, write `close-summary.md` noting closure was skipped and do not call `tk`.
-   - If `workflow.enableQualityGate` is true and any severity in `workflow.failOn` has a nonzero count, write `close-summary.md` with status BLOCKED and do not call `tk`.
+   - Parse `{artifactDir}/review.md` counts (Critical/Major/Minor/Warnings/Suggestions).
+   - If `workflow.enableCloser` is false, write `{artifactDir}/close-summary.md` noting closure was skipped and do not call `tk`.
+   - If `workflow.enableQualityGate` is true and any severity in `workflow.failOn` has a nonzero count, write `{artifactDir}/close-summary.md` with status BLOCKED and do not call `tk`.
 
-2. **Read `implementation.md`, `review.md`, `fixes.md`**
+2. **Read artifacts**: `{artifactDir}/implementation.md`, `{artifactDir}/review.md`, `{artifactDir}/fixes.md` (if exists), and `{artifactDir}/files_changed.txt`.
 
-3. **Compose summary note** for ticket
+3. **Commit changes (required)**:
+   - If inside a git repo, stage the ticket artifacts plus any paths from `{artifactDir}/files_changed.txt`:
+     ```bash
+     git add -A -- "{artifactDir}"
+     if [ -f "{artifactDir}/files_changed.txt" ]; then
+       while IFS= read -r path; do
+         git add -A -- "$path" 2>/dev/null || true
+       done < "{artifactDir}/files_changed.txt"
+     fi
+     ```
+   - If staging produced changes, commit with message `"{ticket-id}: <short summary>"`.
+   - Capture the commit hash for the ticket note and close-summary.
+   - If no repo or no changes, note it in close-summary.
 
-4. **Add note via `tk add-note`**
+4. **Compose summary note** for ticket (include commit hash if available)
 
-5. **Close ticket via `tk close`**
+5. **Add note via `tk add-note`**
 
-6. **Write `close-summary.md`**
+6. **Close ticket via `tk close`**
+
+7. **Write `{artifactDir}/close-summary.md`**
 
 ### Procedure: Final Review Loop (Optional)
 
@@ -361,17 +384,17 @@ Only if `.pi/ralph/` directory exists:
 
 ## Output Artifacts
 
-Always written to current working directory:
+Written under `{artifactDir}` (default `{knowledgeDir}/tickets/{ticket-id}/`):
+- `research.md` - Ticket research (if research ran or migrated)
 - `implementation.md` - What was implemented
 - `review.md` - Consolidated review
 - `fixes.md` - What was fixed
 - `followups.md` - Follow-up tickets (if `--create-followups`)
 - `close-summary.md` - Final summary
 - `chain-summary.md` - Links to artifacts (if closer runs)
+- `files_changed.txt` - Tracked changed files for this ticket
+- `ticket_id.txt` - Ticket ID (single line)
 
 Ralph files (if active):
 - `.pi/ralph/progress.md` - Updated
 - `.pi/ralph/AGENTS.md` - May be updated with lessons
-
-Knowledge base (if research ran):
-- `{knowledgeDir}/tickets/{ticket}.md`
