@@ -23,6 +23,14 @@ Review the implementation for the ticket ID provided in the Task input.
 4. **Find issues**: Look for bugs, logic flaws, security problems, performance issues
 5. **Document findings**: Write structured review to the output file specified in the write instructions
 
+## Output Location (REQUIRED)
+
+Write the review to the SAME knowledge directory used for implementation.md:
+
+- `{knowledgeDir}/tickets/<ticket-id>/review-second.md`
+
+Use that exact filename (do not invent new names like `review_second_opinion.md`).
+
 ## Output Format (review output)
 
 Use the ticket ID from the Task input in the header.
