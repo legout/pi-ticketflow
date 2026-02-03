@@ -170,7 +170,7 @@ if [ -z "$TARGET_BASE" ] && [ "$COMMAND" != "track" ]; then
       fi
       ;;
     update)
-      if [ -d ".pi" ]; then
+      if [ -d ".pi" ] || [ -d ".tf" ]; then
         TARGET_BASE="$(pwd)/.pi"
         if [ -d ".tf" ]; then
           TF_BASE="$(pwd)/.tf"
@@ -188,6 +188,12 @@ if [ -z "$TARGET_BASE" ] && [ "$COMMAND" != "track" ]; then
         TF_BASE="$(pwd)/.tf"
         SCOPE_FLAG="-l"
         IS_GLOBAL=false
+      elif [ -d ".pi" ]; then
+        TARGET_BASE="$(pwd)/.pi"
+        IS_GLOBAL=false
+      else
+        TARGET_BASE="$HOME/.pi/agent"
+        IS_GLOBAL=true
       fi
       ;;
   esac
