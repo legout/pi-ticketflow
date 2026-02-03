@@ -33,7 +33,7 @@ Follow the **TF Planning Skill** "Follow-up Creation" procedure:
 
 1. Resolve review path:
    - If path: use directly
-   - If ticket ID: prefer `.pi/knowledge/tickets/{ticket-id}/review.md` when it exists; otherwise search `/tmp/pi-chain-runs`
+   - If ticket ID: prefer `.tf/knowledge/tickets/{ticket-id}/review.md` when it exists; otherwise search `/tmp/pi-chain-runs`
    - If empty: check `./review.md` (or the current ticket artifact directory)
 2. Parse review:
    - Extract Warnings section

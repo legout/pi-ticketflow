@@ -38,7 +38,7 @@ Execute the Implement → Review → Fix → Close workflow on a ticket.
 8. Close ticket
 9. Ralph integration (if active)
 
-**Output Artifacts (written under `.pi/knowledge/tickets/<ticket-id>/`):**
+**Output Artifacts (written under `.tf/knowledge/tickets/<ticket-id>/`):**
 - `research.md` - Ticket research (if any)
 - `implementation.md` - Implementation summary
 - `review.md` - Consolidated review
@@ -48,7 +48,7 @@ Execute the Implement → Review → Fix → Close workflow on a ticket.
 - `chain-summary.md` - Artifact index
 - `files_changed.txt` - Tracked changed files
 - `ticket_id.txt` - Ticket ID
-- `.pi/ralph/progress.md` - Updated (if Ralph active)
+- `.tf/ralph/progress.md` - Updated (if Ralph active)
 
 **Close step behavior:**
 - Stages and commits only files listed in `files_changed.txt` before closing the ticket.
@@ -67,8 +67,8 @@ Processes tickets until backlog is empty, max iterations reached, or error occur
 
 **Features:**
 - Re-anchors context per ticket
-- Reads lessons from `.pi/ralph/AGENTS.md`
-- Updates progress in `.pi/ralph/progress.md`
+- Reads lessons from `.tf/ralph/AGENTS.md`
+- Updates progress in `.tf/ralph/progress.md`
 - Outputs `<promise>COMPLETE</promise>` on finish
 
 ---
@@ -83,7 +83,7 @@ Create a plan document from a request.
 /tf-plan <request description>
 ```
 
-Creates a structured plan in `.pi/knowledge/topics/plan-*/`:
+Creates a structured plan in `.tf/knowledge/topics/plan-*/`:
 - `plan.md` - Single source of truth
 - Status starts as `draft`
 
@@ -149,7 +149,7 @@ Capture an idea into structured seed artifacts.
 /tf-seed <idea description>
 ```
 
-**Creates artifacts in `.pi/knowledge/topics/seed-*/`:**
+**Creates artifacts in `.tf/knowledge/topics/seed-*/`:**
 - `overview.md` - Summary + keywords
 - `seed.md` - Vision, concept, features, questions
 - `success-metrics.md` - How to measure success
@@ -184,7 +184,7 @@ Research spike on a topic.
 | Sequential (default) | Query tools one by one |
 | Parallel (`--parallel`) | Spawn 3 subagents simultaneously |
 
-**Creates artifacts in `.pi/knowledge/topics/spike-*/`:**
+**Creates artifacts in `.tf/knowledge/topics/spike-*/`:**
 - `overview.md` - Summary + quick answer
 - `spike.md` - Full analysis with findings, options, recommendation
 - `sources.md` - All URLs and tools used
@@ -205,7 +205,7 @@ Capture status-quo of an existing project.
 /tf-baseline [focus-area]
 ```
 
-**Creates artifacts in `.pi/knowledge/topics/baseline-*/`:**
+**Creates artifacts in `.tf/knowledge/topics/baseline-*/`:**
 - `overview.md` - Project summary
 - `baseline.md` - Architecture, components, entry points
 - `risk-map.md` - Technical, dependency, knowledge risks
@@ -334,7 +334,7 @@ Sync configuration from `config.json` to agent and prompt files.
 /tf-sync
 ```
 
-Updates `model:` frontmatter in all agent and prompt files based on `workflows/tf/config.json`.
+Updates `model:` frontmatter in all agent and prompt files based on `config/workflows/tf/config.json`.
 
 ---
 
@@ -361,7 +361,7 @@ tf backlog-ls [topic]             # List backlog status
 tf track <path>                   # Append to files_changed.txt
 
 # Ralph Loop
-tf ralph init                     # Create .pi/ralph/ directory
+tf ralph init                     # Create .tf/ralph/ directory
 tf ralph status                   # Show current loop state
 tf ralph reset                    # Clear progress
 tf ralph reset --keep-lessons     # Clear progress, keep lessons
@@ -375,12 +375,12 @@ tf agentsmd validate              # Check for bloat, stale paths
 tf agentsmd fix                   # Auto-fix common issues
 ```
 
-### Project Install (CLI at `.pi/bin/tf`)
+### Project Install (CLI at `.tf/bin/tf`)
 
-Use `./.pi/bin/tf` instead of `irf` for project installs.
+Use `./.tf/bin/tf` instead of `irf` for project installs.
 
 ```bash
-./.pi/bin/tf setup
-./.pi/bin/tf sync
-./.pi/bin/tf ralph init
+./.tf/bin/tf setup
+./.tf/bin/tf sync
+./.tf/bin/tf ralph init
 ```

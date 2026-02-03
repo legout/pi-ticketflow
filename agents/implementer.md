@@ -18,17 +18,17 @@ Implement the ticket described in the Task input (ticket ID).
 ## Required Steps
 
 1. **Get ticket details**: Run `tk show <ticket-id>` (ticket ID provided in the Task input)
-2. **Prepare ticket artifact directory**: Create `.pi/knowledge/tickets/<ticket-id>/` and write outputs there (`implementation.md`, `ticket_id.txt`, `files_changed.txt`).
-3. **Check knowledge base**: Read relevant docs from `.pi/knowledge/` (ticket-specific or topic summaries) and `docs/dev/knowledge/` if they exist
+2. **Prepare ticket artifact directory**: Create `.tf/knowledge/tickets/<ticket-id>/` and write outputs there (`implementation.md`, `ticket_id.txt`, `files_changed.txt`).
+3. **Check knowledge base**: Read relevant docs from `.tf/knowledge/` (ticket-specific or topic summaries) and `docs/dev/knowledge/` if they exist
 4. **Explore codebase**: Use find/grep to locate relevant files
 5. **Track file changes**: After every `edit` or `write`, run `tf track <path>` to append the file path (deduped) to `files_changed.txt`. Prefer an absolute tracking file path:
    - If the task provides an artifact or chain dir, use `tf track <path> --file {artifactDir}/files_changed.txt`
-   - Otherwise, place `files_changed.txt` next to `implementation.md` (expected under `.pi/knowledge/tickets/<ticket-id>/`)
-   - If `tf` is not in PATH but `./bin/tf` exists, use `./bin/tf track ...` instead
+   - Otherwise, place `files_changed.txt` next to `implementation.md` (expected under `.tf/knowledge/tickets/<ticket-id>/`)
+   - If `tf` is not in PATH but `./.tf/bin/tf` exists, use `./.tf/bin/tf track ...` instead
 6. **Implement**: Make changes following existing project patterns
 7. **Code Quality Checks** (run BEFORE tests):
    - **A. Load workflow config (preferred)**:
-     - Check for `.pi/workflows/tf/config.json` (project override) and `~/.pi/agent/workflows/tf/config.json` (global).
+     - Check for `.tf/config/workflows/tf/config.json` (project override) and `~/.tf/config/workflows/tf/config.json` (global).
      - If both exist, merge with project settings taking precedence.
      - If `workflow.exclude` exists, filter those paths out of `files_changed.txt` before running checkers.
      - If `checkers` exists, use it to drive lint/format/typecheck commands.

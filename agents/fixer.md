@@ -19,13 +19,13 @@ Fix issues from the review described in the Task input.
 ## Required Steps
 
 1. **Read review.md**: Parse Critical, Major, and Minor issues
-2. **Prepare ticket artifact directory**: Ensure `.pi/knowledge/tickets/<ticket-id>/` exists and write `fixes.md` there.
+2. **Prepare ticket artifact directory**: Ensure `.tf/knowledge/tickets/<ticket-id>/` exists and write `fixes.md` there.
 3. **No-op if empty**: If there are no Critical/Major/Minor issues, write `fixes.md` with "No fixes needed" and stop.
 4. **Read affected files**: Use `read` to see current state
 5. **Track file changes**: After every `edit` or `write`, run `tf track <path>` to append the file path (deduped) to `files_changed.txt`. Prefer an absolute tracking file path:
    - If the task provides an artifact or chain dir, use `tf track <path> --file {artifactDir}/files_changed.txt`
-   - Otherwise, place `files_changed.txt` next to `fixes.md` (expected under `.pi/knowledge/tickets/<ticket-id>/`)
-   - If `tf` is not in PATH but `./bin/tf` exists, use `./bin/tf track ...` instead
+   - Otherwise, place `files_changed.txt` next to `fixes.md` (expected under `.tf/knowledge/tickets/<ticket-id>/`)
+   - If `tf` is not in PATH but `./.tf/bin/tf` exists, use `./.tf/bin/tf track ...` instead
 6. **Fix Critical issues**: Address ALL critical issues
 7. **Fix Major issues**: Address all major issues if feasible
 8. **Fix Minor issues**: Address minor issues if low effort

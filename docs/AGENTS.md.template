@@ -38,7 +38,7 @@ This file contains project-specific patterns, conventions, and guidelines for AI
 
 ## Ralph Loop Integration
 
-If `.pi/ralph/AGENTS.md` exists, it contains lessons learned from autonomous ticket processing.
+If `.tf/ralph/AGENTS.md` exists, it contains lessons learned from autonomous ticket processing.
 Read it for accumulated wisdom from previous implementations.
 
 To initialize Ralph tracking:

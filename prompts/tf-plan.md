@@ -30,13 +30,13 @@ Create a single plan document for a project, feature, or refactor.
 Follow the **TF Planning Skill** "Plan Interview (Planner)" procedure:
 
 1. Create `plan-*` topic ID
-2. Create `.pi/knowledge/topics/{topic-id}/`
+2. Create `.tf/knowledge/topics/{topic-id}/`
 3. Write `plan.md` (single source of truth)
 4. Update `index.json`
 
 ## Output
 
-- `plan.md` in `.pi/knowledge/topics/{topic-id}/`
+- `plan.md` in `.tf/knowledge/topics/{topic-id}/`
 - Status set to `draft`
 
 ## Next Steps

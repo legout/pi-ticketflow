@@ -23,12 +23,12 @@ Research the ticket or topic described in the Task input.
 
 2. **Prepare artifact directory (ticket only)**:
    - If you have a ticket ID, ensure the directory exists:
-     - `.pi/knowledge/tickets/<ticket-id>/`
+     - `.tf/knowledge/tickets/<ticket-id>/`
    - If you are invoked with a working directory already set to the ticket artifact dir, you can write `research.md` directly.
 
 3. **Check knowledge base** (ticket only):
-   - Preferred: `.pi/knowledge/tickets/<ticket-id>/research.md`
-   - Back-compat: `.pi/knowledge/tickets/<ticket-id>.md` (if found, reuse and consider migrating into the new location)
+   - Preferred: `.tf/knowledge/tickets/<ticket-id>/research.md`
+   - Back-compat: `.tf/knowledge/tickets/<ticket-id>.md` (if found, reuse and consider migrating into the new location)
 
 4. **Gather sources**:
    - Use available tools (MCP if configured) or local docs/README files.

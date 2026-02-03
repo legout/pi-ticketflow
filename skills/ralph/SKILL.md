@@ -20,7 +20,7 @@ Expertise for autonomous, continuous ticket processing.
 
 Each iteration starts fresh:
 1. Load root `AGENTS.md` (project patterns)
-2. Load `.pi/ralph/AGENTS.md` (lessons learned)
+2. Load `.tf/ralph/AGENTS.md` (lessons learned)
 3. Load ticket + knowledge base
 4. Execute workflow
 
@@ -30,13 +30,13 @@ This prevents "context rot" from accumulated conversation history.
 
 Persistent wisdom across iterations:
 - Extracted after each ticket
-- Stored in `.pi/ralph/AGENTS.md`
+- Stored in `.tf/ralph/AGENTS.md`
 - Read at start of next iteration
 - Pruned when too many accumulate
 
 ### Progress Tracking
 
-External state in `.pi/ralph/progress.md`:
+External state in `.tf/ralph/progress.md`:
 - Survives context resets
 - Tracks completed/failed tickets
 - Records statistics
@@ -59,7 +59,7 @@ Controlled by `promiseOnComplete` (default: true).
 ## Directory Structure
 
 ```
-.pi/ralph/
+.tf/ralph/
 ├── AGENTS.md          # Lessons learned
 ├── progress.md        # Loop state and history
 └── config.json        # Loop configuration
@@ -67,7 +67,7 @@ Controlled by `promiseOnComplete` (default: true).
 
 ## Configuration
 
-`.pi/ralph/config.json`:
+`.tf/ralph/config.json`:
 ```json
 {
   "maxIterations": 50,
@@ -92,7 +92,7 @@ Controlled by `promiseOnComplete` (default: true).
 Create directory structure:
 
 ```bash
-mkdir -p .pi/ralph
+mkdir -p .tf/ralph
 ```
 
 Create `config.json` with defaults.
@@ -198,7 +198,7 @@ After ticket completion, decide if lesson is worth preserving:
 
 ### Procedure: Update Progress
 
-Append to `.pi/ralph/progress.md`:
+Append to `.tf/ralph/progress.md`:
 
 ```markdown
 - {ticket-id}: {STATUS} ({timestamp})

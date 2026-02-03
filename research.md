@@ -1,7 +1,7 @@
 # Research: pi-tk-workflow-context
 
 ## Knowledge Used
-- .pi/knowledge/topics/pi-tk-workflow-pi-extensions/
+- .tf/knowledge/topics/pi-tk-workflow-pi-extensions/
 
 ## Summary
 - Ticket lookup via `tk show pi-tk-workflow-context` failed (ticket not found), so context was gathered from repo documentation and existing extension notes.
@@ -10,8 +10,8 @@
 
 ## Sources
 - README.md
-- workflows/tf/README.md
-- workflows/tf/config.json
+- config/workflows/tf/README.md
+- config/workflows/tf/config.json
 - prompts/tf.md
 - bin/tf
 - agents/researcher.md

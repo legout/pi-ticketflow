@@ -19,10 +19,10 @@ The current TF workflow provides a strong end‑to‑end chain (Research → Imp
 ## Proposed Improvements
 
 ### 1) `tf doctor` (preflight checks)
-**What:** Add `./bin/tf doctor` to validate prerequisites: `tk`, Pi binary, required extensions, MCP availability (if enabled), and language tools configured in `checkers`.
+**What:** Add `./.tf/bin/tf doctor` to validate prerequisites: `tk`, Pi binary, required extensions, MCP availability (if enabled), and language tools configured in `checkers`.
 
 ### 2) Session‑scoped change tracking (no git diff)
-**What:** Maintain a per‑run change ledger in the subagent **chain artifacts directory** (`{chain_dir}`; fixed by pi‑subagents). Use **absolute paths** when writing (e.g., `${chain_dir}/files_changed.txt`). Provide a helper (`./bin/tf track <path>`) and update agents to call it after each edit/write. This keeps `files_changed.txt` **session‑accurate** and isolated from other tickets.
+**What:** Maintain a per‑run change ledger in the subagent **chain artifacts directory** (`{chain_dir}`; fixed by pi‑subagents). Use **absolute paths** when writing (e.g., `${chain_dir}/files_changed.txt`). Provide a helper (`./.tf/bin/tf track <path>`) and update agents to call it after each edit/write. This keeps `files_changed.txt` **session‑accurate** and isolated from other tickets.
 
 ### 3) Follow‑up tickets behind a flag
 **What:** Add `--create-followups` to run a dedicated **`/tf-followups`** command after review merge. The command parses `review.md`, creates follow‑up tickets via `tk create` (tagged, e.g. `followup`), and writes `followups.md` as a run artifact. Default behavior remains unchanged (no follow‑ups).
@@ -53,14 +53,14 @@ The current TF workflow provides a strong end‑to‑end chain (Research → Imp
 ## Acceptance Criteria
 
 ### 1) `tf doctor`
-- Running `./bin/tf doctor` prints a checklist with pass/fail for `tk`, `pi`, required extensions, and checker tools.
+- Running `./.tf/bin/tf doctor` prints a checklist with pass/fail for `tk`, `pi`, required extensions, and checker tools.
 - Exit code is **non‑zero** when required tools are missing.
 - No files are modified.
 
 ### 2) Session‑scoped change tracking
 - `files_changed.txt` is created per chain run at an **absolute path** (`${chain_dir}/files_changed.txt`) and only includes files edited/written in that run.
 - No git‑diff is used to populate `files_changed.txt`.
-- The helper (`./bin/tf track <path>`) appends paths in a de‑duplicated way.
+- The helper (`./.tf/bin/tf track <path>`) appends paths in a de‑duplicated way.
 - Parallel ticket runs do **not** contaminate each other’s `files_changed.txt`.
 
 ### 3) Follow‑up tickets behind a flag
@@ -103,7 +103,7 @@ The current TF workflow provides a strong end‑to‑end chain (Research → Imp
 ## Suggested Files to Update
 - `prompts/tf.md`
 - `prompts/tf-followups.md` (new command)
-- `workflows/tf/config.json`
+- `config/workflows/tf/config.json`
 - `bin/tf`
 - Agent files (`implementer.md`, `review-merge.md`, `fixer.md`, `closer.md`) where needed for new artifacts
 

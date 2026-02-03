@@ -4,6 +4,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG_HELPER="$ROOT_DIR/scripts/tf_config.py"
+
+# If tf is installed to ~/.local/bin as a copy (not a symlink), ROOT_DIR won't
+# contain the bundled scripts/config. Fall back to ~/.tf, which is where the
+# installer places the TF runtime files.
+if [ ! -f "$CONFIG_HELPER" ] && [ -f "$HOME/.tf/scripts/tf_config.py" ]; then
+  ROOT_DIR="$HOME/.tf"
+  CONFIG_HELPER="$ROOT_DIR/scripts/tf_config.py"
+fi
+
 CONFIG_HELPER_SUPPORTS_FLAGS=false
 if [ -f "$CONFIG_HELPER" ] && grep -q 'add_argument("--base"' "$CONFIG_HELPER"; then
   CONFIG_HELPER_SUPPORTS_FLAGS=true
@@ -33,7 +42,7 @@ Commands:
   agentsmd    AGENTS.md management (init, validate, fix, status)
 
 Ralph Subcommands:
-  ralph init     Create .pi/ralph/ directory structure
+  ralph init     Create .tf/ralph/ directory structure
   ralph status   Show current loop state and statistics
   ralph reset    Clear progress (optionally keep lessons)
   ralph lessons  Show or prune lessons learned
@@ -45,8 +54,8 @@ Agentsmd Subcommands:
   agentsmd fix [path]      Auto-fix common issues (backup created)
 
 Options:
-  --global                 Install/sync in ~/.pi/agent (default for setup)
-  --project <path>         Install/sync in <path>/.pi
+  --global                 Install/sync Pi files in ~/.pi/agent and TF files in ~/.tf (default for setup)
+  --project <path>         Install/sync Pi files in <path>/.pi and TF files in <path>/.tf
   --file <path>            Output files_changed.txt path (track only)
   --keep-lessons           Keep lessons when resetting (ralph reset only)
   --help                   Show this help
@@ -67,7 +76,8 @@ fi
 COMMAND="$1"
 shift
 
-TARGET_BASE=""
+TARGET_BASE=""   # Pi base (global: ~/.pi/agent, project: <root>/.pi)
+TF_BASE=""       # TF base (global: ~/.tf, project: <root>/.tf)
 SCOPE_FLAG=""
 TRACK_FILE=""
 ARGS=()
@@ -77,6 +87,7 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --global)
       TARGET_BASE="$HOME/.pi/agent"
+      TF_BASE="$HOME/.tf"
       SCOPE_FLAG=""
       IS_GLOBAL=true
       shift
@@ -87,6 +98,7 @@ while [ "$#" -gt 0 ]; do
         exit 1
       fi
       TARGET_BASE="$2/.pi"
+      TF_BASE="$2/.tf"
       SCOPE_FLAG="-l"
       IS_GLOBAL=false
       shift 2
@@ -135,16 +147,20 @@ while [ "$#" -gt 0 ]; do
 
 if [ -z "$TARGET_BASE" ] && [ "$COMMAND" != "track" ]; then
   if [ "$COMMAND" = "setup" ]; then
+    # setup defaults to global unless the user selects project during the prompt below
     TARGET_BASE="$HOME/.pi/agent"
+    TF_BASE="$HOME/.tf"
     IS_GLOBAL=true
   else
-    # sync/doctor default: prefer project if .pi exists in cwd
-    if [ -d ".pi" ]; then
+    # sync/doctor/login default: prefer project if .tf or .pi exists in cwd
+    if [ -d ".tf" ] || [ -d ".pi" ]; then
       TARGET_BASE="$(pwd)/.pi"
+      TF_BASE="$(pwd)/.tf"
       SCOPE_FLAG="-l"
       IS_GLOBAL=false
     else
       TARGET_BASE="$HOME/.pi/agent"
+      TF_BASE="$HOME/.tf"
       IS_GLOBAL=true
     fi
   fi
@@ -153,7 +169,7 @@ fi
 install_files() {
   local manifest="$ROOT_DIR/config/install-manifest.txt"
 
-  # NOTE: When running `tf setup` from an already-installed workflow (e.g. `.pi/bin/tf`),
+  # NOTE: When running `tf setup` from an already-installed workflow,
   # older installs may not have shipped the install manifest.
   # In that case, fall back to a baked-in manifest so setup still works.
   local manifest_content=""
@@ -163,8 +179,11 @@ install_files() {
     echo "[warn] Install manifest not found: $manifest" >&2
     echo "[warn] Falling back to built-in manifest (please re-install/upgrade for full fidelity)." >&2
     manifest_content="$(cat <<'EOF'
-# CLI tool (will be installed to bin/tf)
+# CLI tool
 bin/tf
+
+# Needed so `tf setup` can be run from an already-installed workflow
+config/install-manifest.txt
 
 # Helper scripts for CLI
 scripts/tf_config.py
@@ -200,13 +219,32 @@ prompts/tf-followups.md
 prompts/tf-sync.md
 prompts/ralph-start.md
 
-workflows/tf/config.json
-workflows/tf/README.md
+config/workflows/tf/config.json
+config/workflows/tf/README.md
 EOF
 )"
   fi
 
-  local count=0
+  if [ -z "$TF_BASE" ]; then
+    echo "TF_BASE not set; cannot install." >&2
+    exit 1
+  fi
+
+  local pi_count=0
+  local tf_count=0
+
+  route_dest_base() {
+    local rel="$1"
+    case "$rel" in
+      agents/*|skills/*|prompts/*)
+        echo "$TARGET_BASE"
+        ;;
+      *)
+        echo "$TF_BASE"
+        ;;
+    esac
+  }
+
   while IFS= read -r line || [ -n "$line" ]; do
     line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
     if [ -z "$line" ] || [[ "$line" == \#* ]]; then
@@ -216,13 +254,23 @@ EOF
       echo "Missing install file: $ROOT_DIR/$line" >&2
       exit 1
     fi
-    mkdir -p "$TARGET_BASE/$(dirname "$line")"
-    cp "$ROOT_DIR/$line" "$TARGET_BASE/$line"
-    count=$((count + 1))
+
+    local dest_base
+    dest_base="$(route_dest_base "$line")"
+
+    mkdir -p "$dest_base/$(dirname "$line")"
+    cp "$ROOT_DIR/$line" "$dest_base/$line"
+
+    if [ "$dest_base" = "$TARGET_BASE" ]; then
+      pi_count=$((pi_count + 1))
+    else
+      tf_count=$((tf_count + 1))
+    fi
   done <<< "$manifest_content"
 
-  echo "Installed Ticketflow workflow to: $TARGET_BASE"
-  echo "Installed files: $count"
+  echo "Installed Pi workflow files to: $TARGET_BASE"
+  echo "Installed TF runtime/config files to: $TF_BASE"
+  echo "Installed files: $((pi_count + tf_count)) (pi: $pi_count, tf: $tf_count)"
 }
 
 install_extensions() {
@@ -529,14 +577,14 @@ print("\n".join(missing))
 # Ralph Loop Management
 # =============================================================================
 
-RALPH_DIR=".pi/ralph"
+RALPH_DIR=".tf/ralph"
 
 ralph_usage() {
   cat <<'EOF'
 Ralph Loop Management
 
 Usage:
-  tf ralph init         Create .pi/ralph/ directory structure
+  tf ralph init         Create .tf/ralph/ directory structure
   tf ralph status       Show current loop state and statistics
   tf ralph reset        Clear progress (use --keep-lessons to preserve lessons)
   tf ralph lessons      Show lessons learned
@@ -546,9 +594,9 @@ The Ralph loop itself is started via Pi prompt:
   /ralph-start [--max-iterations N]
 
 Files:
-  .pi/ralph/AGENTS.md    Lessons learned (read by implementer)
-  .pi/ralph/progress.md  Loop state and ticket history
-  .pi/ralph/config.json  Loop configuration
+  .tf/ralph/AGENTS.md    Lessons learned (read by implementer)
+  .tf/ralph/progress.md  Loop state and ticket history
+  .tf/ralph/config.json  Loop configuration
 EOF
 }
 
@@ -1812,11 +1860,13 @@ case "$COMMAND" in
           read -r -p "Project path (default: current dir): " project_path
           project_path="${project_path:-$(pwd)}"
           TARGET_BASE="$project_path/.pi"
+          TF_BASE="$project_path/.tf"
           SCOPE_FLAG="-l"
           IS_GLOBAL=false
           ;;
         *)
           TARGET_BASE="$HOME/.pi/agent"
+          TF_BASE="$HOME/.tf"
           SCOPE_FLAG=""
           IS_GLOBAL=true
           ;;

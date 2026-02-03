@@ -53,7 +53,7 @@ tf setup
 tf sync
 ```
 
-For project installs, use `./.pi/bin/tf` instead.
+For project installs, use `./.tf/bin/tf` instead.
 
 ### Manual Install (from cloned repo)
 
@@ -74,8 +74,8 @@ cd pi-ticketflow
 | Component | Global Install | Project Install |
 |-----------|---------------|-----------------|
 | Agents, Skills, Prompts | `~/.pi/agent/` | `.pi/` |
-| tf CLI | `~/.local/bin/tf` | `.pi/bin/tf` |
-| Config | `~/.pi/agent/workflows/` | `.pi/workflows/` |
+| tf CLI | `~/.local/bin/tf` | `.tf/bin/tf` |
+| Config | `~/.tf/config/` | `.tf/config/` |
 
 ---
 
@@ -87,7 +87,7 @@ cd pi-ticketflow
 /tf-seed "Build a CLI tool for managing database migrations"
 ```
 
-Creates structured artifacts in `.pi/knowledge/topics/seed-build-a-cli/`.
+Creates structured artifacts in `.tf/knowledge/topics/seed-build-a-cli/`.
 
 ### 2. Create Tickets
 
@@ -164,7 +164,7 @@ Choose the workflow that matches your situation:
    ```
    Then add the spike docs to `sources.md` (manual):
    ```
-   - .pi/knowledge/topics/spike-auth-strategy/spike.md
+   - .tf/knowledge/topics/spike-auth-strategy/spike.md
    ```
 4. If the work is complex, create a plan and run the planning loop:
    ```
@@ -301,7 +301,7 @@ Dependencies are inferred from task ordering/headings and applied with `tk dep`.
 │  <ticket>  │    │  review.md   │    │   <followup>   │    │  -start  │
 └────────────┘    └─────────────┘    └────────────────┘    │(optional)│
      ↓                                                      └──────────┘
- review.md (from .pi/knowledge/tickets/<ticket>/)
+ review.md (from .tf/knowledge/tickets/<ticket>/)
  (Warnings +
 Suggestions)
 ```
@@ -408,10 +408,10 @@ See [docs/architecture.md](docs/architecture.md) for details.
 
 ## Knowledge Base
 
-All planning and research artifacts are stored in `.pi/knowledge/`:
+All planning and research artifacts are stored in `.tf/knowledge/`:
 
 ```
-.pi/knowledge/
+.tf/knowledge/
 ├── index.json                    # Registry of all topics
 ├── tickets/
 │   └── {ticket-id}/
@@ -445,7 +445,7 @@ Topics are automatically linked to tickets via `external-ref`.
 
 ## Configuration
 
-Models are configured in `workflows/tf/config.json`:
+Models are configured in `config/workflows/tf/config.json`:
 
 ```json
 {
@@ -464,7 +464,7 @@ Apply changes with:
 tf sync
 
 # Project install
-./.pi/bin/tf sync
+./.tf/bin/tf sync
 
 # Or via Pi prompt
 /tf-sync
@@ -479,7 +479,7 @@ See [docs/configuration.md](docs/configuration.md) for full setup options.
 Ralph enables autonomous ticket processing with:
 
 - **Re-anchoring**: Fresh context per ticket
-- **Lessons Learned**: Persistent wisdom in `.pi/ralph/AGENTS.md`
+- **Lessons Learned**: Persistent wisdom in `.tf/ralph/AGENTS.md`
 - **Progress Tracking**: External state survives resets
 
 ```bash
@@ -489,8 +489,8 @@ tf ralph status        # Check status
 tf ralph lessons       # View lessons
 
 # After project install:
-./.pi/bin/tf ralph init
-./.pi/bin/tf ralph status
+./.tf/bin/tf ralph init
+./.tf/bin/tf ralph status
 
 # Start loop (in Pi)
 /ralph-start --max-iterations 50

@@ -31,7 +31,7 @@ Follow the **TF Planning Skill** "Seed Capture" procedure:
 
 1. Parse idea from `$@`
 2. Create topic ID: `seed-{slug}`
-3. Create directory: `.pi/knowledge/topics/{id}/`
+3. Create directory: `.tf/knowledge/topics/{id}/`
 4. Write artifacts:
    - `overview.md` - Summary + keywords
    - `seed.md` - Vision, concept, features, questions
@@ -44,7 +44,7 @@ Follow the **TF Planning Skill** "Seed Capture" procedure:
 
 ## Output
 
-Created seed artifacts in `.pi/knowledge/topics/{topic-id}/`:
+Created seed artifacts in `.tf/knowledge/topics/{topic-id}/`:
 - overview.md
 - seed.md
 - success-metrics.md

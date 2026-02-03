@@ -1,5 +1,8 @@
-# Paths to install into ~/.pi/agent or <project>/.pi
-# Each entry is copied to the same relative path under the target base.
+# Install manifest
+#
+# Routing:
+# - agents/*, skills/*, prompts/*  → Pi base (global: ~/.pi/agent, project: <root>/.pi)
+# - everything else (bin/*, scripts/*, config/*) → TF base (global: ~/.tf, project: <root>/.tf)
 
 # CLI tool (will be installed to bin/tf)
 bin/tf
@@ -41,5 +44,5 @@ prompts/tf-followups.md
 prompts/tf-sync.md
 prompts/ralph-start.md
 
-workflows/tf/config.json
-workflows/tf/README.md
+config/workflows/tf/config.json
+config/workflows/tf/README.md

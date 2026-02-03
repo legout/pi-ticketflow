@@ -122,7 +122,7 @@
   "workflow": {
     "clarifyDefault": true,
     "enableResearcher": true,
-    "knowledgeDir": ".pi/knowledge",
+    "knowledgeDir": ".tf/knowledge",
     "mcpServers": [
       "context7",
       "exa",

@@ -55,7 +55,7 @@ Follow the **TF Planning Skill** "Research Spike" procedure:
 
 ## Output
 
-Created artifacts in `.pi/knowledge/topics/{topic-id}/`:
+Created artifacts in `.tf/knowledge/topics/{topic-id}/`:
 - overview.md
 - sources.md
 - spike.md

@@ -22,7 +22,7 @@ Start the Ralph autonomous loop for continuous ticket processing.
 
 ## Prerequisites
 
-- Ralph initialized: `./bin/tf ralph init`
+- Ralph initialized: `./.tf/bin/tf ralph init`
 - Tickets ready in backlog: `tk ready`
 - `/tf` working standalone
 
@@ -47,13 +47,13 @@ Output: <promise>COMPLETE</promise> (if promiseOnComplete)
 ## How It Works
 
 1. **Re-Anchoring**: Each ticket starts fresh with accumulated lessons
-2. **Lessons Learned**: Extracted after each ticket, stored in `.pi/ralph/AGENTS.md`
-3. **Progress Tracking**: State in `.pi/ralph/progress.md` survives context resets
+2. **Lessons Learned**: Extracted after each ticket, stored in `.tf/ralph/AGENTS.md`
+3. **Progress Tracking**: State in `.tf/ralph/progress.md` survives context resets
 4. **Promise Sigil**: Clear termination signal when done
 
 ## Configuration
 
-`.pi/ralph/config.json`:
+`.tf/ralph/config.json`:
 ```json
 {
   "maxIterations": 50,
@@ -72,8 +72,8 @@ Output: <promise>COMPLETE</promise> (if promiseOnComplete)
 
 In another terminal:
 ```bash
-./bin/tf ralph status     # Current state
-./bin/tf ralph lessons    # View lessons learned
+./.tf/bin/tf ralph status     # Current state
+./.tf/bin/tf ralph lessons    # View lessons learned
 ```
 
 ## Stopping

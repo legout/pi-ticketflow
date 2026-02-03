@@ -46,7 +46,7 @@ Follow the **TF Planning Skill** "Baseline Capture" procedure:
 
 ## Output
 
-Created artifacts in `.pi/knowledge/topics/{topic-id}/`:
+Created artifacts in `.tf/knowledge/topics/{topic-id}/`:
 - overview.md
 - baseline.md
 - risk-map.md

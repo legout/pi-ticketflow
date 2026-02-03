@@ -51,7 +51,7 @@ Follow the **TF Workflow Skill** procedures:
 
 ## Output Artifacts
 
-Written under `.pi/knowledge/tickets/<ticket-id>/`:
+Written under `.tf/knowledge/tickets/<ticket-id>/`:
 - `research.md` - Ticket research (if any)
 - `implementation.md` - Implementation summary
 - `review.md` - Consolidated review
@@ -62,9 +62,9 @@ Written under `.pi/knowledge/tickets/<ticket-id>/`:
 - `files_changed.txt` - Tracked changed files
 - `ticket_id.txt` - Ticket ID
 
-Ralph files (if `.pi/ralph/` exists):
-- `.pi/ralph/progress.md` - Updated
-- `.pi/ralph/AGENTS.md` - May be updated
+Ralph files (if `.tf/ralph/` exists):
+- `.tf/ralph/progress.md` - Updated
+- `.tf/ralph/AGENTS.md` - May be updated
 
 ## Notes
 

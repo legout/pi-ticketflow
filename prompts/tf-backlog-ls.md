@@ -27,7 +27,7 @@ Show backlog status and corresponding tickets for seed/baseline/plan topics.
 /tf-backlog-ls seed-build-a-cli
 /tf-backlog-ls plan-auth-rewrite
 /tf-backlog-ls baseline-myapp
-/tf-backlog-ls .pi/knowledge/topics/baseline-myapp/
+/tf-backlog-ls .tf/knowledge/topics/baseline-myapp/
 ```
 
 ## Execution

@@ -21,10 +21,10 @@ Ralph is an orchestration layer that runs the TF workflow in a loop, processing 
 ### 1. Initialize
 
 ```bash
-./bin/tf ralph init
+./.tf/bin/tf ralph init
 ```
 
-Creates `.pi/ralph/` directory structure.
+Creates `.tf/ralph/` directory structure.
 
 ### 2. Configure Root AGENTS.md (Optional)
 
@@ -38,7 +38,7 @@ Create root `AGENTS.md` for project patterns:
 - All API calls go through `src/lib/api.ts`
 
 ## Ralph Loop Integration
-If `.pi/ralph/AGENTS.md` exists, read it for lessons learned.
+If `.tf/ralph/AGENTS.md` exists, read it for lessons learned.
 ```
 
 ### 3. Run TF (Ralph-Ready by Default)
@@ -49,8 +49,8 @@ If `.pi/ralph/AGENTS.md` exists, read it for lessons learned.
 
 Automatically:
 - Reads root `AGENTS.md` (re-anchoring)
-- Reads `.pi/ralph/AGENTS.md` if exists (lessons)
-- Tracks progress in `.pi/ralph/progress.md`
+- Reads `.tf/ralph/AGENTS.md` if exists (lessons)
+- Tracks progress in `.tf/ralph/progress.md`
 - Synthesizes lessons after completion
 
 ### 4. Run in Loop
@@ -73,7 +73,7 @@ done
 ## Directory Structure
 
 ```
-.pi/ralph/
+.tf/ralph/
 ├── AGENTS.md       # Lessons learned (read before each ticket)
 ├── progress.md     # Loop state and history
 └── config.json     # Loop settings
@@ -83,7 +83,7 @@ done
 
 ## Configuration
 
-`.pi/ralph/config.json`:
+`.tf/ralph/config.json`:
 
 ```json
 {
@@ -122,7 +122,7 @@ done
 
 Each iteration starts fresh. The agent reads:
 1. Root `AGENTS.md` (project patterns)
-2. `.pi/ralph/AGENTS.md` (lessons from previous tickets)
+2. `.tf/ralph/AGENTS.md` (lessons from previous tickets)
 3. Ticket description and knowledge base
 
 This prevents "context rot" where accumulated conversation history degrades performance.
@@ -150,7 +150,7 @@ The loop outputs `<promise>COMPLETE</promise>` when:
 
 ### Progress Tracking
 
-State is stored in `.pi/ralph/progress.md`:
+State is stored in `.tf/ralph/progress.md`:
 
 ```markdown
 ## Current State
@@ -174,20 +174,20 @@ State is stored in `.pi/ralph/progress.md`:
 
 ```bash
 # Initialize
-./bin/tf ralph init
+./.tf/bin/tf ralph init
 
 # Check status
-./bin/tf ralph status
+./.tf/bin/tf ralph status
 
 # View lessons
-./bin/tf ralph lessons
+./.tf/bin/tf ralph lessons
 
 # Prune old lessons (keep last N)
-./bin/tf ralph lessons prune 20
+./.tf/bin/tf ralph lessons prune 20
 
 # Reset progress
-./bin/tf ralph reset --keep-lessons  # Keep lessons
-./bin/tf ralph reset                 # Clear everything
+./.tf/bin/tf ralph reset --keep-lessons  # Keep lessons
+./.tf/bin/tf ralph reset                 # Clear everything
 ```
 
 ---
@@ -204,7 +204,7 @@ Test on 3-5 tickets before running large batches:
 
 ### 2. Prime Lessons
 
-Before starting, add known patterns to `.pi/ralph/AGENTS.md`:
+Before starting, add known patterns to `.tf/ralph/AGENTS.md`:
 
 ```markdown
 ## Gotchas
@@ -217,7 +217,7 @@ Before starting, add known patterns to `.pi/ralph/AGENTS.md`:
 Check first few tickets manually:
 
 ```bash
-./bin/tf ralph status
+./.tf/bin/tf ralph status
 # Review completed tickets in tk
 ```
 
@@ -226,7 +226,7 @@ Check first few tickets manually:
 Keep lessons file manageable:
 
 ```bash
-./bin/tf ralph lessons prune 30
+./.tf/bin/tf ralph lessons prune 30
 ```
 
 Old lessons may become outdated as the codebase evolves.
@@ -261,10 +261,10 @@ Ralph works best with well-defined tickets:
 
 **Loop stops early?**
 - Check `tk ready` - are there tickets with unmet dependencies?
-- Check `.pi/ralph/progress.md` for failures
+- Check `.tf/ralph/progress.md` for failures
 
 **Lessons not helping?**
-- Review `.pi/ralph/AGENTS.md` for stale info
+- Review `.tf/ralph/AGENTS.md` for stale info
 - Prune outdated lessons
 - Add more specific patterns
 

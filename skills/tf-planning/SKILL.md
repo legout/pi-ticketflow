@@ -27,10 +27,10 @@ All ticket creation in this skill follows these rules:
 ## Configuration
 
 Read workflow config (project overrides global):
-- `.pi/workflows/tf/config.json`
-- `~/.pi/agent/workflows/tf/config.json`
+- `.tf/config/workflows/tf/config.json`
+- `~/.tf/config/workflows/tf/config.json`
 
-Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
+Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
 
 ## Execution Procedures
 
@@ -414,7 +414,7 @@ Extract `workflow.knowledgeDir` (default: `.pi/knowledge`).
 
 **Steps**:
 
-1. **Resolve knowledgeDir** from config (default: `.pi/knowledge`).
+1. **Resolve knowledgeDir** from config (default: `.tf/knowledge`).
 
 2. **If input provided**:
    - If path provided: use directly
@@ -640,7 +640,7 @@ tk create "<title>" \
 
 ### Knowledge Base Structure
 ```
-.pi/knowledge/
+.tf/knowledge/
 ├── index.json              # Registry of all topics
 ├── tickets/
 │   └── {ticket-id}/

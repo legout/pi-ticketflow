@@ -9,7 +9,7 @@ Setting up pi-ticketflow, models, extensions, and MCP servers.
 ### Interactive Setup (Recommended)
 
 ```bash
-./bin/tf setup
+./.tf/bin/tf setup
 ```
 
 Guides you through:
@@ -51,7 +51,7 @@ pi install npm:pi-subagents              # Parallel reviewer subagents
 
 ## Model Configuration
 
-Models are configured in `workflows/tf/config.json`:
+Models are configured in `config/workflows/tf/config.json`:
 
 ### Default Config
 
@@ -86,7 +86,7 @@ Models are configured in `workflows/tf/config.json`:
 After editing `config.json`:
 
 ```bash
-./bin/tf sync
+./.tf/bin/tf sync
 # or
 /tf-sync
 ```
@@ -110,7 +110,7 @@ Additional workflow settings in `config.json`:
     "enableCloser": true,
     "enableQualityGate": false,
     "failOn": ["Critical"],
-    "knowledgeDir": ".pi/knowledge"
+    "knowledgeDir": ".tf/knowledge"
   }
 }
 ```
@@ -124,16 +124,16 @@ Additional workflow settings in `config.json`:
 | `enableCloser` | `true` | Close ticket after completion |
 | `enableQualityGate` | `false` | Block closing if issues found |
 | `failOn` | `["Critical"]` | Severities that block closing |
-| `knowledgeDir` | `.pi/knowledge` | Where to store knowledge artifacts |
+| `knowledgeDir` | `.tf/knowledge` | Where to store knowledge artifacts |
 
 ---
 
 ## Knowledge Base
 
-Planning and research artifacts are stored in `knowledgeDir` (default: `.pi/knowledge/`):
+Planning and research artifacts are stored in `knowledgeDir` (default: `.tf/knowledge/`):
 
 ```
-.pi/knowledge/
+.tf/knowledge/
 ├── index.json                    # Registry of all topics
 ├── tickets/
 │   └── {ticket-id}.md           # Per-ticket research
@@ -170,7 +170,7 @@ pi install npm:pi-mcp-adapter
 
 ### MCP Config Location
 
-MCP config is written to `<target>/.pi/mcp.json` when you run `./bin/tf setup`.
+MCP config is written to `<target>/.pi/mcp.json` when you run `./.tf/bin/tf setup`.
 
 Example structure:
 
@@ -192,7 +192,7 @@ Example structure:
 
 ## Ralph Configuration
 
-Ralph loop settings in `.pi/ralph/config.json`:
+Ralph loop settings in `.tf/ralph/config.json`:
 
 ```json
 {
@@ -239,7 +239,7 @@ pi install npm:pi-review-loop    # Post-chain review with /review-start
 Check your setup:
 
 ```bash
-./bin/tf doctor
+./.tf/bin/tf doctor
 ```
 
 Runs preflight checks for:
@@ -258,26 +258,41 @@ After installation:
 ~/.pi/agent/
 ├── agents/
 ├── skills/
-├── prompts/
-└── workflows/
-    └── tf/
-        └── config.json
+└── prompts/
+
+~/.tf/
+├── bin/
+│   └── tf
+├── scripts/
+│   └── tf_config.py
+└── config/
+    └── workflows/
+        └── tf/
+            └── config.json
 
 # Project install
 .pi/
 ├── agents/
 ├── skills/
-├── prompts/
-├── workflows/
-│   └── tf/
-│       └── config.json
-├── mcp.json              # (if configured)
-├── ralph/                # (if initialized)
+└── prompts/
+
+# Pi extension config (optional)
+.pi/mcp.json
+
+.tf/
+├── bin/
+│   └── tf
+├── scripts/
+│   └── tf_config.py
+├── config/
+│   └── workflows/
+│       └── tf/
+│           └── config.json
+├── ralph/
 │   ├── AGENTS.md
 │   ├── progress.md
 │   └── config.json
-└── knowledge/            # (auto-created)
-    ├── index.json
+└── knowledge/
     ├── tickets/
     └── topics/
 ```

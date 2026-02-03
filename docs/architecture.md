@@ -164,10 +164,10 @@ Agents are subagent definitions in `agents/*.md`. They are:
 
 ## Knowledge Base
 
-All planning and research artifacts are stored in `.pi/knowledge/`:
+All planning and research artifacts are stored in `.tf/knowledge/`:
 
 ```
-.pi/knowledge/
+.tf/knowledge/
 ├── index.json                    # Registry of all topics
 ├── tickets/
 │   └── {ticket-id}/
@@ -251,12 +251,12 @@ Used by skills to switch between phases:
 ├─────────────────────────────────────────────────────────────┤
 │  0. Re-anchor Context                                       │
 │     - Read root AGENTS.md                                   │
-│     - Read .pi/ralph/AGENTS.md (lessons)                    │
+│     - Read .tf/ralph/AGENTS.md (lessons)                    │
 │     - Read ticket + knowledge base                          │
 ├─────────────────────────────────────────────────────────────┤
 │  1. Research (optional)                                     │
 │     - MCP tools (context7, exa, grep_app)                   │
-│     - Write to .pi/knowledge/tickets/{id}/research.md       │
+│     - Write to .tf/knowledge/tickets/{id}/research.md       │
 ├─────────────────────────────────────────────────────────────┤
 │  2. Implement (model-switch)                                │
 │     - Switch to implementer model                           │
@@ -284,7 +284,7 @@ Used by skills to switch between phases:
 │     - Close ticket                                          │
 │     - Write close-summary.md (ticket artifact dir)          │
 ├─────────────────────────────────────────────────────────────┤
-│  8. Ralph Integration (if .pi/ralph/ exists)                │
+│  8. Ralph Integration (if .tf/ralph/ exists)                │
 │     - Update progress.md                                    │
 │     - Extract lessons → AGENTS.md                           │
 │     - Output <promise>TICKET_COMPLETE</promise>             │
@@ -298,7 +298,7 @@ Used by skills to switch between phases:
 ```
 /tf-seed "Idea"
   ↓
-Create .pi/knowledge/topics/seed-*/
+Create .tf/knowledge/topics/seed-*/
   - seed.md, mvp-scope.md, success-metrics.md, etc.
   ↓
 /tf-backlog seed-*
@@ -313,7 +313,7 @@ Create tickets in tk (with external-ref: seed-*)
 ```
 /tf-baseline [focus]
   ↓
-Create .pi/knowledge/topics/baseline-*/
+Create .tf/knowledge/topics/baseline-*/
   - baseline.md, risk-map.md, test-inventory.md, etc.
   ↓
 /tf-backlog baseline-*
@@ -347,7 +347,7 @@ plan.md (status: draft)
 
 ## Model Strategy
 
-Models are configured in `workflows/tf/config.json`:
+Models are configured in `config/workflows/tf/config.json`:
 
 | Role | Default Model | Purpose |
 |------|---------------|---------|

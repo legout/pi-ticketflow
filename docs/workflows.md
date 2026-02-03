@@ -45,10 +45,10 @@ Create a new seed (or update your existing one) and **reference the spike IDs** 
 /tf-seed "Build X using SSO + magic links based on spike-auth-strategy"
 ```
 
-Add to `.pi/knowledge/topics/seed-build-x/sources.md`:
+Add to `.tf/knowledge/topics/seed-build-x/sources.md`:
 
 ```
-- .pi/knowledge/topics/spike-auth-strategy/spike.md
+- .tf/knowledge/topics/spike-auth-strategy/spike.md
 ```
 
 ### 4. Plan if the work is complex
@@ -85,7 +85,7 @@ Starting a new project or feature from scratch when you want to move fast.
 /tf-seed "Build a CLI tool for managing database migrations"
 ```
 
-This creates structured artifacts in `.pi/knowledge/topics/seed-build-a-cli/`:
+This creates structured artifacts in `.tf/knowledge/topics/seed-build-a-cli/`:
 - `seed.md` - Your vision and core concept
 - `mvp-scope.md` - What's in/out of the first version
 - `success-metrics.md` - How you'll measure success
@@ -100,7 +100,7 @@ If you need to research technical approaches:
 /tf-spike "Database migration tools in Python"
 ```
 
-Creates `.pi/knowledge/topics/spike-database-migration-tools/` with:
+Creates `.tf/knowledge/topics/spike-database-migration-tools/` with:
 - `spike.md` - Analysis of options with recommendations
 - `sources.md` - URLs and references
 
@@ -165,9 +165,9 @@ This captures:
 
 **Review the artifacts:**
 ```bash
-cat .pi/knowledge/topics/seed-distributed-task-queue/seed.md
-cat .pi/knowledge/topics/seed-distributed-task-queue/mvp-scope.md
-cat .pi/knowledge/topics/seed-distributed-task-queue/constraints.md
+cat .tf/knowledge/topics/seed-distributed-task-queue/seed.md
+cat .tf/knowledge/topics/seed-distributed-task-queue/mvp-scope.md
+cat .tf/knowledge/topics/seed-distributed-task-queue/constraints.md
 ```
 
 ### Step 2: Specify with Plan
@@ -236,7 +236,7 @@ Or focus on a specific area:
 /tf-baseline "authentication system"
 ```
 
-Creates `.pi/knowledge/topics/baseline-myapp/` with:
+Creates `.tf/knowledge/topics/baseline-myapp/` with:
 - `baseline.md` - Architecture and components
 - `risk-map.md` - Technical risks and fragile areas
 - `test-inventory.md` - Test coverage gaps
@@ -285,7 +285,7 @@ For complex features requiring careful design. Use this when you already underst
 /tf-plan "Refactor auth flow to support OAuth + magic links"
 ```
 
-Creates `.pi/knowledge/topics/plan-auth-refactor/plan.md` with:
+Creates `.tf/knowledge/topics/plan-auth-refactor/plan.md` with:
 - Summary and requirements
 - Constraints and assumptions
 - Risks and gaps
@@ -444,17 +444,17 @@ Running batches of tickets without manual intervention.
 ### 1. Initialize Ralph
 
 ```bash
-./bin/tf ralph init
+./.tf/bin/tf ralph init
 ```
 
-Creates `.pi/ralph/` directory with:
+Creates `.tf/ralph/` directory with:
 - `AGENTS.md` - Lessons learned
 - `progress.md` - Loop state
 - `config.json` - Configuration
 
 ### 2. (Optional) Prime with Known Patterns
 
-Edit `.pi/ralph/AGENTS.md`:
+Edit `.tf/ralph/AGENTS.md`:
 
 ```markdown
 ## Gotchas
@@ -474,7 +474,7 @@ Edit `.pi/ralph/AGENTS.md`:
 Or with CLI:
 
 ```bash
-./bin/tf ralph init
+./.tf/bin/tf ralph init
 # Then in pi:
 /ralph-start
 ```
@@ -482,15 +482,15 @@ Or with CLI:
 ### 4. Monitor Progress
 
 ```bash
-./bin/tf ralph status
-./bin/tf ralph lessons
+./.tf/bin/tf ralph status
+./.tf/bin/tf ralph lessons
 ```
 
 ### 5. Review and Prune
 
 ```bash
 # Remove outdated lessons
-./bin/tf ralph lessons prune 30
+./.tf/bin/tf ralph lessons prune 30
 ```
 
 ---
@@ -512,7 +512,7 @@ All ticket creation follows these principles:
 ## Knowledge Base Organization
 
 ```
-.pi/knowledge/
+.tf/knowledge/
 ├── index.json                    # Registry
 ├── tickets/
 │   └── TICKET-123/

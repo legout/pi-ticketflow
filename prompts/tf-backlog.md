@@ -26,7 +26,7 @@ Generate small, actionable implementation tickets from seed (greenfield), baseli
 /tf-backlog seed-build-a-cli
 /tf-backlog baseline-myapp
 /tf-backlog plan-auth-rewrite
-/tf-backlog .pi/knowledge/topics/baseline-myapp/
+/tf-backlog .tf/knowledge/topics/baseline-myapp/
 ```
 
 ## Execution

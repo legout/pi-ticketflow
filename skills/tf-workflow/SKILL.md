@@ -41,8 +41,8 @@ pi install npm:pi-subagents
 ## Configuration
 
 Read workflow config (project overrides global):
-- `.pi/workflows/tf/config.json`
-- `~/.pi/agent/workflows/tf/config.json`
+- `.tf/config/workflows/tf/config.json`
+- `~/.tf/config/workflows/tf/config.json`
 
 Key config values:
 - `metaModels` - Abstract model definitions (model + thinking)
@@ -80,11 +80,11 @@ Parse flags from the Task input before running any steps:
 Run this at the start of EVERY ticket implementation to prevent context rot.
 
 1. **Read root AGENTS.md** (if exists)
-   - Check if it references `.pi/ralph/AGENTS.md`
-   - If referenced, read `.pi/ralph/AGENTS.md` for lessons learned
+   - Check if it references `.tf/ralph/AGENTS.md`
+   - If referenced, read `.tf/ralph/AGENTS.md` for lessons learned
 
 2. **Prepare ticket artifact directory**
-   - Resolve `knowledgeDir` from config (default `.pi/knowledge`)
+   - Resolve `knowledgeDir` from config (default `.tf/knowledge`)
    - Set `artifactDir = {knowledgeDir}/tickets/{ticket-id}/`
    - `mkdir -p {artifactDir}`
 
@@ -351,10 +351,10 @@ Run only when `--simplify-tickets` is provided.
 
 ### Procedure: Ralph Integration (Optional)
 
-Only if `.pi/ralph/` directory exists:
+Only if `.tf/ralph/` directory exists:
 
 **Update Progress**:
-- Append to `.pi/ralph/progress.md`:
+- Append to `.tf/ralph/progress.md`:
   ```markdown
   - {ticket-id}: {STATUS} ({timestamp})
     - Summary: {one-line}
@@ -364,7 +364,7 @@ Only if `.pi/ralph/` directory exists:
 
 **Extract Lessons** (conditional):
 - Only if a gotcha was discovered or pattern emerged
-- Append to `.pi/ralph/AGENTS.md`:
+- Append to `.tf/ralph/AGENTS.md`:
   ```markdown
   ## Lesson from {ticket-id} ({date})
 
@@ -422,5 +422,5 @@ Written under `{artifactDir}` (default `{knowledgeDir}/tickets/{ticket-id}/`):
 - `ticket_id.txt` - Ticket ID (single line)
 
 Ralph files (if active):
-- `.pi/ralph/progress.md` - Updated
-- `.pi/ralph/AGENTS.md` - May be updated with lessons
+- `.tf/ralph/progress.md` - Updated
+- `.tf/ralph/AGENTS.md` - May be updated with lessons

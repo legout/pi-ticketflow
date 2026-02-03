@@ -20,10 +20,10 @@ The chain is triggered by:
 ## Files & Locations
 
 **Config (global):**
-- `~/.pi/agent/workflows/tf/config.json`
+- `~/.tf/config/workflows/tf/config.json`
 
 **Config (project override):**
-- `<project>/.pi/workflows/tf/config.json`
+- `<project>/.tf/config/workflows/tf/config.json`
 
 **Prompt template:**
 - `~/.pi/agent/prompts/tf.md`
@@ -124,7 +124,7 @@ Edit the config file to customize:
 - **Workflow toggles** (enable/disable research, reviewers, fixer, closer, quality gate)
 - **Fail-on severities** (`workflow.failOn`, list of severities that block closing)
 - **Research parallelism** (`workflow.researchParallelAgents`)
-- **Knowledge directory** (`workflow.knowledgeDir`, default `.pi/knowledge`)
+- **Knowledge directory** (`workflow.knowledgeDir`, default `.tf/knowledge`)
 - **MCP servers** (`workflow.mcpServers`, list of server ids to configure)
 - **Exclude globs** for generated files
 
@@ -158,7 +158,7 @@ Example (partial):
 
 Research and ticket artifacts are stored in:
 ```
-.pi/knowledge/
+.tf/knowledge/
   index.json
   topics/<topic-id>/
   tickets/<ticket-id>/
@@ -193,5 +193,5 @@ This updates the `model:` frontmatter in workflow agent **and prompt** files.
 - Agents must live in `~/.pi/agent/agents` or `.pi/agents` for Pi to discover them.
 - Prompt templates load from `~/.pi/agent/prompts` or `.pi/prompts`.
 - Config files are read manually by the prompt/agents (Pi does not auto‑apply custom settings).
-- `chain-summary.md` is written in `.pi/knowledge/tickets/<ticket-id>/` by the closer.
+- `chain-summary.md` is written in `.tf/knowledge/tickets/<ticket-id>/` by the closer.
 - The close step stages/commits only paths listed in `files_changed.txt`.

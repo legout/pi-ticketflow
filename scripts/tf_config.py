@@ -26,15 +26,22 @@ def merge(a, b):
     return out
 
 
-def resolve_project_config(base: Path) -> Path:
-    project_config = Path(".pi/workflows/tf/config.json")
+def resolve_project_root(base: Path) -> Path:
+    # Project installs pass base=<project>/.pi
     if str(base).endswith("/.pi"):
-        project_config = base / "workflows/tf/config.json"
-    return project_config
+        return base.parent
+    # Global installs pass base=~/.pi/agent, but the active project is cwd
+    return Path.cwd()
+
+
+def resolve_project_config(base: Path) -> Path:
+    # TF workflow config lives in .tf/config (project-local override)
+    return resolve_project_root(base) / ".tf/config/workflows/tf/config.json"
 
 
 def load_workflow_config(base: Path, ignore_project: bool) -> dict:
-    global_config = Path.home() / ".pi/agent/workflows/tf/config.json"
+    # Global TF workflow config lives in ~/.tf/config
+    global_config = Path.home() / ".tf/config/workflows/tf/config.json"
     project_config = resolve_project_config(base)
 
     if ignore_project:
@@ -43,14 +50,8 @@ def load_workflow_config(base: Path, ignore_project: bool) -> dict:
     return merge(read_json(global_config), read_json(project_config))
 
 
-def resolve_project_root(base: Path) -> Path:
-    if str(base).endswith("/.pi"):
-        return base.parent
-    return Path.cwd()
-
-
 def resolve_knowledge_dir(config: dict, base: Path) -> Path:
-    knowledge_dir = config.get("workflow", {}).get("knowledgeDir", ".pi/knowledge")
+    knowledge_dir = config.get("workflow", {}).get("knowledgeDir", ".tf/knowledge")
     knowledge_path = Path(str(knowledge_dir)).expanduser()
     if not knowledge_path.is_absolute():
         knowledge_path = resolve_project_root(base) / knowledge_dir
