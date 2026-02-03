@@ -239,32 +239,59 @@ install_local() {
 ensure_global_config() {
   local use_remote="$1"
   local dest="$HOME/.tf/config/settings.json"
+  local helper_dest="$HOME/.tf/scripts/tf_config.py"
 
-  if [ -f "$dest" ]; then
+  if [ ! -f "$dest" ]; then
+    if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
+      log "WARNING: Cannot create $dest"
+      return 0
+    fi
+
+    if [ "$use_remote" = true ]; then
+      if download_file "$REPO_URL/config/settings.json" "$dest"; then
+        log "Created global config at: $dest"
+      else
+        log "WARNING: Failed to download global config"
+      fi
+    else
+      local script_dir
+      script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      if [ -f "$script_dir/config/settings.json" ]; then
+        cp "$script_dir/config/settings.json" "$dest"
+        log "Created global config at: $dest"
+      else
+        log "WARNING: Missing config/settings.json; global config not created"
+      fi
+    fi
+  fi
+
+  if [ -f "$helper_dest" ]; then
     return 0
   fi
 
-  if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
-    log "WARNING: Cannot create $dest"
+  if ! mkdir -p "$(dirname "$helper_dest")" 2>/dev/null; then
+    log "WARNING: Cannot create $helper_dest"
     return 0
   fi
 
   if [ "$use_remote" = true ]; then
-    if download_file "$REPO_URL/config/settings.json" "$dest"; then
-      log "Created global config at: $dest"
+    if download_file "$REPO_URL/scripts/tf_config.py" "$helper_dest"; then
+      chmod +x "$helper_dest"
+      log "Created global config helper at: $helper_dest"
     else
-      log "WARNING: Failed to download global config"
+      log "WARNING: Failed to download global config helper"
     fi
     return 0
   fi
 
   local script_dir
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  if [ -f "$script_dir/config/settings.json" ]; then
-    cp "$script_dir/config/settings.json" "$dest"
-    log "Created global config at: $dest"
+  if [ -f "$script_dir/scripts/tf_config.py" ]; then
+    cp "$script_dir/scripts/tf_config.py" "$helper_dest"
+    chmod +x "$helper_dest"
+    log "Created global config helper at: $helper_dest"
   else
-    log "WARNING: Missing config/settings.json; global config not created"
+    log "WARNING: Missing scripts/tf_config.py; global config helper not created"
   fi
 }
 

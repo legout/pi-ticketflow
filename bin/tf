@@ -170,7 +170,7 @@ if [ -z "$TARGET_BASE" ] && [ "$COMMAND" != "track" ]; then
       fi
       ;;
     update)
-      if [ -d ".pi" ] || [ -d ".tf" ]; then
+      if [ -d ".pi" ]; then
         TARGET_BASE="$(pwd)/.pi"
         if [ -d ".tf" ]; then
           TF_BASE="$(pwd)/.tf"
@@ -183,7 +183,7 @@ if [ -z "$TARGET_BASE" ] && [ "$COMMAND" != "track" ]; then
       fi
       ;;
     *)
-      if [ -d ".tf" ]; then
+      if [ -d ".tf" ] && [ -d ".pi" ]; then
         TARGET_BASE="$(pwd)/.pi"
         TF_BASE="$(pwd)/.tf"
         SCOPE_FLAG="-l"
@@ -1159,12 +1159,25 @@ write_settings_file() {
 ensure_global_settings() {
   local dest="$HOME/.tf/config/settings.json"
   if [ -f "$dest" ]; then
+    ensure_global_scripts
     return 0
   fi
 
   mkdir -p "$(dirname "$dest")"
   write_settings_file "$dest"
   echo "Created global TF settings at: $dest"
+  ensure_global_scripts
+}
+
+ensure_global_scripts() {
+  local dest="$HOME/.tf/scripts/tf_config.py"
+  if [ -f "$dest" ]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$dest")"
+  write_tf_config_file "$dest"
+  echo "Created global tf_config.py at: $dest"
 }
 
 write_tf_config_file() {
@@ -2657,6 +2670,7 @@ sync_models() {
 
   # In global mode, use ~/.tf/scripts/tf_config.py or fall back to embedded
   if [ "$IS_GLOBAL" = true ]; then
+    ensure_global_scripts
     local global_tf_config="$HOME/.tf/scripts/tf_config.py"
     if [ -f "$global_tf_config" ]; then
       CONFIG_HELPER="$global_tf_config"
