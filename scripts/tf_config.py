@@ -36,12 +36,12 @@ def resolve_project_root(base: Path) -> Path:
 
 def resolve_project_config(base: Path) -> Path:
     # TF workflow config lives in .tf/config (project-local override)
-    return resolve_project_root(base) / ".tf/config/workflows/tf/config.json"
+    return resolve_project_root(base) / ".tf/config/settings.json"
 
 
 def load_workflow_config(base: Path, ignore_project: bool) -> dict:
     # Global TF workflow config lives in ~/.tf/config
-    global_config = Path.home() / ".tf/config/workflows/tf/config.json"
+    global_config = Path.home() / ".tf/config/settings.json"
     project_config = resolve_project_config(base)
 
     if ignore_project:

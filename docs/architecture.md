@@ -347,7 +347,7 @@ plan.md (status: draft)
 
 ## Model Strategy
 
-Models are configured in `config/workflows/tf/config.json`:
+Models are configured in `config/settings.json`:
 
 | Role | Default Model | Purpose |
 |------|---------------|---------|

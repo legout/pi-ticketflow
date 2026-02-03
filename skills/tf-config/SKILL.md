@@ -34,8 +34,8 @@ pi list | grep -q "pi-review-loop" && echo "✓ pi-review-loop" || echo "○ pi-
 ### Workflow Config
 
 Location (project overrides global):
-- `.tf/config/workflows/tf/config.json` (project)
-- `~/.tf/config/workflows/tf/config.json` (global)
+- `.tf/config/settings.json` (project)
+- `~/.tf/config/settings.json` (global)
 
 Structure:
 ```json
@@ -99,7 +99,7 @@ Check complete installation status:
    - `agents/closer.md`
 
 3. **Check workflow config exists**:
-   - Look for `config/workflows/tf/config.json`
+   - Look for `config/settings.json`
 
 4. **Check `tk` CLI**:
    ```bash

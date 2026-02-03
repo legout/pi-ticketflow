@@ -334,7 +334,7 @@ Sync configuration from `config.json` to agent and prompt files.
 /tf-sync
 ```
 
-Updates `model:` frontmatter in all agent and prompt files based on `config/workflows/tf/config.json`.
+Updates `model:` frontmatter in all agent and prompt files based on `config/settings.json`.
 
 ---
 

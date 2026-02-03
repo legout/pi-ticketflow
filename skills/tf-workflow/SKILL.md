@@ -41,8 +41,8 @@ pi install npm:pi-subagents
 ## Configuration
 
 Read workflow config (project overrides global):
-- `.tf/config/workflows/tf/config.json`
-- `~/.tf/config/workflows/tf/config.json`
+- `.tf/config/settings.json`
+- `~/.tf/config/settings.json`
 
 Key config values:
 - `metaModels` - Abstract model definitions (model + thinking)

@@ -51,7 +51,7 @@ pi install npm:pi-subagents              # Parallel reviewer subagents
 
 ## Model Configuration
 
-Models are configured in `config/workflows/tf/config.json`:
+Models are configured in `config/settings.json`:
 
 ### Default Config
 

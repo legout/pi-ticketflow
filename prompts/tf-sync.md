@@ -57,8 +57,8 @@ Config key → Prompt file mapping:
 ## Configuration Sources
 
 Read and merge (project overrides global):
-- `.tf/config/workflows/tf/config.json` (project)
-- `~/.tf/config/workflows/tf/config.json` (global)
+- `.tf/config/settings.json` (project)
+- `~/.tf/config/settings.json` (global)
 
 ## Output Example
 

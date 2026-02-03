@@ -28,7 +28,7 @@ Implement the ticket described in the Task input (ticket ID).
 6. **Implement**: Make changes following existing project patterns
 7. **Code Quality Checks** (run BEFORE tests):
    - **A. Load workflow config (preferred)**:
-     - Check for `.tf/config/workflows/tf/config.json` (project override) and `~/.tf/config/workflows/tf/config.json` (global).
+     - Check for `.tf/config/settings.json` (project override) and `~/.tf/config/settings.json` (global).
      - If both exist, merge with project settings taking precedence.
      - If `workflow.exclude` exists, filter those paths out of `files_changed.txt` before running checkers.
      - If `checkers` exists, use it to drive lint/format/typecheck commands.

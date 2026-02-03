@@ -219,7 +219,7 @@ prompts/tf-followups.md
 prompts/tf-sync.md
 prompts/ralph-start.md
 
-config/workflows/tf/config.json
+config/settings.json
 config/workflows/tf/README.md
 EOF
 )"

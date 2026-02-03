@@ -103,7 +103,7 @@ The current TF workflow provides a strong end‑to‑end chain (Research → Imp
 ## Suggested Files to Update
 - `prompts/tf.md`
 - `prompts/tf-followups.md` (new command)
-- `config/workflows/tf/config.json`
+- `config/settings.json`
 - `bin/tf`
 - Agent files (`implementer.md`, `review-merge.md`, `fixer.md`, `closer.md`) where needed for new artifacts
 

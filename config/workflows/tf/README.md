@@ -20,10 +20,10 @@ The chain is triggered by:
 ## Files & Locations
 
 **Config (global):**
-- `~/.tf/config/workflows/tf/config.json`
+- `~/.tf/config/settings.json`
 
 **Config (project override):**
-- `<project>/.tf/config/workflows/tf/config.json`
+- `<project>/.tf/config/settings.json`
 
 **Prompt template:**
 - `~/.pi/agent/prompts/tf.md`

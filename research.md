@@ -11,7 +11,7 @@
 ## Sources
 - README.md
 - config/workflows/tf/README.md
-- config/workflows/tf/config.json
+- config/settings.json
 - prompts/tf.md
 - bin/tf
 - agents/researcher.md

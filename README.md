@@ -445,7 +445,7 @@ Topics are automatically linked to tickets via `external-ref`.
 
 ## Configuration
 
-Models are configured in `config/workflows/tf/config.json`:
+Models are configured in `config/settings.json`:
 
 ```json
 {
