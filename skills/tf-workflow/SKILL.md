@@ -115,10 +115,15 @@ If you decide that no additional research is required, still write a **minimal s
 - Back-compat: if `{knowledgeDir}/tickets/{ticket}.md` exists, read it and migrate to `{artifactDir}/research.md`
 
 **Fresh research (best effort):**
-1. Check available MCP tools (context7, exa, grep_app, zai-web-search)
+1. **Prefer pi-web-access when available** (tools: `web_search`, `fetch_content`, `get_search_content`).
+   - If these tools are available, use them as **primary**.
+   - Use a **single agent only** (do NOT spawn `researcher-fetch`) because `web_search` can batch queries and `fetch_content` runs concurrent fetches.
+   - Suggested flow: `web_search` (optionally with `includeContent: true`) → `fetch_content` for key docs/repos → `get_search_content` as needed.
+2. **Fallback to MCP tools** when pi-web-access is unavailable.
+   - Check available MCP tools (context7, exa, grep_app, zai-web-search).
    - MCP config may be project-local (`.pi/mcp.json`) or global (`~/.pi/agent/mcp.json`).
+   - If `workflow.researchParallelAgents` > 1 and `researcher-fetch` is available, spawn parallel fetches (docs/web/code). Otherwise, query sequentially.
    - If MCP tools are unavailable, fall back to local repo docs.
-2. If `workflow.researchParallelAgents` > 1 and `researcher-fetch` is available, spawn parallel fetches (docs/web/code). Otherwise, query sequentially.
 3. Synthesize findings
 4. Write to `{artifactDir}/research.md`
 

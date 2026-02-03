@@ -25,6 +25,7 @@ pi list | grep -q "pi-subagents" && echo "✓ pi-subagents" || echo "✗ pi-suba
 pi list | grep -q "pi-model-switch" && echo "✓ pi-model-switch" || echo "✗ pi-model-switch"
 
 # Optional extensions
+pi list | grep -q "pi-web-access" && echo "✓ pi-web-access" || echo "○ pi-web-access (preferred for web/docs research)"
 pi list | grep -q "pi-mcp-adapter" && echo "✓ pi-mcp-adapter" || echo "○ pi-mcp-adapter (optional)"
 pi list | grep -q "pi-review-loop" && echo "✓ pi-review-loop" || echo "○ pi-review-loop (optional)"
 ```

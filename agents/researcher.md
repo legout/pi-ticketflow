@@ -31,7 +31,8 @@ Research the ticket or topic described in the Task input.
    - Back-compat: `.tf/knowledge/tickets/<ticket-id>.md` (if found, reuse and consider migrating into the new location)
 
 4. **Gather sources**:
-   - Use available tools (MCP if configured) or local docs/README files.
+   - Prefer pi-web-access tools when available: `web_search`, `fetch_content`, `get_search_content`.
+   - Otherwise use MCP tools (if configured) or local docs/README files.
    - Focus on relevant APIs, patterns, and constraints.
 
 5. **Write `research.md`** with summary and sources.

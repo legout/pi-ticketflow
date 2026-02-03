@@ -19,6 +19,7 @@ Research the topic slice described in the Task input (e.g., "Docs: X", "Web: Y",
 
 1. **Interpret task**: Identify the topic focus (docs/web/code/etc.).
 2. **Collect sources**:
+   - This agent is only used when pi-web-access is **not** available.
    - Use available tools or local repo docs.
    - If MCP tools are available, prefer those for web/docs/code search.
 3. **Write findings** to `research-fetch.md` with a clear label of the focus.
