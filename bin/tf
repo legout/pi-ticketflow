@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Dict, List
 
-DEFAULT_UVX_SOURCE = "https://github.com/legout/pi-ticketflow"
+DEFAULT_UVX_SOURCE = "git+https://github.com/legout/pi-ticketflow"
 
 def read_root_file(path: Path) -> str:
     try:
@@ -100,19 +100,32 @@ def exec_with_env(cmd: List[str], env: Optional[Dict[str, str]] = None) -> None:
 def main() -> None:
     args = sys.argv[1:]
     uvx = shutil.which("uvx")
+    python = shutil.which("python3") or shutil.which("python")
 
     repo_root = find_repo_root()
-    if repo_root:
-        if uvx:
-            exec_with_env(["uvx", "--from", str(repo_root), "tf", *args])
-        python = shutil.which("python3") or shutil.which("python")
-        if python:
-            env = os.environ.copy()
-            existing = env.get("PYTHONPATH", "")
-            env["PYTHONPATH"] = (
-                f"{repo_root}{os.pathsep}{existing}" if existing else str(repo_root)
-            )
+    
+    # Try local Python module first (works offline) if available
+    if python and repo_root:
+        env = os.environ.copy()
+        existing = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{repo_root}{os.pathsep}{existing}" if existing else str(repo_root)
+        )
+        try:
             exec_with_env([python, "-m", "tf_cli.cli", *args], env)
+        except FileNotFoundError:
+            pass
+
+    # Try local pip install (works offline)
+    if python:
+        try:
+            exec_with_env([python, "-m", "tf_cli.cli", *args])
+        except FileNotFoundError:
+            pass
+
+    # Try uvx with repo root
+    if uvx and repo_root:
+        exec_with_env(["uvx", "--from", str(repo_root), "tf", *args])
 
     uvx_source = find_uvx_source()
     if uvx and uvx_source:
@@ -125,7 +138,6 @@ def main() -> None:
     if uvx:
         exec_with_env(["uvx", "--from", DEFAULT_UVX_SOURCE, "tf", *args])
 
-    python = shutil.which("python3") or shutil.which("python")
     if python:
         exec_with_env([python, "-m", "tf_cli.cli", *args])
 

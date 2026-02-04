@@ -32,17 +32,20 @@ pi install npm:pi-subagents              # Parallel reviewer subagents
 
 ```bash
 # Global install (installs shim to ~/.local/bin/tf)
-uvx --from https://github.com/legout/pi-ticketflow tf install --global
+uvx --from git+https://github.com/legout/pi-ticketflow tf install --global
 
 # Project install
-uvx --from https://github.com/legout/pi-ticketflow tf install --project /path/to/project
+uvx --from git+https://github.com/legout/pi-ticketflow tf install --project /path/to/project
 
 # Local clone (development)
 uvx --from . tf install
+
+# Install with offline support (uvx + pip install)
+uvx --from git+https://github.com/legout/pi-ticketflow tf install --global --force-local
 ```
 
-> Note: Some uvx versions require `git+https://...` instead of a plain URL.
-> Once published to PyPI, this becomes: `uvx tf install`.
+> Note: The `git+` prefix is required for GitHub URLs with uvx.
+> Use `--force-local` to also install locally via pip for offline/resilient operation.
 
 ### Quick Install (via curl, legacy)
 

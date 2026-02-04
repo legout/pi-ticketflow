@@ -151,24 +151,52 @@ def run_legacy(args: list[str]) -> int:
     return subprocess.call(["bash", str(legacy), *args])
 
 
-def render_uvx_shim(uvx_source: str) -> str:
-    return """#!/usr/bin/env python3
+def render_uvx_shim(uvx_source: str, local_install: bool = False) -> str:
+    if local_install:
+        return f"""#!/usr/bin/env python3
 import os
 import shutil
 import sys
 
 
 def main() -> None:
-    uvx = shutil.which(\"uvx\")
-    if not uvx:
-        print(\"ERROR: uvx not found in PATH.\", file=sys.stderr)
-        raise SystemExit(1)
-    os.execvpe(\"uvx\", [\"uvx\", \"--from\", {source!r}, \"tf\", *sys.argv[1:]], os.environ.copy())
+    # Try local Python module first (works offline)
+    python = shutil.which("python3") or shutil.which("python")
+    if python:
+        try:
+            os.execvpe(python, [python, "-m", "tf_cli.cli", *sys.argv[1:]], os.environ.copy())
+        except FileNotFoundError:
+            pass
+
+    # Fallback to uvx (requires internet)
+    uvx = shutil.which("uvx")
+    if uvx:
+        os.execvpe("uvx", ["uvx", "--from", "{uvx_source}", "tf", *sys.argv[1:]], os.environ.copy())
+
+    print("ERROR: Neither Python module nor uvx available", file=sys.stderr)
+    raise SystemExit(1)
 
 
-if __name__ == \"__main__\":
+if __name__ == "__main__":
     main()
-""".format(source=uvx_source)
+"""
+    return f"""#!/usr/bin/env python3
+import os
+import shutil
+import sys
+
+
+def main() -> None:
+    uvx = shutil.which("uvx")
+    if not uvx:
+        print("ERROR: uvx not found in PATH.", file=sys.stderr)
+        raise SystemExit(1)
+    os.execvpe("uvx", ["uvx", "--from", "{uvx_source}", "tf", *sys.argv[1:]], os.environ.copy())
+
+
+if __name__ == "__main__":
+    main()
+"""
 
 
 def install_main(argv: list[str]) -> int:
@@ -181,6 +209,7 @@ def install_main(argv: list[str]) -> int:
     parser.add_argument("--project", help="Install into <path>/.tf/bin/tf")
     parser.add_argument("--path", help="Install shim to an explicit path")
     parser.add_argument("--global", dest="global_install", action="store_true", help="Install to ~/.local/bin (default)")
+    parser.add_argument("--force-local", action="store_true", help="Also install locally via pip for offline use")
 
     args = parser.parse_args(argv)
 
@@ -220,6 +249,8 @@ def install_main(argv: list[str]) -> int:
         if candidate.is_file():
             shim_source = candidate
 
+    local_install = args.force_local or bool(repo_root)
+    
     if shim_source:
         shutil.copy2(shim_source, dest)
         dest.chmod(dest.stat().st_mode | 0o111)
@@ -230,7 +261,7 @@ def install_main(argv: list[str]) -> int:
         print(f"Installed shim to: {dest}")
         print(f"Recorded repo root: {cli_root_file}")
     else:
-        dest.write_text(render_uvx_shim(str(uvx_source)), encoding="utf-8")
+        dest.write_text(render_uvx_shim(str(uvx_source), local_install=local_install), encoding="utf-8")
         dest.chmod(dest.stat().st_mode | 0o111)
 
         print(f"Installed shim to: {dest}")
@@ -238,6 +269,27 @@ def install_main(argv: list[str]) -> int:
     cli_source_file.parent.mkdir(parents=True, exist_ok=True)
     cli_source_file.write_text(str(uvx_source) + "\n", encoding="utf-8")
     print(f"Recorded uvx source: {cli_source_file}")
+
+    # Install locally via pip for offline use if requested
+    if local_install and not shim_source:
+        try:
+            import subprocess
+            if repo_root:
+                result = subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "-e", str(repo_root)],
+                    capture_output=True, text=True
+                )
+            else:
+                result = subprocess.run(
+                    [sys.executable, "-m", "pip", "install", str(uvx_source)],
+                    capture_output=True, text=True
+                )
+            if result.returncode == 0:
+                print("Installed locally via pip for offline use")
+            else:
+                print(f"WARNING: Local pip install failed: {result.stderr}", file=sys.stderr)
+        except Exception as e:
+            print(f"WARNING: Could not install locally: {e}", file=sys.stderr)
 
     ensure_tf_assets(tf_base, repo_root, uvx_source)
 
