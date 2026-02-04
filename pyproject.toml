@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pi-tk-workflow"
+version = "0.0.0"
+description = "Ticketflow CLI"
+requires-python = ">=3.9"
+
+[project.scripts]
+tf = "tf_cli.cli:main"
+
+[tool.setuptools]
+packages = ["tf_cli"]

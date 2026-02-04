@@ -12,6 +12,7 @@ config/install-manifest.txt
 
 # Helper scripts for CLI
 scripts/tf_config.py
+scripts/tf_legacy.sh
 
 agents/reviewer-general.md
 agents/reviewer-spec-audit.md

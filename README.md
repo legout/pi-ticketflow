@@ -28,7 +28,23 @@ pi install npm:pi-model-switch           # Runtime model switching
 pi install npm:pi-subagents              # Parallel reviewer subagents
 ```
 
-### Quick Install (via curl)
+### Install with uvx (recommended)
+
+```bash
+# Global install (installs shim to ~/.local/bin/tf)
+uvx --from https://github.com/legout/pi-ticketflow tf install --global
+
+# Project install
+uvx --from https://github.com/legout/pi-ticketflow tf install --project /path/to/project
+
+# Local clone (development)
+uvx --from . tf install
+```
+
+> Note: Some uvx versions require `git+https://...` instead of a plain URL.
+> Once published to PyPI, this becomes: `uvx tf install`.
+
+### Quick Install (via curl, legacy)
 
 ```bash
 # Global install (installs tf CLI to ~/.local/bin/)
@@ -59,14 +75,17 @@ tf sync
 
 For project installs, use `./.tf/bin/tf` instead (or the global `tf`).
 
-### Manual Install (from cloned repo)
+### Manual Install (from cloned repo, legacy)
 
 ```bash
 # Clone first
 git clone https://github.com/legout/pi-ticketflow.git
 cd pi-ticketflow
 
-# Global install (adds tf to ~/.local/bin/)
+# Preferred (uvx)
+uvx --from . tf install
+
+# Legacy install.sh (curl-style)
 ./install.sh --global
 
 # Project install
@@ -512,7 +531,9 @@ pi-ticketflow/
 ├── skills/                 # Domain expertise
 ├── prompts/                # Command entry points
 ├── workflows/              # Workflow configurations
-├── bin/tf                 # CLI tool
+├── tf_cli/                 # Python CLI package
+├── bin/tf                  # Python shim entrypoint
+├── scripts/tf_legacy.sh    # Legacy bash CLI (install.sh/curl)
 ├── install.sh              # Installation script
 └── docs/                   # Documentation
 ```

@@ -240,6 +240,7 @@ ensure_global_config() {
   local use_remote="$1"
   local dest="$HOME/.tf/config/settings.json"
   local helper_dest="$HOME/.tf/scripts/tf_config.py"
+  local legacy_dest="$HOME/.tf/scripts/tf_legacy.sh"
 
   if [ ! -f "$dest" ]; then
     if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
@@ -265,33 +266,52 @@ ensure_global_config() {
     fi
   fi
 
-  if [ -f "$helper_dest" ]; then
-    return 0
-  fi
-
   if ! mkdir -p "$(dirname "$helper_dest")" 2>/dev/null; then
     log "WARNING: Cannot create $helper_dest"
     return 0
   fi
 
-  if [ "$use_remote" = true ]; then
-    if download_file "$REPO_URL/scripts/tf_config.py" "$helper_dest"; then
-      chmod +x "$helper_dest"
-      log "Created global config helper at: $helper_dest"
-    else
-      log "WARNING: Failed to download global config helper"
-    fi
-    return 0
+  local script_dir=""
+  if [ "$use_remote" != true ]; then
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   fi
 
-  local script_dir
-  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  if [ -f "$script_dir/scripts/tf_config.py" ]; then
-    cp "$script_dir/scripts/tf_config.py" "$helper_dest"
-    chmod +x "$helper_dest"
-    log "Created global config helper at: $helper_dest"
-  else
-    log "WARNING: Missing scripts/tf_config.py; global config helper not created"
+  if [ ! -f "$helper_dest" ]; then
+    if [ "$use_remote" = true ]; then
+      if download_file "$REPO_URL/scripts/tf_config.py" "$helper_dest"; then
+        chmod +x "$helper_dest"
+        log "Created global config helper at: $helper_dest"
+      else
+        log "WARNING: Failed to download global config helper"
+      fi
+    else
+      if [ -f "$script_dir/scripts/tf_config.py" ]; then
+        cp "$script_dir/scripts/tf_config.py" "$helper_dest"
+        chmod +x "$helper_dest"
+        log "Created global config helper at: $helper_dest"
+      else
+        log "WARNING: Missing scripts/tf_config.py; global config helper not created"
+      fi
+    fi
+  fi
+
+  if [ ! -f "$legacy_dest" ]; then
+    if [ "$use_remote" = true ]; then
+      if download_file "$REPO_URL/scripts/tf_legacy.sh" "$legacy_dest"; then
+        chmod +x "$legacy_dest"
+        log "Created global legacy CLI at: $legacy_dest"
+      else
+        log "WARNING: Failed to download legacy CLI"
+      fi
+    else
+      if [ -f "$script_dir/scripts/tf_legacy.sh" ]; then
+        cp "$script_dir/scripts/tf_legacy.sh" "$legacy_dest"
+        chmod +x "$legacy_dest"
+        log "Created global legacy CLI at: $legacy_dest"
+      else
+        log "WARNING: Missing scripts/tf_legacy.sh; legacy CLI not created"
+      fi
+    fi
   fi
 }
 

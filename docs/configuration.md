@@ -6,6 +6,22 @@ Setting up pi-ticketflow, models, extensions, and MCP servers.
 
 ## Installation Methods
 
+### Install with uvx (Recommended)
+
+```bash
+# Global install (installs shim to ~/.local/bin/tf)
+uvx --from https://github.com/legout/pi-ticketflow tf install --global
+
+# Project install
+uvx --from https://github.com/legout/pi-ticketflow tf install --project /path/to/project
+
+# Local clone (development)
+uvx --from . tf install
+```
+
+> Note: Some uvx versions require `git+https://...` instead of a plain URL.
+> Once published to PyPI, this becomes: `uvx tf install`.
+
 ### Interactive Setup (Recommended)
 
 ```bash
@@ -24,7 +40,7 @@ Guides you through:
 - MCP server configuration + API keys
 - Project scaffolding via `tf init`
 
-### Manual Install
+### Manual Install (Legacy)
 
 ```bash
 # Global install

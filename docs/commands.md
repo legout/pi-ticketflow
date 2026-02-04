@@ -357,11 +357,19 @@ Updates `model:` frontmatter in all agent and prompt files based on `config/sett
 
 ## CLI Reference
 
-The `tf` CLI is installed during setup and provides utilities for workflow management.
+The `tf` CLI is a small Python shim that provides utilities for workflow management.
+Install it with uvx (recommended) or via the legacy `install.sh`.
+
+```bash
+uvx --from https://github.com/legout/pi-ticketflow tf install --global
+```
 
 ### Global Install (CLI at `~/.local/bin/tf`)
 
 ```bash
+# Install/refresh CLI shim
+tf install --global               # Explicit global install (default)
+
 # Setup
 tf setup                          # Interactive install + extensions + MCP
 
@@ -404,6 +412,11 @@ tf agentsmd fix                   # Auto-fix common issues
 ### Project Install (CLI at `.tf/bin/tf`)
 
 Use `./.tf/bin/tf` for project installs (or the global `tf`).
+You can install it with:
+
+```bash
+uvx --from https://github.com/legout/pi-ticketflow tf install --project /path/to/project
+```
 
 ```bash
 ./.tf/bin/tf setup
