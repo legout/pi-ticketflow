@@ -7,7 +7,7 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
-DEFAULT_UVX_SOURCE = "https://github.com/legout/pi-ticketflow"
+DEFAULT_UVX_SOURCE = "git+https://github.com/legout/pi-ticketflow"
 DEFAULT_RAW_REPO_URL = "https://raw.githubusercontent.com/legout/pi-ticketflow/main"
 
 
