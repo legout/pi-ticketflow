@@ -476,7 +476,7 @@ Models are configured in `config/settings.json`:
 ```json
 {
   "models": {
-    "implementer": "chutes/moonshotai/Kimi-K2.5-TEE:high",
+    "worker": "chutes/moonshotai/Kimi-K2.5-TEE:high",
     "reviewer": "openai-codex/gpt-5.1-codex-mini",
     "fixer": "zai/glm-4.7"
   }

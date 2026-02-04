@@ -111,7 +111,7 @@ Add a standard pre-step in reviewer prompts:
 **Downside:** More complex prompt logic; reviewers must handle path rewriting.
 
 ### Option C: Change implementation.md to include absolute paths
-Have implementer write absolute file paths in `implementation.md`. This is intrusive and inconsistent with existing conventions.
+Have the main workflow agent write absolute file paths in `implementation.md`. This is intrusive and inconsistent with existing conventions.
 
 ---
 

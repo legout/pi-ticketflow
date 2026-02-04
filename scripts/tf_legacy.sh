@@ -633,7 +633,6 @@ write_default_settings_json() {
     }
   },
   "agents": {
-    "implementer": "worker",
     "reviewer-general": "review-general",
     "reviewer-spec-audit": "review-spec",
     "reviewer-second-opinion": "review-secop",
@@ -1579,7 +1578,7 @@ The Ralph loop can be started via Pi prompt or CLI:
   tf ralph start [--max-iterations N] [--parallel N]
 
 Files:
-  .tf/ralph/AGENTS.md    Lessons learned (read by implementer)
+  .tf/ralph/AGENTS.md    Lessons learned (read by main workflow agent)
   .tf/ralph/progress.md  Loop state and ticket history
   .tf/ralph/config.json  Loop configuration
 EOF
@@ -1596,7 +1595,7 @@ ralph_init() {
 # Ralph Loop: Lessons Learned
 
 This file contains lessons learned during autonomous ticket processing.
-It is read by the implementer at the start of each iteration for re-anchoring.
+It is read by the main workflow agent at the start of each iteration for re-anchoring.
 
 ## How This Works
 
@@ -1785,7 +1784,7 @@ PROGRESS_EOF
 # Ralph Loop: Lessons Learned
 
 This file contains lessons learned during autonomous ticket processing.
-It is read by the implementer at the start of each iteration for re-anchoring.
+It is read by the main workflow agent at the start of each iteration for re-anchoring.
 
 ## How This Works
 

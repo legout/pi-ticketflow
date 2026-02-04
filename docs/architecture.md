@@ -150,7 +150,6 @@ Agents are subagent definitions in `agents/*.md`. They are:
 
 | Agent | Purpose | When Spawned |
 |-------|---------|--------------|
-| `implementer` | Write implementation | After research |
 | `reviewer-general` | General code review | Parallel with others |
 | `reviewer-spec-audit` | Spec compliance check | Parallel with others |
 | `reviewer-second-opinion` | Alternative perspective | Parallel with others |
@@ -259,7 +258,7 @@ Used by skills to switch between phases:
 │     - Write to .tf/knowledge/tickets/{id}/research.md       │
 ├─────────────────────────────────────────────────────────────┤
 │  2. Implement (model-switch)                                │
-│     - Switch to implementer model                           │
+│     - Switch to worker model                                │
 │     - Write implementation.md (ticket artifact dir)         │
 ├─────────────────────────────────────────────────────────────┤
 │  3. Parallel Reviews (subagents)                            │
@@ -351,7 +350,7 @@ Models are configured in `config/settings.json`:
 
 | Role | Default Model | Purpose |
 |------|---------------|---------|
-| implementer | Kimi-K2.5 / Sonnet | Deep reasoning for implementation |
+| worker | Kimi-K2.5 / Sonnet | Deep reasoning for implementation |
 | reviewer-* | GPT-5.1-mini | Fast, capable review |
 | review-merge | GPT-5.1-mini | Deduplication and consolidation |
 | fixer | GLM-4.7 | Cheap fixes |

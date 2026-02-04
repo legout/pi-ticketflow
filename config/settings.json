@@ -42,7 +42,6 @@
     }
   },
   "agents": {
-    "implementer": "worker",
     "reviewer-general": "review-general",
     "reviewer-spec-audit": "review-spec",
     "reviewer-second-opinion": "review-secop",

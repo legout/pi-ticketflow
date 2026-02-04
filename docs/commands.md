@@ -30,7 +30,7 @@ Execute the Implement → Review → Fix → Close workflow on a ticket.
 **Workflow:**
 1. Re-anchor context (load AGENTS.md, lessons, ticket)
 2. Research (optional, MCP tools)
-3. Implement (model-switch to implementer model)
+3. Implement (model-switch to worker model)
 4. Parallel reviews (3 subagents)
 5. Merge reviews (deduplication)
 6. Fix issues

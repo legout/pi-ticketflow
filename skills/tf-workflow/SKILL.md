@@ -147,9 +147,8 @@ Research enabled. No additional external research was performed.
 
 ### Procedure: Implement
 
-1. **Switch to implementer model**:
-   - Look up `agents.implementer` in config → get meta-model key (e.g., "worker")
-   - Look up `metaModels.{key}.model` → get actual model ID
+1. **Switch to worker model**:
+   - Look up `metaModels.worker.model` → get actual model ID
    - ```
      switch_model action="switch" search="{metaModels.worker.model}"
      ```

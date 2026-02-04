@@ -83,7 +83,7 @@ Models are configured in `config/settings.json`:
 ```json
 {
   "models": {
-    "implementer": "chutes/moonshotai/Kimi-K2.5-TEE:high",
+    "worker": "chutes/moonshotai/Kimi-K2.5-TEE:high",
     "reviewer": "openai-codex/gpt-5.1-codex-mini",
     "review-merge": "openai-codex/gpt-5.1-codex-mini",
     "fixer": "zai/glm-4.7",
@@ -98,7 +98,7 @@ Models are configured in `config/settings.json`:
 
 | Role | Recommended Model Type | Purpose |
 |------|------------------------|---------|
-| implementer | Strong (Kimi-K2.5, Sonnet) | Deep reasoning for implementation |
+| worker | Strong (Kimi-K2.5, Sonnet) | Deep reasoning for implementation |
 | reviewer-* | Fast, capable (GPT-5.1-mini) | Code review |
 | review-merge | Cheap (GPT-5.1-mini) | Deduplication |
 | fixer | Cheapest (GLM-4.7) | Apply fixes |

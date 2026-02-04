@@ -161,7 +161,7 @@ If `pi-model-switch` is installed, suggest useful aliases:
 **Suggested content**:
 ```json
 {
-  "tf-implementer": [
+  "tf-worker": [
     "chutes/moonshotai/Kimi-K2.5-TEE",
     "anthropic/claude-sonnet-4",
     "openai-codex/gpt-5.2"

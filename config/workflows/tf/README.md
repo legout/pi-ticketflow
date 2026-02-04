@@ -3,7 +3,7 @@
 This workflow runs a full ticket implementation chain:
 
 1. **Research** (`researcher`, optional)
-2. **Implement** (`implementer`)
+2. **Implement** (worker model)
 3. **Parallel reviews** (`reviewer-general`, `reviewer-spec-audit`, `reviewer-second-opinion`)
 4. **Merge reviews** (`review-merge`)
 5. **Fix** (`fixer`, only if Critical/Major/Minor issues exist)
@@ -128,7 +128,7 @@ Example (partial):
 ```json
 {
   "models": {
-    "implementer": "chutes/moonshotai/Kimi-K2.5-TEE:high",
+    "worker": "chutes/moonshotai/Kimi-K2.5-TEE:high",
     "reviewer-general": "openai-codex/gpt-5.1-codex-mini:high",
     "planning": "openai-codex/gpt-5.1-codex-mini:medium",
     "config": "zai/glm-4.7:medium"
