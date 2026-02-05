@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 DEFAULT_MCP_SERVERS = [
     "context7",
@@ -37,6 +38,75 @@ def read_json(path: Path) -> Dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def read_toml(path: Path) -> Dict:
+    """Parse a TOML file and return as dict.
+
+    Handles basic TOML syntax including:
+    - [section] headers
+    - key = "value" string values
+    - key = true/false booleans
+    - Comments (lines starting with #)
+
+    Args:
+        path: Path to TOML file
+
+    Returns:
+        Dict with nested structure matching TOML sections
+    """
+    if not path.exists():
+        return {}
+    try:
+        content = path.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+
+    result: Dict = {}
+    current_section = result
+
+    for line in content.splitlines():
+        line = line.strip()
+        # Skip empty lines and comments
+        if not line or line.startswith("#"):
+            continue
+
+        # Section header: [section] or [section.subsection]
+        if line.startswith("[") and line.endswith("]"):
+            section_path = line[1:-1].strip()
+            # Navigate/create nested sections
+            parts = section_path.split(".")
+            current = result
+            for part in parts:
+                if part not in current:
+                    current[part] = {}
+                current = current[part]
+            current_section = current
+            continue
+
+        # Key-value pair
+        if "=" in line:
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip()
+
+            # Handle string values (remove quotes)
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1]
+            elif value.startswith("'") and value.endswith("'"):
+                value = value[1:-1]
+            # Handle booleans
+            elif value.lower() == "true":
+                value = True
+            elif value.lower() == "false":
+                value = False
+            # Handle integers
+            elif re.match(r'^-?\d+$', value):
+                value = int(value)
+
+            current_section[key] = value
+
+    return result
 
 
 def merge(a: Dict, b: Dict) -> Dict:
@@ -190,6 +260,91 @@ def get_package_version(project_root: Path) -> Optional[str]:
     return version.strip()
 
 
+def get_pyproject_version(project_root: Path) -> Optional[str]:
+    """Read version from pyproject.toml if it exists.
+
+    Returns the version string if found and valid, None otherwise.
+    Looks for version in [project] section per PEP 621.
+    Validates that the version is a non-empty string.
+    """
+    pyproject_file = project_root / "pyproject.toml"
+    if not pyproject_file.exists():
+        return None
+    data = read_toml(pyproject_file)
+    if not data:
+        return None
+    # PEP 621: version is in [project] section
+    project = data.get("project", {})
+    version = project.get("version")
+    # Validate version is a non-empty string
+    if not isinstance(version, str) or not version.strip():
+        return None
+    return version.strip()
+
+
+def get_cargo_version(project_root: Path) -> Optional[str]:
+    """Read version from Cargo.toml if it exists.
+
+    Returns the version string if found and valid, None otherwise.
+    Looks for version in [package] section.
+    Validates that the version is a non-empty string.
+    """
+    cargo_file = project_root / "Cargo.toml"
+    if not cargo_file.exists():
+        return None
+    data = read_toml(cargo_file)
+    if not data:
+        return None
+    # Cargo.toml: version is in [package] section
+    package = data.get("package", {})
+    version = package.get("version")
+    # Validate version is a non-empty string
+    if not isinstance(version, str) or not version.strip():
+        return None
+    return version.strip()
+
+
+# Priority order for manifest files (first match wins for canonical version)
+MANIFEST_CHECKS = [
+    ("pyproject.toml", get_pyproject_version),
+    ("Cargo.toml", get_cargo_version),
+    ("package.json", get_package_version),
+]
+
+
+def detect_manifest_versions(project_root: Path) -> Tuple[Optional[str], List[str], Dict[str, str]]:
+    """Detect and return versions from all available package manifests.
+
+    Args:
+        project_root: Path to the project root
+
+    Returns:
+        Tuple of (canonical_version, found_manifests, all_versions)
+        - canonical_version: The version from the highest priority manifest, or None
+        - found_manifests: List of manifest filenames that exist
+        - all_versions: Dict mapping manifest name to its version (or "invalid" if unreadable)
+    """
+    found_manifests: List[str] = []
+    all_versions: Dict[str, str] = {}
+    canonical_version: Optional[str] = None
+
+    for manifest_name, version_func in MANIFEST_CHECKS:
+        version = version_func(project_root)
+        manifest_path = project_root / manifest_name
+
+        if manifest_path.exists():
+            found_manifests.append(manifest_name)
+            if version is not None:
+                all_versions[manifest_name] = version
+                # First valid version becomes canonical
+                if canonical_version is None:
+                    canonical_version = version
+            else:
+                all_versions[manifest_name] = "invalid"
+
+    return canonical_version, found_manifests, all_versions
+
+
 def get_version_file_version(project_root: Path) -> Optional[str]:
     """Read version from VERSION file if it exists.
 
@@ -231,12 +386,12 @@ def normalize_version(version: str) -> str:
     return version
 
 
-def sync_version_file(project_root: Path, package_version: str) -> bool:
-    """Sync VERSION file to match package.json version.
+def sync_version_file(project_root: Path, canonical_version: str) -> bool:
+    """Sync VERSION file to match the canonical manifest version.
 
     Args:
         project_root: Path to the project root
-        package_version: The version string from package.json
+        canonical_version: The version string from the canonical manifest
 
     Returns:
         True if the file was created/updated/unchanged, False on error
@@ -244,7 +399,7 @@ def sync_version_file(project_root: Path, package_version: str) -> bool:
     version_file = project_root / "VERSION"
     try:
         # Avoid unnecessary writes by checking current content
-        expected_content = package_version + "\n"
+        expected_content = canonical_version + "\n"
         if version_file.exists():
             try:
                 current_content = version_file.read_text(encoding="utf-8")
@@ -264,77 +419,103 @@ def check_version_consistency(
 ) -> bool:
     """Check that version is consistent across version sources.
 
-    Currently checks:
-    - package.json (canonical source)
+    Checks all supported package manifests:
+    - pyproject.toml (Python, highest priority)
+    - Cargo.toml (Rust)
+    - package.json (Node.js)
     - VERSION file (optional, should match if present)
 
+    Warns if multiple manifests exist with different versions.
     Version strings are normalized (v prefix stripped) before comparison.
     Prints warnings on mismatch. Safe to run offline.
 
     Args:
         project_root: Path to the project root
-        fix: If True, auto-fix VERSION file to match package.json
+        fix: If True, auto-fix VERSION file to match canonical manifest version
         dry_run: If True, show what would be changed without writing files
 
     Returns:
         True if consistent (or would be fixed), False if mismatch and not fixed
     """
-    package_file = project_root / "package.json"
-    package_version = get_package_version(project_root)
+    canonical_version, found_manifests, all_versions = detect_manifest_versions(project_root)
     version_file_version = get_version_file_version(project_root)
 
-    # If no package.json, nothing to check
-    if not package_file.exists():
-        print("[info] No package.json found, skipping version check")
+    # If no package manifests found, nothing to check
+    if not found_manifests:
+        print("[info] No package manifests found (pyproject.toml, Cargo.toml, package.json), skipping version check")
         return True
 
-    # If package.json exists but version is invalid/missing
-    if package_version is None:
-        print("[info] package.json found but version field is missing or invalid")
+    # If manifests exist but none have valid versions
+    if canonical_version is None:
+        print("[info] Package manifest(s) found but no valid version field")
+        for manifest in found_manifests:
+            print(f"       - {manifest}: {all_versions.get(manifest, 'invalid')}")
         return True
 
-    print(f"[ok] package.json version: {package_version}")
+    # Report found manifests and their versions
+    for manifest in found_manifests:
+        version = all_versions.get(manifest, "invalid")
+        if version == "invalid":
+            print(f"[info] {manifest}: version field missing or invalid")
+        else:
+            print(f"[ok] {manifest} version: {version}")
+
+    # Check for version mismatches between manifests
+    if len(found_manifests) > 1:
+        mismatches = []
+        normalized_canonical = normalize_version(canonical_version)
+        for manifest, version in all_versions.items():
+            if version != "invalid" and normalize_version(version) != normalized_canonical:
+                mismatches.append((manifest, version))
+
+        if mismatches:
+            print(f"[warn] Version mismatch between package manifests:")
+            print(f"       Canonical (first valid): {found_manifests[0]} = {canonical_version}")
+            for manifest, version in mismatches:
+                print(f"       Mismatch: {manifest} = {version}")
+            print("       Consider aligning versions across all manifests")
+            # Don't fail the check for manifest mismatches, just warn
 
     # Check VERSION file consistency if it exists
     if version_file_version is not None:
         # Normalize versions for comparison (strip v prefix)
-        normalized_package = normalize_version(package_version)
+        normalized_canonical = normalize_version(canonical_version)
         normalized_file = normalize_version(version_file_version)
 
-        if normalized_file != normalized_package:
+        if normalized_file != normalized_canonical:
             if dry_run:
                 print(
-                    f"[dry-run] Would update VERSION file from {version_file_version} to {package_version}"
+                    f"[dry-run] Would update VERSION file from {version_file_version} to {canonical_version}"
                 )
                 return False
             elif fix:
-                if sync_version_file(project_root, package_version):
+                if sync_version_file(project_root, canonical_version):
                     print(
-                        f"[fixed] VERSION file updated from {version_file_version} to {package_version}"
+                        f"[fixed] VERSION file updated from {version_file_version} to {canonical_version}"
                     )
                     return True
                 return False
             else:
                 print(
-                    f"[warn] VERSION file ({version_file_version}) does not match package.json ({package_version})"
+                    f"[warn] VERSION file ({version_file_version}) does not match {found_manifests[0]} ({canonical_version})"
                 )
                 print(
                     "       To fix: run 'tf doctor --fix' or update VERSION file manually"
                 )
                 return False
         else:
-            print(f"[ok] VERSION file matches package.json: {version_file_version}")
+            print(f"[ok] VERSION file matches: {version_file_version}")
             return True
     else:
         # VERSION file doesn't exist
         if dry_run:
             print(
-                f"[dry-run] Would create VERSION file with version {package_version}"
+                f"[dry-run] Would create VERSION file with version {canonical_version}"
             )
             return False
         elif fix:
-            if sync_version_file(project_root, package_version):
-                print(f"[fixed] VERSION file created with version {package_version}")
+            if sync_version_file(project_root, canonical_version):
+                print(f"[fixed] VERSION file created with version {canonical_version}")
                 return True
             return False
         else:

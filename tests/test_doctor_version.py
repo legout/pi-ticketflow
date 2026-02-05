@@ -20,9 +20,13 @@ import pytest
 
 from tf_cli.doctor_new import (
     check_version_consistency,
+    detect_manifest_versions,
+    get_cargo_version,
     get_package_version,
+    get_pyproject_version,
     get_version_file_version,
     normalize_version,
+    read_toml,
     sync_version_file,
 )
 
@@ -99,6 +103,262 @@ class TestGetPackageVersion:
         result = get_package_version(tmp_path)
         
         assert result is None
+
+
+class TestGetPyprojectVersion:
+    """Tests for get_pyproject_version function."""
+
+    def test_returns_version_from_pyproject_toml(self, tmp_path: Path) -> None:
+        """Should return version string from valid pyproject.toml."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "1.2.3"
+description = "A test project"
+""")
+        
+        result = get_pyproject_version(tmp_path)
+        
+        assert result == "1.2.3"
+
+    def test_returns_none_when_pyproject_toml_missing(self, tmp_path: Path) -> None:
+        """Should return None when pyproject.toml doesn't exist."""
+        result = get_pyproject_version(tmp_path)
+        
+        assert result is None
+
+    def test_returns_none_when_version_missing(self, tmp_path: Path) -> None:
+        """Should return None when version field is missing from [project]."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+description = "A test project"
+""")
+        
+        result = get_pyproject_version(tmp_path)
+        
+        assert result is None
+
+    def test_returns_none_when_project_section_missing(self, tmp_path: Path) -> None:
+        """Should return None when [project] section is missing."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[build-system]
+requires = ["setuptools"]
+""")
+        
+        result = get_pyproject_version(tmp_path)
+        
+        assert result is None
+
+    def test_strips_whitespace_from_version(self, tmp_path: Path) -> None:
+        """Should strip whitespace from version string."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "  1.2.3  "
+""")
+        
+        result = get_pyproject_version(tmp_path)
+        
+        assert result == "1.2.3"
+
+
+class TestGetCargoVersion:
+    """Tests for get_cargo_version function."""
+
+    def test_returns_version_from_cargo_toml(self, tmp_path: Path) -> None:
+        """Should return version string from valid Cargo.toml."""
+        cargo_file = tmp_path / "Cargo.toml"
+        cargo_file.write_text("""
+[package]
+name = "my-crate"
+version = "1.2.3"
+edition = "2021"
+""")
+        
+        result = get_cargo_version(tmp_path)
+        
+        assert result == "1.2.3"
+
+    def test_returns_none_when_cargo_toml_missing(self, tmp_path: Path) -> None:
+        """Should return None when Cargo.toml doesn't exist."""
+        result = get_cargo_version(tmp_path)
+        
+        assert result is None
+
+    def test_returns_none_when_version_missing(self, tmp_path: Path) -> None:
+        """Should return None when version field is missing from [package]."""
+        cargo_file = tmp_path / "Cargo.toml"
+        cargo_file.write_text("""
+[package]
+name = "my-crate"
+edition = "2021"
+""")
+        
+        result = get_cargo_version(tmp_path)
+        
+        assert result is None
+
+    def test_returns_none_when_package_section_missing(self, tmp_path: Path) -> None:
+        """Should return None when [package] section is missing."""
+        cargo_file = tmp_path / "Cargo.toml"
+        cargo_file.write_text("""
+[dependencies]
+serde = "1.0"
+""")
+        
+        result = get_cargo_version(tmp_path)
+        
+        assert result is None
+
+    def test_strips_whitespace_from_version(self, tmp_path: Path) -> None:
+        """Should strip whitespace from version string."""
+        cargo_file = tmp_path / "Cargo.toml"
+        cargo_file.write_text("""
+[package]
+name = "my-crate"
+version = "  1.2.3  "
+""")
+        
+        result = get_cargo_version(tmp_path)
+        
+        assert result == "1.2.3"
+
+
+class TestReadToml:
+    """Tests for read_toml function."""
+
+    def test_parses_simple_toml(self, tmp_path: Path) -> None:
+        """Should parse a simple TOML file."""
+        toml_file = tmp_path / "test.toml"
+        toml_file.write_text("""
+[project]
+name = "test"
+version = "1.0.0"
+
+[build-system]
+requires = ["setuptools"]
+""")
+        
+        result = read_toml(toml_file)
+        
+        assert result["project"]["name"] == "test"
+        assert result["project"]["version"] == "1.0.0"
+
+    def test_parses_nested_sections(self, tmp_path: Path) -> None:
+        """Should parse TOML with nested sections."""
+        toml_file = tmp_path / "test.toml"
+        toml_file.write_text("""
+[package]
+name = "my-package"
+version = "2.0.0"
+
+[dependencies.serde]
+version = "1.0"
+""")
+        
+        result = read_toml(toml_file)
+        
+        assert result["package"]["name"] == "my-package"
+        assert result["dependencies"]["serde"]["version"] == "1.0"
+
+    def test_skips_comments(self, tmp_path: Path) -> None:
+        """Should skip full-line comment lines."""
+        toml_file = tmp_path / "test.toml"
+        toml_file.write_text("""
+# This is a comment
+[project]
+name = "test"
+version = "1.0.0"
+# Another comment
+""")
+        
+        result = read_toml(toml_file)
+        
+        assert result["project"]["name"] == "test"
+        assert result["project"]["version"] == "1.0.0"
+
+    def test_returns_empty_dict_for_missing_file(self, tmp_path: Path) -> None:
+        """Should return empty dict when file doesn't exist."""
+        result = read_toml(tmp_path / "nonexistent.toml")
+        
+        assert result == {}
+
+    def test_parses_boolean_values(self, tmp_path: Path) -> None:
+        """Should parse boolean values."""
+        toml_file = tmp_path / "test.toml"
+        toml_file.write_text("""
+[tool]
+enabled = true
+disabled = false
+""")
+        
+        result = read_toml(toml_file)
+        
+        assert result["tool"]["enabled"] is True
+        assert result["tool"]["disabled"] is False
+
+
+class TestDetectManifestVersions:
+    """Tests for detect_manifest_versions function."""
+
+    def test_detects_single_manifest(self, tmp_path: Path) -> None:
+        """Should detect a single manifest file."""
+        package_file = tmp_path / "package.json"
+        package_file.write_text(json.dumps({"version": "1.2.3"}))
+        
+        canonical, found, versions = detect_manifest_versions(tmp_path)
+        
+        assert canonical == "1.2.3"
+        assert found == ["package.json"]
+        assert versions == {"package.json": "1.2.3"}
+
+    def test_detects_multiple_manifests(self, tmp_path: Path) -> None:
+        """Should detect multiple manifest files."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "1.0.0"
+""")
+        package_file = tmp_path / "package.json"
+        package_file.write_text(json.dumps({"version": "2.0.0"}))
+        
+        canonical, found, versions = detect_manifest_versions(tmp_path)
+        
+        # pyproject.toml has priority
+        assert canonical == "1.0.0"
+        assert found == ["pyproject.toml", "package.json"]
+        assert versions == {"pyproject.toml": "1.0.0", "package.json": "2.0.0"}
+
+    def test_handles_invalid_version_in_manifest(self, tmp_path: Path) -> None:
+        """Should handle manifests with invalid/missing versions."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+""")
+        package_file = tmp_path / "package.json"
+        package_file.write_text(json.dumps({"version": "1.2.3"}))
+        
+        canonical, found, versions = detect_manifest_versions(tmp_path)
+        
+        # pyproject.toml exists but has no version, so package.json becomes canonical
+        assert canonical == "1.2.3"
+        assert found == ["pyproject.toml", "package.json"]
+        assert versions == {"pyproject.toml": "invalid", "package.json": "1.2.3"}
+
+    def test_returns_none_when_no_manifests(self, tmp_path: Path) -> None:
+        """Should return None when no manifests exist."""
+        canonical, found, versions = detect_manifest_versions(tmp_path)
+        
+        assert canonical is None
+        assert found == []
+        assert versions == {}
 
 
 class TestGetVersionFileVersion:
@@ -263,12 +523,12 @@ class TestCheckVersionConsistency:
     """Tests for check_version_consistency function."""
 
     def test_returns_true_when_no_package_json(self, tmp_path: Path, capsys) -> None:
-        """Should return True when no package.json exists."""
+        """Should return True when no package manifests exist."""
         result = check_version_consistency(tmp_path)
         
         assert result is True
         captured = capsys.readouterr()
-        assert "No package.json found" in captured.out
+        assert "No package manifests found" in captured.out
 
     def test_returns_true_when_package_json_has_no_version(self, tmp_path: Path, capsys) -> None:
         """Should return True when package.json has no version field."""
@@ -279,7 +539,7 @@ class TestCheckVersionConsistency:
         
         assert result is True
         captured = capsys.readouterr()
-        assert "version field is missing or invalid" in captured.out
+        assert "Package manifest(s) found but no valid version field" in captured.out
 
     def test_returns_true_when_only_package_json_exists(self, tmp_path: Path, capsys) -> None:
         """Should return True when only package.json exists with valid version."""
@@ -304,7 +564,7 @@ class TestCheckVersionConsistency:
         
         assert result is True
         captured = capsys.readouterr()
-        assert "VERSION file matches package.json" in captured.out
+        assert "VERSION file matches" in captured.out
 
     def test_returns_true_with_v_prefix_normalization(self, tmp_path: Path, capsys) -> None:
         """Should return True when versions match after v prefix normalization."""
@@ -317,7 +577,7 @@ class TestCheckVersionConsistency:
         
         assert result is True
         captured = capsys.readouterr()
-        assert "VERSION file matches package.json" in captured.out
+        assert "VERSION file matches" in captured.out
 
     def test_returns_false_when_versions_mismatch(self, tmp_path: Path, capsys) -> None:
         """Should return False when VERSION file doesn't match package.json."""
@@ -330,7 +590,7 @@ class TestCheckVersionConsistency:
         
         assert result is False
         captured = capsys.readouterr()
-        assert "does not match package.json" in captured.out
+        assert "does not match" in captured.out
 
     def test_fix_creates_version_file_when_missing(self, tmp_path: Path, capsys) -> None:
         """Should create VERSION file when fix=True and file is missing."""
@@ -386,3 +646,97 @@ class TestCheckVersionConsistency:
         assert version_file.read_text().strip() == "0.9.0"  # Unchanged
         captured = capsys.readouterr()
         assert "Would update VERSION file" in captured.out
+
+
+class TestMultiLanguageVersionCheck:
+    """Tests for multi-language version checking with pyproject.toml and Cargo.toml."""
+
+    def test_pyproject_toml_priority_over_package_json(self, tmp_path: Path, capsys) -> None:
+        """Should use pyproject.toml as canonical source when both exist."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "2.0.0"
+""")
+        package_file = tmp_path / "package.json"
+        package_file.write_text(json.dumps({"version": "1.0.0"}))
+        
+        result = check_version_consistency(tmp_path)
+        
+        assert result is True
+        captured = capsys.readouterr()
+        assert "[ok] pyproject.toml version: 2.0.0" in captured.out
+        assert "[ok] package.json version: 1.0.0" in captured.out
+        assert "Would create VERSION file" in captured.out or "No VERSION file found" in captured.out
+
+    def test_warns_on_manifest_version_mismatch(self, tmp_path: Path, capsys) -> None:
+        """Should warn when multiple manifests have different versions."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "1.0.0"
+""")
+        cargo_file = tmp_path / "Cargo.toml"
+        cargo_file.write_text("""
+[package]
+name = "my-crate"
+version = "2.0.0"
+""")
+        
+        result = check_version_consistency(tmp_path)
+        
+        assert result is True  # Warning, not failure
+        captured = capsys.readouterr()
+        assert "Version mismatch between package manifests" in captured.out
+        assert "pyproject.toml = 1.0.0" in captured.out
+        assert "Cargo.toml = 2.0.0" in captured.out
+
+    def test_cargo_toml_alone(self, tmp_path: Path, capsys) -> None:
+        """Should work with only Cargo.toml present."""
+        cargo_file = tmp_path / "Cargo.toml"
+        cargo_file.write_text("""
+[package]
+name = "my-crate"
+version = "3.0.0"
+""")
+        
+        result = check_version_consistency(tmp_path)
+        
+        assert result is True
+        captured = capsys.readouterr()
+        assert "[ok] Cargo.toml version: 3.0.0" in captured.out
+
+    def test_pyproject_toml_alone(self, tmp_path: Path, capsys) -> None:
+        """Should work with only pyproject.toml present."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "4.0.0"
+""")
+        
+        result = check_version_consistency(tmp_path)
+        
+        assert result is True
+        captured = capsys.readouterr()
+        assert "[ok] pyproject.toml version: 4.0.0" in captured.out
+
+    def test_version_file_syncs_with_pyproject(self, tmp_path: Path, capsys) -> None:
+        """Should sync VERSION file with pyproject.toml when using --fix."""
+        pyproject_file = tmp_path / "pyproject.toml"
+        pyproject_file.write_text("""
+[project]
+name = "my-project"
+version = "5.0.0"
+""")
+        
+        result = check_version_consistency(tmp_path, fix=True)
+        
+        assert result is True
+        version_file = tmp_path / "VERSION"
+        assert version_file.exists()
+        assert version_file.read_text().strip() == "5.0.0"
+        captured = capsys.readouterr()
+        assert "VERSION file created" in captured.out
