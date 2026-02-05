@@ -1,7 +1,7 @@
 import sys
 from typing import Optional, List
 
-from . import agentsmd_new, backlog_ls_new, doctor_new, init_new, login_new, next_new, ralph_new, sync_new, track_new, update_new
+from . import agentsmd_new, backlog_ls_new, doctor_new, init_new, login_new, next_new, ralph_new, setup_new, sync_new, track_new, update_new
 
 
 def usage() -> None:
@@ -16,6 +16,7 @@ Usage:
   tf new login [--project <path>] [--global]
   tf new next [--project <path>]
   tf new ralph <subcommand> [options]
+  tf new setup [--project <path>] [--global]
   tf new sync [--project <path>] [--global]
   tf new track <path> [--file <files_changed_path>]
   tf new update [--project <path>] [--global]
@@ -28,6 +29,7 @@ Commands:
   login      Configure API keys for web search and MCP servers
   next       Print the next ready ticket id
   ralph      Python implementation of Ralph loop (start/run)
+  setup      Install Pi/TF assets and extensions
   sync       Sync model frontmatter from config
   track      Append a file to files_changed.txt
   update     Download latest agents/skills/prompts
@@ -60,6 +62,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         return next_new.main(rest)
     if command == "ralph":
         return ralph_new.main(rest)
+    if command == "setup":
+        return setup_new.main(rest)
     if command == "sync":
         return sync_new.main(rest)
     if command == "track":
