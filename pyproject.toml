@@ -4,9 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pi-tk-workflow"
-version = "0.0.0"
+dynamic = ["version"]
 description = "Ticketflow CLI"
 requires-python = ">=3.9"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
 
 [project.scripts]
 tf = "tf_cli.cli:main"
