@@ -23,7 +23,7 @@ Generate small, actionable implementation tickets from seed (greenfield), baseli
 ## Options
 
 - `--no-deps` - Skip automatic dependency inference for seed/baseline backlogs
-- `--no-component-tags` - Skip automatic component tag suggestion during ticket creation
+- `--no-component-tags` - Skip automatic component tag assignment during ticket creation
 - `--no-links` - Skip automatic linking of related tickets
 
 ## Examples
@@ -57,7 +57,7 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags tf,backlog \
+     --tags tf,backlog,<component-tags> \
      --type task \
      --priority 2 \
      --external-ref "{topic-id}"
@@ -68,7 +68,7 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags tf,backlog,baseline \
+     --tags tf,backlog,baseline,<component-tags> \
      --type task \
      --priority 2 \
      --external-ref "{topic-id}"
@@ -79,7 +79,7 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    ```bash
    tk create "<title>" \
      --description "<description>" \
-     --tags tf,backlog,plan \
+     --tags tf,backlog,plan,<component-tags> \
      --type task \
      --priority 2 \
      --external-ref "{topic-id}"
@@ -107,11 +107,25 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    - Skip dependencies unless explicitly stated in source docs
    - Apply with `tk dep <id> <dep-id>`
 
-8. Suggest component tags (if `--no-component-tags` NOT provided):
-   - Analyze each ticket's title and description
-   - Suggest `component:*` tags for parallel scheduling safety
-   - Apply to ticket tags during creation
-   - If skipped, users can run `/tf-tags-suggest --apply` later
+8. **Apply component tags by default** (skip if `--no-component-tags` provided):
+   - For each ticket, analyze title and description using the component classifier
+   - Import and use `tf_cli.component_classifier.classify_components()`:
+     ```python
+     from tf_cli.component_classifier import classify_components, format_tags_for_tk
+     
+     result = classify_components(title, description)
+     component_tags = result.tags  # e.g., ['component:cli', 'component:tests']
+     ```
+   - Apply component tags to tickets during creation via `--tags`:
+     ```bash
+     tk create "<title>" \
+       --description "<description>" \
+       --tags "tf,backlog,component:cli" \
+       ...
+     ```
+   - Only assign tags when the classifier returns confident matches
+   - Tickets without confident component matches are left untagged (no random tagging)
+   - If skipped, users can re-run tagging later via `/tf-tags-suggest --apply`
 
 9. Link related tickets (if `--no-links` NOT provided):
    - Link tickets that are tightly related for discoverability

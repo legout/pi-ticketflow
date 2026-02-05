@@ -1,6 +1,6 @@
 ---
 id: ptw-xwlc
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T14:00:22Z
@@ -29,3 +29,19 @@ Ralph parallel processing and backlog filtering rely on consistent component tag
 ## References
 - Seed: seed-backlog-deps-and-tags
 
+
+## Notes
+
+**2026-02-05T16:40:16Z**
+
+Implemented: Updated /tf-backlog to apply component:* tags by default
+
+Changes:
+- Modified prompts/tf-backlog.md to enable automatic component tagging
+- Component tags are now applied during ticket creation using tf_cli.component_classifier
+- Added --no-component-tags flag for opt-out
+- All 24 component classifier tests pass
+
+The classifier analyzes ticket titles/descriptions and assigns tags like component:cli, component:tests, etc. when confident matches are found. Tickets without confident matches remain untagged.
+
+Documentation includes fallback path via /tf-tags-suggest --apply for re-tagging.
