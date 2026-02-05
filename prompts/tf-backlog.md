@@ -108,8 +108,9 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    - Apply with `tk dep <id> <dep-id>`
 
 8. **Apply component tags by default** (skip if `--no-component-tags` provided):
-   - For each ticket, analyze title and description using the component classifier
-   - Import and use `tf_cli.component_classifier.classify_components()`:
+   - For each ticket, analyze title and description using the shared component classifier
+   - Import and use `tf_cli.component_classifier.classify_components()` - the same
+     module used by `/tf-tags-suggest` to ensure consistent suggestions:
      ```python
      from tf_cli.component_classifier import classify_components, format_tags_for_tk
      

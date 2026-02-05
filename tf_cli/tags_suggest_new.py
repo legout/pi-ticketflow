@@ -1,4 +1,18 @@
-"""Suggest component tags for tickets using the conservative keyword classifier."""
+"""Suggest component tags for tickets using the conservative keyword classifier.
+
+This module provides CLI commands for component tag suggestion. It uses the
+shared `tf_cli.component_classifier` module as the single source of truth for
+classification logic, ensuring consistency with `/tf-backlog` automatic tagging.
+
+Commands:
+    tf new tags-suggest - Suggest tags for a ticket or text
+    tf new tags-classify - Classify arbitrary text
+    tf new tags-keywords - Show the keyword mapping documentation
+
+The shared classifier ensures that both `/tf-backlog` (during ticket creation)
+and `/tf-tags-suggest` (as a fallback/explicit tool) produce consistent
+component:* tag suggestions.
+"""
 
 from __future__ import annotations
 

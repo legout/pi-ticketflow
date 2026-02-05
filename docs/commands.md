@@ -285,6 +285,11 @@ Generates 5-15 small tickets (skipping duplicates already listed in `backlog.md`
 - Dependencies inferred for plan work plans (applied via `tk dep`)
 - `backlog.md` written to topic directory
 
+**Component Tag Assignment:**
+`/tf-backlog` uses the shared `tf_cli.component_classifier` module to automatically
+assign `component:*` tags based on keyword matching in ticket titles and descriptions.
+This ensures consistency with `/tf-tags-suggest`, which uses the same classifier.
+
 **Fallback Workflow:**
 When inference is incomplete or you used opt-out flags, correct with:
 ```
@@ -331,6 +336,11 @@ Suggest missing `component:*` tags for open tickets.
 
 **Purpose:**
 Component tags enable safe parallel scheduling in Ralph. Run this after `/tf-backlog` if tickets lack component tags.
+
+**Shared Classifier:**
+This command uses the same `tf_cli.component_classifier` module as `/tf-backlog`,
+ensuring consistent `component:*` suggestions whether tags are assigned during
+backlog creation or via explicit suggestion.
 
 **Example:**
 ```

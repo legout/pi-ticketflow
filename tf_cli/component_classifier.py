@@ -3,6 +3,23 @@
 Maps keywords in ticket titles/descriptions to component tags.
 Designed to be simple, explainable, and easy to extend.
 
+**Shared Source of Truth**
+This module is the single source of truth for component classification across
+the ticketflow system. Both `/tf-backlog` and `/tf-tags-suggest` use this module
+to ensure consistent `component:*` tag suggestions.
+
+**Usage in `/tf-backlog`:**
+Automatically assigns component tags when creating tickets from seeds, baselines,
+or plans. Used during ticket creation to set initial tags.
+
+**Usage in `/tf-tags-suggest`:**
+Provides fallback tag suggestions when automatic tagging misses or when
+explicitly requested via the CLI command.
+
+**Consumers:**
+- `tf_cli.tags_suggest_new` - CLI commands: `tf new tags-suggest`, `tf new tags-classify`
+- `prompts/tf-backlog.md` - Backlog generation with `--tags` assignment
+
 Example:
     >>> from tf_cli.component_classifier import classify_components
     >>> result = classify_components("Add --version flag to CLI")
