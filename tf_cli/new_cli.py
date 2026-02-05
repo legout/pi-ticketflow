@@ -1,7 +1,7 @@
 import sys
 from typing import Optional, List
 
-from . import ralph_new
+from . import ralph_new, sync_new, update_new
 
 
 def usage() -> None:
@@ -10,9 +10,13 @@ def usage() -> None:
 
 Usage:
   tf new ralph <subcommand> [options]
+  tf new sync [--project <path>] [--global]
+  tf new update [--project <path>] [--global]
 
 Commands:
   ralph   Python implementation of Ralph loop (start/run)
+  sync    Sync model frontmatter from config
+  update  Download latest agents/skills/prompts
 """
     )
 
@@ -30,6 +34,10 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if command == "ralph":
         return ralph_new.main(rest)
+    if command == "sync":
+        return sync_new.main(rest)
+    if command == "update":
+        return update_new.main(rest)
 
     print(f"Unknown 'new' subcommand: {command}", file=sys.stderr)
     usage()
