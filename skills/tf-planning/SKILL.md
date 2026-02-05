@@ -457,6 +457,7 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
    - **Default chain**: Create a simple linear dependency chain in ticket creation order
    - Each ticket N depends on ticket N-1 (the previous ticket created)
    - Apply with `tk dep <id> <dep-id>` (one command per dependency)
+   - **Out-of-order creation**: The chain is based on creation sequence, not ticket IDs. If ticket 5 is created before ticket 3, ticket 5 will have no dependency (first created) and ticket 3 will depend on ticket 5 (if created second). To correct this, manually adjust with `tk dep <ticket-3> <ticket-5>` and `tk dep <ticket-5> --remove`.
    - **Hint-based override**: If seed content suggests a different order, adjust the chain:
      - Look for keywords in titles/descriptions: "setup", "configure", "define", "design", "implement", "test"
      - "Setup"/"Configure" → comes first

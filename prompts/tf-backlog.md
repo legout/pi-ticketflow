@@ -120,6 +120,7 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    - **Default chain**: Create a simple linear dependency chain in ticket creation order
    - Each ticket N depends on ticket N-1 (the previous one created)
    - Apply with `tk dep <id> <dep-id>`
+   - **Out-of-order creation**: The chain reflects creation sequence, not ticket ID order. If you create ticket 5 before ticket 3, ticket 5 becomes the chain head and ticket 3 depends on it. To fix: `tk dep <ticket-3> <ticket-5>` then `tk dep <ticket-5> --remove`.
    - **Hint-based override**: If seed content suggests a different order (e.g., keywords like "define", "implement", "test", "setup", "configure"), adjust the chain to match the logical sequence:
      - "Setup" or "Configure" tasks come first
      - "Define" or "Design" tasks come before "Implement"
