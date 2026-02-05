@@ -225,11 +225,20 @@ def sync_version_file(project_root: Path, package_version: str) -> bool:
         package_version: The version string from package.json
 
     Returns:
-        True if the file was created/updated, False otherwise
+        True if the file was created/updated/unchanged, False on error
     """
     version_file = project_root / "VERSION"
     try:
-        version_file.write_text(package_version + "\n", encoding="utf-8")
+        # Avoid unnecessary writes by checking current content
+        expected_content = package_version + "\n"
+        if version_file.exists():
+            try:
+                current_content = version_file.read_text(encoding="utf-8")
+                if current_content == expected_content:
+                    return True  # No change needed
+            except Exception:
+                pass  # Continue with write if read fails
+        version_file.write_text(expected_content, encoding="utf-8")
         return True
     except Exception as exc:
         print(f"[error] Failed to write VERSION file at {version_file}: {exc}")

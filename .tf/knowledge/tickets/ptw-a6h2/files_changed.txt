@@ -1,0 +1,3 @@
+tests/__init__.py
+tests/test_doctor_version.py
+tf_cli/doctor_new.py
