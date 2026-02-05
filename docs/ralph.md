@@ -98,7 +98,9 @@ done
   "includeKnowledgeBase": true,
   "includePlanningDocs": true,
   "promiseOnComplete": true,
-  "lessonsMaxCount": 50
+  "lessonsMaxCount": 50,
+  "sessionDir": ".tf/ralph/sessions",
+  "sessionPerTicket": true
 }
 ```
 
@@ -113,6 +115,8 @@ done
 | `sleepBetweenTickets` | 5000 | Ms to wait between tickets |
 | `promiseOnComplete` | true | Emit `<promise>COMPLETE</promise>` on completion |
 | `lessonsMaxCount` | 50 | Max lessons before pruning |
+| `sessionDir` | `.tf/ralph/sessions` | Directory for saved session files |
+| `sessionPerTicket` | `true` | Write one session file per ticket (false = one per loop) |
 
 ---
 

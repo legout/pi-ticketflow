@@ -1674,6 +1674,8 @@ PROGRESS_EOF
   "includePlanningDocs": true,
   "promiseOnComplete": true,
   "lessonsMaxCount": 50,
+  "sessionDir": ".tf/ralph/sessions",
+  "sessionPerTicket": true,
   "parallelWorkers": 1,
   "parallelWorktreesDir": ".tf/ralph/worktrees",
   "parallelAllowUntagged": false,

@@ -81,7 +81,9 @@ Controlled by `promiseOnComplete` (default: true).
   "includeKnowledgeBase": true,
   "includePlanningDocs": true,
   "promiseOnComplete": true,
-  "lessonsMaxCount": 50
+  "lessonsMaxCount": 50,
+  "sessionDir": ".tf/ralph/sessions",
+  "sessionPerTicket": true
 }
 ```
 
