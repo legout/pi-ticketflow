@@ -743,6 +743,706 @@ tags: [security]
         mock_confirm.assert_called_once()
 
 
+class TestRubricMappingComprehensive:
+    """Comprehensive tests for rubric mapping and keyword rules."""
+
+    def test_p0_security_keywords_all(self):
+        """Test all P0 security keywords trigger P0 classification."""
+        security_keywords = [
+            "security vulnerability",
+            "CVE-2024-1234",
+            "exploit in authentication",
+            "data breach detected",
+            "XSS vulnerability found",
+            "SQL injection possible",
+            "auth bypass vulnerability",
+            "unauthorized access",
+        ]
+        for kw in security_keywords:
+            ticket = {"title": f"Fix {kw}", "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P0", f"Expected P0 for '{kw}', got {priority}"
+
+    def test_p0_data_keywords(self):
+        """Test P0 data loss/corruption keywords."""
+        data_keywords = [
+            "data loss in production",
+            "database corruption detected",
+            "need rollback immediately",
+            "data recovery required",
+            "data integrity violation",
+        ]
+        for kw in data_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P0", f"Expected P0 for '{kw}', got {priority}"
+
+    def test_p0_system_keywords(self):
+        """Test P0 system outage/crash keywords."""
+        system_keywords = [
+            "system outage",
+            "service is down",
+            "app crashes on launch",
+            "server crashing repeatedly",
+            "OOM killer activated",
+            "deadlock in production",
+            "panic in main thread",
+            "segfault in library",
+            "infinite loop detected",
+        ]
+        for kw in system_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P0", f"Expected P0 for '{kw}', got {priority}"
+
+    def test_p0_compliance_keywords(self):
+        """Test P0 compliance/regulatory keywords."""
+        compliance_keywords = [
+            "GDPR violation",
+            "legal requirement not met",
+            "compliance violation found",
+            "regulatory audit failure",
+        ]
+        for kw in compliance_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P0", f"Expected P0 for '{kw}', got {priority}"
+
+    def test_p1_user_impact_keywords(self):
+        """Test P1 user-facing impact keywords."""
+        impact_keywords = [
+            "user-facing bug in checkout",
+            "customer reported issue",
+            "regression in payment flow",
+            "broken login button",
+            "feature not working",
+        ]
+        for kw in impact_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P1", f"Expected P1 for '{kw}', got {priority}"
+
+    def test_p1_release_blocker_keywords(self):
+        """Test P1 release blocker keywords."""
+        blocker_keywords = [
+            "release blocker for v2.0",
+            "milestone requirement",
+            "launch blocking issue",
+            "blocking release deployment",
+        ]
+        for kw in blocker_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P1", f"Expected P1 for '{kw}', got {priority}"
+
+    def test_p1_performance_keywords(self):
+        """Test P1 performance degradation keywords."""
+        perf_keywords = [
+            "slow response times",
+            "request timeout errors",
+            "memory leak detected",
+            "high CPU usage",
+            "performance degradation observed",
+        ]
+        for kw in perf_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P1", f"Expected P1 for '{kw}', got {priority}"
+
+    def test_p1_correctness_keywords(self):
+        """Test P1 correctness/data accuracy keywords."""
+        correctness_keywords = [
+            "wrong results in calculations",
+            "calculation error in totals",
+            "data inconsistency detected",
+        ]
+        for kw in correctness_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "bug"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P1", f"Expected P1 for '{kw}', got {priority}"
+
+    def test_p2_standard_work_keywords(self):
+        """Test P2 standard feature work keywords."""
+        feature_keywords = [
+            "implement new dashboard",
+            "add support for webhooks",
+            "enhancement to user profile",
+            "new capability for exports",
+        ]
+        for kw in feature_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "feature"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P2", f"Expected P2 for '{kw}', got {priority}"
+
+    def test_p2_integration_keywords(self):
+        """Test P2 integration/API keywords."""
+        integration_keywords = [
+            "API endpoint needed",
+            "webhook integration",
+            "export to CSV",
+            "import from external system",
+            "third-party integration",
+        ]
+        for kw in integration_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "feature"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P2", f"Expected P2 for '{kw}', got {priority}"
+
+    def test_p3_quality_keywords(self):
+        """Test P3 code quality/architecture keywords."""
+        quality_keywords = [
+            ("address tech debt", "P3"),
+            ("improve architecture design", "P3"),
+            ("redesign module structure", "P3"),
+        ]
+        for kw, expected in quality_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == expected, f"Expected {expected} for '{kw}', got {priority}"
+
+    def test_p3_dx_keywords(self):
+        """Test P3 developer experience keywords."""
+        dx_keywords = [
+            "improve DX for new devs",
+            "optimize dev workflow",
+            "reduce build time",
+            "improve CI/CD pipeline",
+            "better developer experience",
+        ]
+        for kw in dx_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P3", f"Expected P3 for '{kw}', got {priority}"
+
+    def test_p3_observability_keywords(self):
+        """Test P3 observability keywords."""
+        obs_keywords = [
+            "add metrics collection",
+            "improve logging",
+            "distributed tracing",
+            "monitoring dashboard",
+            "alerting rules",
+        ]
+        for kw in obs_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P3", f"Expected P3 for '{kw}', got {priority}"
+
+    def test_p3_testing_keywords(self):
+        """Test P3 testing infrastructure keywords."""
+        # Note: "integration" and "API" are P2 keywords, so mixed phrases
+        # will match P2 first before P3's "testing" keyword
+        testing_keywords = [
+            ("improve test coverage", "P3"),
+            ("add integration tests", "P2"),  # "integration" matches P2 first
+            ("load tests for API", "P2"),  # "API" matches P2 first
+            ("test infrastructure improvements", "P3"),
+        ]
+        for kw, expected in testing_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == expected, f"Expected {expected} for '{kw}', got {priority}"
+
+    def test_p4_polish_keywords(self):
+        """Test P4 polish/cosmetic keywords."""
+        polish_keywords = [
+            "fix typo in README",
+            "formatting cleanup",
+            "lint fixes",
+            "naming convention updates",
+            "cosmetic changes only",
+            "whitespace cleanup",
+        ]
+        for kw in polish_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P4", f"Expected P4 for '{kw}', got {priority}"
+
+    def test_p4_docs_keywords(self):
+        """Test P4 documentation keywords."""
+        docs_keywords = [
+            "update docs",
+            "improve README",
+            "add code comments",
+            "docstrings for modules",
+            "documentation improvements",
+        ]
+        for kw in docs_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P4", f"Expected P4 for '{kw}', got {priority}"
+
+    def test_p4_types_keywords(self):
+        """Test P4 type hints/typing keywords."""
+        type_keywords = [
+            "add type hints",
+            "fix mypy errors",
+            "improve type safety",
+            "typing annotations",
+        ]
+        for kw in type_keywords:
+            ticket = {"title": kw, "description": "", "tags": [], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == "P4", f"Expected P4 for '{kw}', got {priority}"
+
+    def test_tag_map_comprehensive(self):
+        """Test all TAG_MAP entries work correctly."""
+        tag_tests = [
+            ("security", "P0"),
+            ("cve", "P0"),
+            ("critical", "P0"),
+            ("data-loss", "P0"),
+            ("outage", "P0"),
+            ("bug", "P1"),
+            ("regression", "P1"),
+            ("performance", "P1"),
+            ("blocker", "P1"),
+            ("feature", "P2"),
+            ("enhancement", "P2"),
+            ("refactor", "P3"),
+            ("tech-debt", "P3"),
+            ("dx", "P3"),
+            ("ci/cd", "P3"),
+            ("testing", "P3"),
+            ("docs", "P4"),
+            ("documentation", "P4"),
+            ("typo", "P4"),
+            ("style", "P4"),
+            ("typing", "P4"),
+        ]
+        for tag, expected_priority in tag_tests:
+            ticket = {"title": "Test", "description": "", "tags": [tag], "type": "task"}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == expected_priority, f"Expected {expected_priority} for tag '{tag}', got {priority}"
+
+    def test_type_defaults(self):
+        """Test TYPE_DEFAULTS mapping."""
+        type_tests = [
+            ("bug", "P1"),
+            ("feature", "P2"),
+            ("enhancement", "P2"),
+            ("task", "P3"),
+            ("chore", "P3"),
+            ("docs", "P4"),
+        ]
+        for ticket_type, expected_priority in type_tests:
+            ticket = {"title": "Test", "description": "", "tags": [], "type": ticket_type}
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == expected_priority, f"Expected {expected_priority} for type '{ticket_type}', got {priority}"
+
+    def test_priority_override_tags_take_precedence(self):
+        """Test that tags take precedence over description keywords."""
+        # Description says "security" but tag says "docs" -> should be P4
+        ticket = {
+            "title": "Security review",
+            "description": "critical security vulnerability",
+            "tags": ["docs"],
+            "type": "task",
+        }
+        priority, reason = pr.classify_priority(ticket)
+        assert priority == "P4", f"Tags should take precedence: expected P4, got {priority}"
+        assert "Tag match" in reason
+
+    def test_unknown_when_ambiguous(self):
+        """Test that ambiguous tickets return unknown."""
+        ticket = {
+            "title": "Some work item",
+            "description": "Description with no clear indicators",
+            "tags": [],
+            "type": "",
+        }
+        priority, reason = pr.classify_priority(ticket)
+        assert priority == "unknown"
+        assert "No clear rubric match" in reason
+
+
+class TestFrontmatterPreservation:
+    """Tests that frontmatter patching preserves unrelated fields."""
+
+    def test_parse_frontmatter_basic(self):
+        """Test parsing frontmatter from ticket content."""
+        content = """---
+id: abc-1234
+priority: P2
+status: open
+type: task
+tags: [bug, fix]
+custom_field: custom_value
+---
+# Title
+
+Description here."""
+        
+        frontmatter, frontmatter_text, body = pr.parse_frontmatter(content)
+        
+        assert frontmatter["id"] == "abc-1234"
+        assert frontmatter["priority"] == "P2"
+        assert frontmatter["status"] == "open"
+        assert frontmatter["custom_field"] == "custom_value"
+        assert "id:" in frontmatter_text
+        assert "priority:" in frontmatter_text
+        assert "# Title" in body
+        assert "Description here" in body
+
+    def test_parse_frontmatter_no_frontmatter(self):
+        """Test parsing content without frontmatter."""
+        content = """# Just a title
+
+No frontmatter here."""
+        
+        frontmatter, frontmatter_text, body = pr.parse_frontmatter(content)
+        
+        assert frontmatter == {}
+        assert frontmatter_text == ""
+        assert "# Just a title" in body
+
+    def test_update_frontmatter_priority_preserves_other_fields(self):
+        """Test that updating priority preserves other frontmatter fields."""
+        frontmatter_text = """id: abc-1234
+priority: P2
+status: open
+type: task
+tags: [bug, fix]
+custom_field: custom_value
+another_field: another_value"""
+        
+        updated = pr.update_frontmatter_priority(frontmatter_text, "P1")
+        
+        assert "priority: P1" in updated
+        assert "id: abc-1234" in updated
+        assert "status: open" in updated
+        assert "type: task" in updated
+        assert "tags: [bug, fix]" in updated
+        assert "custom_field: custom_value" in updated
+        assert "another_field: another_value" in updated
+
+    def test_update_frontmatter_priority_preserves_indentation(self):
+        """Test that updating priority preserves indentation."""
+        frontmatter_text = """  id: abc-1234
+  priority: P2
+  status: open"""
+        
+        updated = pr.update_frontmatter_priority(frontmatter_text, "P0")
+        
+        assert "  priority: P0" in updated
+        assert "  id: abc-1234" in updated
+        assert "  status: open" in updated
+
+    def test_update_frontmatter_adds_priority_if_missing(self):
+        """Test that priority is added if not present in frontmatter."""
+        frontmatter_text = """id: abc-1234
+status: open
+type: task"""
+        
+        updated = pr.update_frontmatter_priority(frontmatter_text, "P2")
+        
+        assert "priority: P2" in updated
+        assert "id: abc-1234" in updated
+        assert "status: open" in updated
+
+    def test_add_note_to_ticket_body_new_section(self):
+        """Test adding audit note when no Notes section exists."""
+        body = """# Title
+
+Description of the ticket."""
+        
+        note = "Priority changed from P2 to P1"
+        updated = pr.add_note_to_ticket_body(body, note)
+        
+        assert "## Notes" in updated
+        assert note in updated
+        assert "Description of the ticket" in updated
+
+    def test_add_note_to_ticket_body_existing_section(self):
+        """Test adding audit note to existing Notes section."""
+        body = """# Title
+
+Description.
+
+## Notes
+
+Previous note here."""
+        
+        note = "Priority changed from P2 to P1"
+        updated = pr.add_note_to_ticket_body(body, note)
+        
+        assert updated.count("## Notes") == 1  # Only one Notes section
+        assert note in updated
+        assert "Previous note here" in updated
+
+    def test_update_ticket_priority_preserves_all_fields(self, tmp_path):
+        """Integration test: update_ticket_priority preserves all frontmatter fields."""
+        # Create temp tickets directory
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        # Create a ticket file with multiple custom fields
+        ticket_content = """---
+id: test-1234
+priority: P3
+status: open
+type: task
+tags: [bug, urgent]
+custom_field: preserved_value
+assignee: developer
+due_date: 2024-12-31
+---
+# Test Ticket
+
+This is a test ticket.
+
+## Notes
+
+Initial note."""
+        
+        ticket_file = tickets_dir / "test-1234.md"
+        ticket_file.write_text(ticket_content)
+        
+        # Update the priority
+        success, error = pr.update_ticket_priority(
+            ticket_id="test-1234",
+            old_priority="P3",
+            new_priority="P1",
+            reason="Security issue",
+            project_root=tmp_path,
+        )
+        
+        assert success, f"Update failed: {error}"
+        
+        # Read updated content
+        updated_content = ticket_file.read_text()
+        
+        # Verify priority was updated
+        assert "priority: P1" in updated_content
+        
+        # Verify all other fields are preserved
+        assert "id: test-1234" in updated_content
+        assert "status: open" in updated_content
+        assert "type: task" in updated_content
+        assert "tags: [bug, urgent]" in updated_content
+        assert "custom_field: preserved_value" in updated_content
+        assert "assignee: developer" in updated_content
+        assert "due_date: 2024-12-31" in updated_content
+        
+        # Verify audit note was added
+        assert "Priority reclassified: P3 → P1" in updated_content
+        assert "Reason: Security issue" in updated_content
+        assert "Initial note" in updated_content  # Original note preserved
+
+    def test_update_ticket_priority_no_notes_section(self, tmp_path):
+        """Test updating ticket without existing Notes section."""
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        ticket_content = """---
+id: test-5678
+priority: P4
+status: open
+type: task
+tags: [docs]
+---
+# Documentation Update
+
+Update the README."""
+        
+        ticket_file = tickets_dir / "test-5678.md"
+        ticket_file.write_text(ticket_content)
+        
+        success, error = pr.update_ticket_priority(
+            ticket_id="test-5678",
+            old_priority="P4",
+            new_priority="P3",
+            reason="More complex than expected",
+            project_root=tmp_path,
+        )
+        
+        assert success, f"Update failed: {error}"
+        
+        updated_content = ticket_file.read_text()
+        assert "priority: P3" in updated_content
+        assert "## Notes" in updated_content
+        assert "Priority reclassified: P4 → P3" in updated_content
+
+    def test_update_ticket_priority_file_not_found(self, tmp_path):
+        """Test handling when ticket file doesn't exist."""
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        success, error = pr.update_ticket_priority(
+            ticket_id="nonexistent",
+            old_priority="P2",
+            new_priority="P1",
+            reason="Test",
+            project_root=tmp_path,
+        )
+        
+        assert not success
+        assert "not found" in error.lower()
+
+
+class TestTempTicketsIntegration:
+    """Integration tests with temporary .tickets/ directory."""
+
+    def test_full_workflow_with_temp_tickets(self, tmp_path):
+        """End-to-end test with temp tickets directory and real files."""
+        # Set up temp project structure
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        # Create multiple ticket files
+        tickets = [
+            {
+                "id": "sec-001",
+                "priority": "P2",
+                "tags": ["security"],
+                "title": "Security vulnerability",
+                "expected_new": "P0",
+            },
+            {
+                "id": "bug-002",
+                "priority": "P3",
+                "tags": ["bug"],  # bug tag -> P1
+                "title": "User reported bug",
+                "expected_new": "P1",
+            },
+            {
+                "id": "feat-003",
+                "priority": "P3",
+                "tags": ["feature"],
+                "title": "New dashboard feature",
+                "expected_new": "P2",
+            },
+            {
+                "id": "doc-004",
+                "priority": "P2",
+                "tags": ["docs"],
+                "title": "Update README",
+                "expected_new": "P4",
+            },
+        ]
+        
+        for t in tickets:
+            # Format tags as YAML list [tag1, tag2]
+            tags_str = "[" + ", ".join(t['tags']) + "]" if t['tags'] else "[]"
+            content = f"""---
+id: {t['id']}
+priority: {t['priority']}
+status: open
+type: task
+tags: {tags_str}
+---
+# {t['title']}
+
+Description here."""
+            (tickets_dir / f"{t['id']}.md").write_text(content)
+        
+        # Test classification by reading files directly
+        for t in tickets:
+            content = (tickets_dir / f"{t['id']}.md").read_text()
+            ticket = pr.parse_ticket_show(content)
+            priority, reason = pr.classify_priority(ticket)
+            assert priority == t['expected_new'], f"Expected {t['expected_new']} for {t['id']}, got {priority}"
+    
+    def test_apply_mode_with_temp_directory(self, tmp_path):
+        """Test apply mode updates files correctly in temp directory."""
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        # Create a ticket file
+        ticket_content = """---
+id: apply-test
+priority: P2
+status: open
+type: task
+tags: [security]
+created: 2024-01-01T00:00:00Z
+---
+# Security Issue
+
+Critical security vulnerability needs fixing."""
+        
+        ticket_file = tickets_dir / "apply-test.md"
+        ticket_file.write_text(ticket_content)
+        
+        # Parse and classify
+        ticket = pr.parse_ticket_show(ticket_content)
+        priority, reason = pr.classify_priority(ticket)
+        
+        assert priority == "P0", f"Security tag should yield P0, got {priority}"
+        
+        # Apply the update
+        success, error = pr.update_ticket_priority(
+            ticket_id="apply-test",
+            old_priority="P2",
+            new_priority="P0",
+            reason="Security classification",
+            project_root=tmp_path,
+        )
+        
+        assert success
+        
+        # Verify file was updated
+        updated_content = ticket_file.read_text()
+        assert "priority: P0" in updated_content
+        assert "created: 2024-01-01T00:00:00Z" in updated_content  # Preserved
+        assert "Priority reclassified: P2 → P0" in updated_content
+    
+    def test_classifier_determinism(self, tmp_path):
+        """Test that classifier produces deterministic results."""
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        # Create identical tickets
+        ticket_content = """---
+id: det-test
+priority: P2
+status: open
+type: task
+tags: [security]
+---
+# Security Bug
+
+Vulnerability in auth system."""
+        
+        # Classify same ticket multiple times
+        results = []
+        for _ in range(5):
+            ticket = pr.parse_ticket_show(ticket_content)
+            priority, reason = pr.classify_priority(ticket)
+            results.append((priority, reason))
+        
+        # All results should be identical
+        first = results[0]
+        for r in results[1:]:
+            assert r == first, f"Classifier not deterministic: {r} != {first}"
+    
+    def test_multiple_tag_precedence(self, tmp_path):
+        """Test that highest priority tag wins when multiple tags present."""
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir()
+        
+        # Ticket with both security (P0) and docs (P4) tags
+        ticket_content = """---
+id: multi-tag
+priority: P3
+status: open
+type: task
+tags: [docs, security]
+---
+# Security Documentation
+
+Document the security fix."""
+        
+        ticket_file = tickets_dir / "multi-tag.md"
+        ticket_file.write_text(ticket_content)
+        
+        ticket = pr.parse_ticket_show(ticket_content)
+        priority, reason = pr.classify_priority(ticket)
+        
+        # Security tag (P0) should take precedence over docs (P4)
+        assert priority == "P0", f"Security tag should win, expected P0 got {priority}"
+
+
 class TestIntegration:
     """Integration tests requiring actual tk."""
 
