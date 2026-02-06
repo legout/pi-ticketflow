@@ -428,6 +428,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         return seed_cli.main(argv[1:])
 
+    if argv and argv[0] == "kb":
+        from . import kb_cli
+
+        return kb_cli.main(argv[1:])
+
     return run_legacy(argv)
 
 
