@@ -399,6 +399,134 @@ def print_results(results: List[dict], apply: bool, include_unknown: bool = Fals
         print("Run with --apply to make these changes.")
 
 
+def get_tickets_dir(project_root: Path) -> Path:
+    """Get the tickets directory path."""
+    return project_root / ".tickets"
+
+
+def parse_frontmatter(content: str) -> Tuple[dict, str, str]:
+    """Parse frontmatter from ticket content.
+    
+    Returns (frontmatter_dict, frontmatter_text, body_text).
+    """
+    lines = content.split("\n")
+    frontmatter_lines = []
+    body_lines = []
+    in_frontmatter = False
+    frontmatter_started = False
+    
+    for line in lines:
+        if line.strip() == "---":
+            if not frontmatter_started:
+                frontmatter_started = True
+                in_frontmatter = True
+                continue
+            elif in_frontmatter:
+                in_frontmatter = False
+                continue
+        
+        if in_frontmatter:
+            frontmatter_lines.append(line)
+        else:
+            body_lines.append(line)
+    
+    # Parse frontmatter key:value pairs
+    frontmatter = {}
+    for line in frontmatter_lines:
+        if ":" in line:
+            key, value = line.split(":", 1)
+            frontmatter[key.strip()] = value.strip()
+    
+    return frontmatter, "\n".join(frontmatter_lines), "\n".join(body_lines)
+
+
+def update_frontmatter_priority(frontmatter_text: str, new_priority: str) -> str:
+    """Update priority in frontmatter text while preserving format."""
+    lines = frontmatter_text.split("\n")
+    new_lines = []
+    priority_updated = False
+    
+    for line in lines:
+        if line.strip().startswith("priority:"):
+            # Preserve indentation
+            indent = line[:len(line) - len(line.lstrip())]
+            new_lines.append(f"{indent}priority: {new_priority}")
+            priority_updated = True
+        else:
+            new_lines.append(line)
+    
+    # If priority wasn't found, add it
+    if not priority_updated:
+        new_lines.append(f"priority: {new_priority}")
+    
+    return "\n".join(new_lines)
+
+
+def add_note_to_ticket_body(body: str, note_content: str) -> str:
+    """Add an audit note to the ticket body."""
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    note_entry = f"""
+
+**{timestamp}**
+
+{note_content}"""
+    
+    # Check if Notes section exists
+    if "## Notes" in body:
+        # Append to existing Notes section
+        parts = body.split("## Notes", 1)
+        before_notes = parts[0].rstrip()
+        after_notes = parts[1]
+        return f"{before_notes}\n\n## Notes{note_entry}{after_notes}"
+    else:
+        # Create new Notes section at end
+        body = body.rstrip()
+        return f"{body}\n\n\n## Notes\n\n{note_entry.lstrip()}"
+
+
+def update_ticket_priority(
+    ticket_id: str,
+    old_priority: str,
+    new_priority: str,
+    reason: str,
+    project_root: Path,
+) -> Tuple[bool, str]:
+    """Update ticket priority and add audit note.
+    
+    Returns (success, error_message).
+    """
+    tickets_dir = get_tickets_dir(project_root)
+    ticket_path = tickets_dir / f"{ticket_id}.md"
+    
+    if not ticket_path.exists():
+        return False, f"Ticket file not found: {ticket_path}"
+    
+    try:
+        content = ticket_path.read_text(encoding="utf-8")
+        
+        # Parse frontmatter and body
+        frontmatter, frontmatter_text, body = parse_frontmatter(content)
+        
+        # Update priority in frontmatter
+        new_frontmatter = update_frontmatter_priority(frontmatter_text, new_priority)
+        
+        # Add audit note
+        note_content = f"Priority reclassified: {old_priority} → {new_priority}\n\nReason: {reason}"
+        new_body = add_note_to_ticket_body(body, note_content)
+        
+        # Reconstruct file content
+        new_content = f"---\n{new_frontmatter}\n---\n{new_body.lstrip()}"
+        
+        # Write back atomically
+        temp_path = ticket_path.with_suffix(".md.tmp")
+        temp_path.write_text(new_content, encoding="utf-8")
+        temp_path.replace(ticket_path)
+        
+        return True, ""
+    except Exception as e:
+        return False, str(e)
+
+
 def write_audit_trail(project_root: Path, results: List[dict], apply: bool) -> None:
     """Write audit trail to knowledge directory."""
     knowledge_dir = project_root / ".tf" / "knowledge"
@@ -581,12 +709,29 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"\nNote: {skipped} ticket(s) with ambiguous priority skipped (use --include-unknown to show)")
     
     # Apply changes if requested (only for non-unknown priorities)
+    applied_count = 0
+    failed_updates = []
     if args.apply:
         for r in results:
             if r["current"] != r["proposed"] and r["proposed"] != "unknown":
-                # Note: Actual priority update would require tk support
-                # For now, we just track what would be changed
-                pass
+                success, error = update_ticket_priority(
+                    ticket_id=r["id"],
+                    old_priority=r["current"],
+                    new_priority=r["proposed"],
+                    reason=r["reason"],
+                    project_root=project_root,
+                )
+                if success:
+                    applied_count += 1
+                else:
+                    failed_updates.append((r["id"], error))
+        
+        if applied_count > 0 and not args.json:
+            print(f"\nApplied priority changes to {applied_count} ticket(s).")
+        if failed_updates:
+            print(f"\nFailed to update {len(failed_updates)} ticket(s):", file=sys.stderr)
+            for ticket_id, error in failed_updates:
+                print(f"  - {ticket_id}: {error}", file=sys.stderr)
     
     # Output results
     if display_results:
