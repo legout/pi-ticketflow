@@ -301,6 +301,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--project",
         help="Operate on project at <path>",
     )
+    parser.add_argument(
+        "--include-closed",
+        action="store_true",
+        help="Include closed tickets in processing (default: excluded)",
+    )
     
     args = parser.parse_args(argv)
     
@@ -357,8 +362,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         if not ticket["id"]:
             ticket["id"] = ticket_id
         
-        # Skip closed tickets
-        if ticket.get("status") == "closed":
+        # Skip closed tickets unless --include-closed is set
+        if ticket.get("status") == "closed" and not args.include_closed:
             continue
         
         proposed, reason = classify_priority(ticket)
