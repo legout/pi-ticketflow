@@ -427,6 +427,83 @@ Creates tickets tagged with `openspec`, linked via `external-ref`, and applies d
 
 ---
 
+## Knowledge Base Commands
+
+### `tf kb`
+
+Manage the knowledge base (topics, seeds, plans, spikes) via the CLI.
+
+```
+tf kb ls [--json] [--type <type>] [--archived] [--knowledge-dir <path>]
+tf kb show <topic-id> [--json] [--knowledge-dir <path>]
+tf kb index [--json] [--knowledge-dir <path>]
+tf kb validate [--json] [--knowledge-dir <path>]
+tf kb rebuild-index [--dry-run] [--json] [--knowledge-dir <path>]
+tf kb archive <topic-id> [--reason TEXT] [--knowledge-dir <path>]
+tf kb restore <topic-id> [--knowledge-dir <path>]
+tf kb delete <topic-id> [--knowledge-dir <path>]
+```
+
+**Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `ls` | List all knowledge base topics from index.json |
+| `show` | Show details for a specific topic |
+| `index` | Show index status and statistics |
+| `validate` | Validate KB integrity (missing files, orphans, duplicates) |
+| `rebuild-index` | Regenerate index.json from filesystem |
+| `archive` | Move a topic to archive (removes from index) |
+| `restore` | Restore an archived topic back to active |
+| `delete` | Permanently delete a topic (active or archived) |
+
+**Global Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output in JSON format |
+| `--knowledge-dir <path>` | Use specific knowledge directory |
+
+**Examples:**
+
+```bash
+# List all topics
+tf kb ls
+
+# List only seed topics
+tf kb ls --type seed
+
+# Include archived topics in listing
+tf kb ls --archived
+
+# Show topic details
+tf kb show seed-build-a-cli
+
+# Validate knowledge base integrity
+tf kb validate
+
+# Preview index rebuild without writing
+tf kb rebuild-index --dry-run
+
+# Archive a topic with reason
+tf kb archive old-topic --reason "Superseded by new design"
+
+# Restore archived topic
+tf kb restore old-topic
+
+# Permanently delete a topic
+tf kb delete old-topic
+```
+
+**Validation Checks:**
+
+The `validate` command detects:
+- **Missing files** - Index entries referencing non-existent files
+- **Orphan directories** - Topic directories not in index
+- **Duplicate IDs** - Multiple index entries with same topic ID
+
+---
+
 ## Configuration Commands
 
 ### `/tf-sync`
@@ -479,6 +556,16 @@ tf backlog-ls [topic]             # List backlog status
 
 # Track changes
 tf track <path>                   # Append to files_changed.txt
+
+# Knowledge Base Management
+tf kb ls [--json] [--type <type>] [--archived]  # List topics
+tf kb show <topic-id> [--json]                  # Show topic details
+tf kb index [--json]                            # Show index status
+tf kb validate [--json]                         # Validate KB integrity
+tf kb rebuild-index [--dry-run] [--json]        # Rebuild index from filesystem
+tf kb archive <topic-id> [--reason TEXT]        # Archive a topic
+tf kb restore <topic-id>                        # Restore archived topic
+tf kb delete <topic-id>                         # Permanently delete topic
 
 # Ralph Loop
 tf ralph init                     # Create .tf/ralph/ directory

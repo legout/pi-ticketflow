@@ -1,0 +1,2 @@
+tests/test_kb_cli.py
+docs/commands.md
