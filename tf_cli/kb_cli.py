@@ -6,6 +6,7 @@ Implements the tf kb command for managing the knowledge base:
 - archive: Move a topic to the archive
 - restore: Restore a topic from the archive
 - delete: Permanently delete a topic (active or archived)
+- validate: Validate knowledge base integrity and detect index drift
 """
 
 from __future__ import annotations
@@ -449,6 +450,129 @@ def cmd_delete(
     return 0
 
 
+def cmd_validate(
+    knowledge_dir: Path,
+    format_json: bool = False,
+) -> int:
+    """Validate knowledge base integrity and detect index drift.
+    
+    Checks for:
+    - Missing files referenced by index entries (overview, sources, etc.)
+    - Orphan directories under topics/* not referenced in index
+    - Duplicate topic IDs in index
+    
+    Args:
+        knowledge_dir: Path to the knowledge directory
+        format_json: Output in JSON format
+        
+    Returns:
+        0 if no issues found, 1 if errors detected
+    """
+    from collections import Counter
+    
+    data = atomic_read_index(knowledge_dir)
+    
+    if data is None:
+        if format_json:
+            print(json.dumps({
+                "valid": False,
+                "errors": ["Knowledge base index not found"],
+                "warnings": [],
+                "orphan_dirs": [],
+                "missing_files": [],
+                "duplicate_ids": []
+            }))
+        else:
+            print("Error: Knowledge base index not found.", file=sys.stderr)
+            print(f"Expected: {knowledge_dir / 'index.json'}", file=sys.stderr)
+        return 1
+    
+    topics = data.get("topics", [])
+    errors: list[str] = []
+    warnings: list[str] = []
+    missing_files: list[dict[str, Any]] = []
+    orphan_dirs: list[str] = []
+    duplicate_ids: list[str] = []
+    
+    # Check for duplicate topic IDs
+    topic_ids = [t.get("id", "") for t in topics if isinstance(t, dict)]
+    id_counts = Counter(topic_ids)
+    duplicates = {tid: count for tid, count in id_counts.items() if count > 1}
+    if duplicates:
+        for tid, count in duplicates.items():
+            duplicate_ids.append(tid)
+            errors.append(f"Duplicate topic ID '{tid}' appears {count} times in index")
+    
+    # Check for missing files referenced by index entries
+    for topic in topics:
+        if not isinstance(topic, dict):
+            continue
+        topic_id = topic.get("id", "")
+        if not topic_id:
+            continue
+            
+        # Check referenced files
+        for field in ["overview", "sources", "plan", "backlog"]:
+            if field in topic:
+                file_path = knowledge_dir / topic[field]
+                if not file_path.exists():
+                    missing_files.append({
+                        "topic_id": topic_id,
+                        "field": field,
+                        "path": topic[field]
+                    })
+                    errors.append(f"Missing file: {topic[field]} (referenced by '{topic_id}')")
+    
+    # Check for orphan directories (not in index but exists in topics/)
+    topics_dir = knowledge_dir / "topics"
+    if topics_dir.exists():
+        indexed_ids = set(topic_ids)
+        for topic_dir in topics_dir.iterdir():
+            if topic_dir.is_dir():
+                topic_id = topic_dir.name
+                if topic_id not in indexed_ids:
+                    orphan_dirs.append(topic_id)
+                    warnings.append(f"Orphan directory: topics/{topic_id} (not in index)")
+    
+    # Output results
+    has_errors = len(errors) > 0
+    has_warnings = len(warnings) > 0
+    
+    if format_json:
+        output = {
+            "valid": not has_errors,
+            "knowledge_dir": str(knowledge_dir),
+            "topics_count": len(topics),
+            "errors": errors,
+            "warnings": warnings,
+            "missing_files": missing_files,
+            "orphan_dirs": orphan_dirs,
+            "duplicate_ids": duplicate_ids,
+        }
+        print(json.dumps(output, indent=2))
+    else:
+        print(f"Knowledge base validation: {'PASSED' if not has_errors else 'FAILED'}")
+        print(f"Knowledge directory: {knowledge_dir}")
+        print(f"Topics in index: {len(topics)}")
+        
+        if errors:
+            print(f"\nErrors ({len(errors)}):")
+            for error in errors:
+                print(f"  ✗ {error}")
+        
+        if warnings:
+            print(f"\nWarnings ({len(warnings)}):")
+            for warning in warnings:
+                print(f"  ⚠ {warning}")
+        
+        if not errors and not warnings:
+            print("\nNo issues found.")
+        
+        print()  # Blank line at end
+    
+    return 1 if has_errors else 0
+
+
 def usage() -> None:
     """Print usage information."""
     print(
@@ -458,6 +582,7 @@ Usage:
   tf kb ls [--json] [--type <type>] [--archived] [--knowledge-dir <path>]
   tf kb show <topic-id> [--json] [--knowledge-dir <path>]
   tf kb index [--json] [--knowledge-dir <path>]
+  tf kb validate [--json] [--knowledge-dir <path>]
   tf kb archive <topic-id> [--reason TEXT] [--knowledge-dir <path>]
   tf kb restore <topic-id> [--knowledge-dir <path>]
   tf kb delete <topic-id> [--knowledge-dir <path>]
@@ -469,6 +594,8 @@ Commands:
               --archived                       Include archived topics
   show        Show details for a specific topic
   index       Show index status and statistics
+  validate    Validate knowledge base integrity
+              Detects missing files, orphan dirs, and duplicate IDs
   archive     Move a topic to the archive
               --reason TEXT  Optional reason for archiving
   restore     Restore a topic from the archive
@@ -545,6 +672,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     
     if command == "index":
         return cmd_index_status(knowledge_dir, format_json=format_json)
+    
+    if command == "validate":
+        return cmd_validate(knowledge_dir, format_json=format_json)
     
     if command == "archive":
         if not rest or rest[0].startswith("-"):
