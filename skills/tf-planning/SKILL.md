@@ -312,18 +312,18 @@ Extract `workflow.knowledgeDir` (default: `.tf/knowledge`).
 4. **Seed mode**:
    - Read `seed.md` (required)
    - Read `mvp-scope.md`, `success-metrics.md`, `constraints.md` (if exist)
-   - Derive 5-15 small tickets from the seed
+   - Derive small tickets from the seed (as many as needed to cover the scope—could be 1 for a small change, or many for a large feature)
 
 5. **Baseline mode**:
    - Read `baseline.md` (required)
    - Read `risk-map.md`, `test-inventory.md`, `dependency-map.md`, `overview.md` (if exist)
-   - Derive 5-15 small tickets from risks, test gaps, dependency issues, and architectural hotspots
+   - Derive small tickets from risks, test gaps, dependency issues, and architectural hotspots (number varies based on scope—could be 1 quick fix or more for extensive refactor)
    - Split large refactors into 1-2 hour chunks
 
 6. **Plan mode**:
    - Read `plan.md` (required)
    - Extract Summary, Requirements, Constraints, Acceptance Criteria, and Work Plan items
-   - Derive 5-15 small tickets from Work Plan entries
+   - Derive small tickets from Work Plan entries (create as many as needed—could be 1 for a simple change, or split large phases into multiple 1-2 hour chunks)
    - Split large phases into 1-2 hour chunks
 
 7. **Create tickets** (1-2 hours each, 30 lines max):

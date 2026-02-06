@@ -121,7 +121,7 @@ Creates structured artifacts in `.tf/knowledge/topics/seed-build-a-cli/`.
 /tf-backlog seed-build-a-cli
 ```
 
-Generates 5-15 small, actionable tickets (1-2 hours each) linked to your seed.
+Generates appropriately-sized tickets to cover the scope (1-2 hours each), linked to your seed. This could be 1 ticket for a tiny change or many for a large feature.
 
 ### 3. Run the TF Workflow
 

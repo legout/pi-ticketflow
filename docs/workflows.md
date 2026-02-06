@@ -110,7 +110,7 @@ Creates `.tf/knowledge/topics/spike-database-migration-tools/` with:
 /tf-backlog seed-build-a-cli
 ```
 
-Generates 5-15 small tickets in `tk`, each:
+Generates appropriately-sized tickets in `tk`—this could be 1 ticket for a tiny fix or many for a large feature. Each ticket is:
 - 30 lines or less
 - 1-2 hours of work
 - Self-contained with context from seed

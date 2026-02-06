@@ -260,7 +260,7 @@ Create tickets from seeds, baselines, or plans.
 | `--no-component-tags` | Skip automatic component tag suggestion |
 | `--no-links` | Skip automatic linking of related tickets |
 
-Generates 5-15 small tickets (skipping duplicates already listed in `backlog.md` or `existing-tickets.md`):
+Generates appropriately-sized tickets to cover the scope (could be 1 ticket for a small change, or many for a large refactor). Skips duplicates already listed in `backlog.md` or `existing-tickets.md`:
 - **30 lines or less** in description
 - **1-2 hours** estimated work
 - **Self-contained** - no need to load full planning docs

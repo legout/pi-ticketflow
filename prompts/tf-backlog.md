@@ -92,7 +92,7 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
    - Read `existing-tickets.md` if present (from `/tf-baseline`)
    - Run `tk list --help` (or `tk help`) to discover listing/search options
    - If `tk` supports listing/search, pull open tickets with tags like `tf`, `baseline`, or `backlog`
-5. Create 5-15 small tickets (1-2 hours each, 30 lines max), skipping duplicates (record skipped items in backlog.md). **Skip this step if `--links-only` provided.**
+5. Create the appropriate number of small tickets (1-2 hours each, 30 lines max) to cover the scope—this could be 1 ticket for a tiny fix or many for a large refactor. Skip duplicates (record skipped items in backlog.md). **Skip this step if `--links-only` provided.**
 6. Create via `tk create` (skip if `--links-only` provided):
 
    **Seed:**
