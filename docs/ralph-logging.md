@@ -14,6 +14,8 @@ tf ralph start
 
 Shows lifecycle events: ticket selection, phase transitions, completions, and errors.
 
+**Output goes to stderr** (so it doesn't mix with stdout data pipes).
+
 ### Verbose Mode
 
 ```bash
@@ -163,6 +165,51 @@ Run single ticket with verbose:
 ```bash
 tf ralph run pt-abc123 --verbose
 ```
+
+### Where to look after failures
+
+When a ticket fails, Ralph logs include an `artifact_path` pointing to:
+
+```
+.tf/knowledge/tickets/<ticket-id>/
+```
+
+This directory contains:
+
+| File | Contains |
+|------|----------|
+| `implementation.md` | What was implemented, files changed |
+| `review.md` | Consolidated review findings |
+| `fixes.md` | Fixes applied after review |
+| `close-summary.md` | Final status and commit info |
+| `files_changed.txt` | List of modified file paths |
+
+**Example error log with artifact pointer:**
+```
+2026-02-06T18:00:35Z | ERROR | artifact_path=.tf/knowledge/tickets/pt-abc123 | error="Command failed" | ticket=pt-abc123 | Error summary
+```
+
+**Quick inspection:**
+```bash
+# See what happened for a failed ticket
+ls .tf/knowledge/tickets/pt-abc123/
+
+# Read the close summary
+cat .tf/knowledge/tickets/pt-abc123/close-summary.md
+
+# Check what files were modified
+cat .tf/knowledge/tickets/pt-abc123/files_changed.txt
+```
+
+### Session traces (experimental)
+
+For deep debugging, Ralph captures session traces as JSONL files:
+
+- **Location**: `.tf/ralph/sessions/<ticket-id>.jsonl`
+- **Format**: One JSON object per line (structured events)
+- **Use case**: Post-mortem analysis of tool calls and responses
+
+**Note**: Session capture is automatic when running via `tf ralph`. The JSONL format is subject to change (experimental feature).
 
 ---
 
