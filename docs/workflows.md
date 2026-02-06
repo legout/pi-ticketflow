@@ -537,11 +537,50 @@ All ticket creation follows these principles:
 
 ---
 
+## Planning Sessions
+
+Planning sessions connect `/tf-seed`, `/tf-spike`, `/tf-plan`, and `/tf-backlog` into a single workflow with automatic linking.
+
+### How Sessions Work
+
+1. **Start a session**: `/tf-seed "My idea"` creates seed artifacts **and** activates a session
+2. **Add research**: `/tf-spike "Technology options"` auto-links to the session
+3. **Create plan**: `/tf-plan "Implementation plan"` attaches to the session, references seed and spikes
+4. **Generate tickets**: `/tf-backlog plan-my-idea` creates tickets and archives the session
+
+### Session Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/tf-seed --active` | Show current active session (or "none") |
+| `/tf-seed --sessions [seed-id]` | List archived sessions, optionally filtered by seed |
+| `/tf-seed --resume <id>` | Resume an archived session |
+
+### Session State
+
+- **Active**: Only one session can be active at a time
+- **Auto-link**: Spike, plan, and backlog auto-link to active session
+- **Completion**: Backlog creation archives the session (removes `.active-planning.json`)
+
+### Bypassing Sessions
+
+For standalone work without session tracking:
+
+```
+/tf-seed --no-session "Standalone idea"  # No session created
+/tf-spike "Quick research"               # No linking when no session active
+/tf-plan "Direct plan"                   # Standalone plan
+/tf-backlog plan-direct                  # No session finalization
+```
+
 ## Knowledge Base Organization
 
 ```
 .tf/knowledge/
 ├── index.json                    # Registry
+├── .active-planning.json         # Current session (if active)
+├── sessions/                     # Archived session snapshots
+│   └── seed-idea@2026-02-06T12-30-00Z.json
 ├── tickets/
 │   └── TICKET-123/
 │       ├── research.md           # Per-ticket research

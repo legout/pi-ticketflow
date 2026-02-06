@@ -32,13 +32,22 @@ Run a focused research spike on a topic and store results.
 /tf-spike "PostgreSQL partitioning strategies" --parallel
 ```
 
+## Session Behavior
+
+When a planning session is active (created via `/tf-seed`), this command **auto-links** the spike to the session:
+- The spike is recorded in the session's `spikes` array
+- Cross-links are created between seed and spike `sources.md` files
+
+To create a standalone spike without session attachment, ensure no session is active (`/tf-seed --active` shows "none").
+
 ## Execution
 
 Follow the **TF Planning Skill** "Research Spike" procedure:
 
 1. Parse topic from `$@` (excluding --parallel)
-2. Create topic ID: `spike-{slug}`
-3. Check available MCP tools:
+2. Check for active session (`.tf/knowledge/.active-planning.json`)
+3. Create topic ID: `spike-{slug}`
+4. Check available MCP tools:
    - context7 (documentation)
    - exa (web search)
    - grep_app (code search)
@@ -46,8 +55,9 @@ Follow the **TF Planning Skill** "Research Spike" procedure:
 4. Research:
    - **Sequential** (default): Query tools inline
    - **Parallel** (--parallel flag): Spawn 3 `researcher-fetch` subagents
-5. Synthesize findings
-6. Write artifacts:
+5. Attach to session (if active): Update `.active-planning.json` `spikes` array and cross-link `sources.md`
+6. Synthesize findings
+7. Write artifacts:
    - `overview.md` - Summary + quick answer
    - `sources.md` - All URLs and tools used
    - `spike.md` - Full analysis with findings, options, recommendation

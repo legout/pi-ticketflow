@@ -27,6 +27,15 @@ Generate small, actionable implementation tickets from seed (greenfield), baseli
 - `--no-links` - Skip automatic linking of related tickets
 - `--links-only` - Run only linking on existing backlog tickets (no new tickets created). Useful for retroactive linking of existing backlogs.
 
+## Session Behavior
+
+When a planning session is active (created via `/tf-seed`), this command **finalizes the session**:
+- All created tickets are recorded in the session's backlog
+- On success: session is archived to `sessions/{session_id}.json`, `.active-planning.json` removed
+- On failure: session remains active for retry
+
+To create a backlog without session finalization, ensure no session is active first (`/tf-seed --active` shows "none").
+
 ## Examples
 
 ```
