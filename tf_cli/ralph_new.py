@@ -12,29 +12,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-
-class LogLevel(Enum):
-    """Log verbosity levels for Ralph."""
-    QUIET = "quiet"
-    NORMAL = "normal"
-    VERBOSE = "verbose"
-    DEBUG = "debug"
-
-    @classmethod
-    def from_string(cls, value: str) -> LogLevel:
-        """Parse log level from string (case-insensitive)."""
-        mapping = {
-            "quiet": cls.QUIET,
-            "normal": cls.NORMAL,
-            "verbose": cls.VERBOSE,
-            "debug": cls.DEBUG,
-        }
-        return mapping.get(value.lower().strip(), cls.NORMAL)
-
-    def should_log(self, level: LogLevel) -> bool:
-        """Check if a message at `level` should be logged at current level."""
-        levels = [LogLevel.QUIET, LogLevel.NORMAL, LogLevel.VERBOSE, LogLevel.DEBUG]
-        return levels.index(level) <= levels.index(self)
+# Import new logger
+from tf_cli.logger import LogLevel, RalphLogger, RedactionHelper, create_logger
 
 
 DEFAULTS: Dict[str, Any] = {
@@ -63,6 +42,7 @@ DEFAULTS: Dict[str, Any] = {
 
 
 def usage() -> None:
+    # Usage goes to stdout as it's user-facing help text
     print(
         """Ralph (new Python CLI)
 
@@ -101,10 +81,14 @@ def find_project_root() -> Optional[Path]:
     return None
 
 
-def ensure_ralph_dir(project_root: Path) -> Optional[Path]:
+def ensure_ralph_dir(project_root: Path, logger: Optional[RalphLogger] = None) -> Optional[Path]:
     ralph_dir = project_root / ".tf/ralph"
     if not ralph_dir.is_dir():
-        print("Ralph not initialized. Run: tf ralph init", file=sys.stderr)
+        msg = "Ralph not initialized. Run: tf ralph init"
+        if logger:
+            logger.error(msg)
+        else:
+            print(msg, file=sys.stderr)
         return None
     return ralph_dir
 
@@ -131,9 +115,13 @@ def run_shell(cmd: str, cwd: Optional[Path] = None) -> subprocess.CompletedProce
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
 
 
-def sanitize_ticket_query(query: str) -> str:
+def sanitize_ticket_query(query: str, logger: Optional[RalphLogger] = None) -> str:
     if re.search(r"(^|\s)tf\s+next(\s|$)", query):
-        print("[warn] ticketQuery uses 'tf next' (recursive). Using default tk-ready query.", file=sys.stderr)
+        msg = "ticketQuery uses 'tf next' (recursive). Using default tk-ready query."
+        if logger:
+            logger.warn(msg)
+        else:
+            print(f"[warn] {msg}", file=sys.stderr)
         return DEFAULTS["ticketQuery"]
     return query
 
@@ -169,12 +157,16 @@ def ensure_pi() -> bool:
     return shutil.which("pi") is not None
 
 
-def prompt_exists(project_root: Path) -> bool:
+def prompt_exists(project_root: Path, logger: Optional[RalphLogger] = None) -> bool:
     local_prompt = project_root / ".pi/prompts/tf.md"
     global_prompt = Path.home() / ".pi/agent/prompts/tf.md"
     if local_prompt.is_file() or global_prompt.is_file():
         return True
-    print("Missing /tf prompt. Run 'tf init' in the project to install prompts (or 'tf sync' to re-ensure).", file=sys.stderr)
+    msg = "Missing /tf prompt. Run 'tf init' in the project to install prompts (or 'tf sync' to re-ensure)."
+    if logger:
+        logger.error(msg)
+    else:
+        print(msg, file=sys.stderr)
     return False
 
 
@@ -192,19 +184,22 @@ def run_ticket(
     dry_run: bool,
     session_path: Optional[Path] = None,
     cwd: Optional[Path] = None,
+    logger: Optional[RalphLogger] = None,
+    mode: str = "serial",
 ) -> int:
+    log = logger or create_logger(mode=mode)
     if not ticket:
-        print("No ticket specified.", file=sys.stderr)
+        log.error("No ticket specified")
         return 1
     if not ensure_pi():
-        print("pi not found in PATH; cannot run workflow.", file=sys.stderr)
+        log.error("pi not found in PATH; cannot run workflow")
         return 1
     if cwd is None:
         project_root = find_project_root()
-        if project_root and not prompt_exists(project_root):
+        if project_root and not prompt_exists(project_root, log):
             return 1
     else:
-        if not prompt_exists(cwd):
+        if not prompt_exists(cwd, log):
             return 1
 
     cmd = build_cmd(workflow, ticket, flags)
@@ -212,10 +207,10 @@ def run_ticket(
 
     if dry_run:
         prefix = " (worktree)" if cwd else ""
-        print(f"Dry run: pi -p{session_flag} \"{cmd}\"{prefix}")
+        log.info(f"Dry run: pi -p{session_flag} \"{cmd}\"{prefix}", ticket=ticket)
         return 0
 
-    print(f"Running: pi -p{session_flag} \"{cmd}\"")
+    log.info(f"Running: pi -p{session_flag} \"{cmd}\"", ticket=ticket)
     args = ["pi", "-p"]
     if session_path:
         args += ["--session", str(session_path)]
@@ -362,14 +357,18 @@ def resolve_knowledge_dir(project_root: Path) -> Path:
     return knowledge_path
 
 
-def lock_acquire(ralph_dir: Path) -> bool:
+def lock_acquire(ralph_dir: Path, logger: Optional[RalphLogger] = None) -> bool:
     lock_path = ralph_dir / "lock"
     if lock_path.exists():
         try:
             pid_text = lock_path.read_text(encoding="utf-8").strip().split()[0]
             pid = int(pid_text)
             os.kill(pid, 0)
-            print(f"Ralph loop already running (pid {pid}). Remove {lock_path} if stale.", file=sys.stderr)
+            msg = f"Ralph loop already running (pid {pid}). Remove {lock_path} if stale."
+            if logger:
+                logger.error(msg)
+            else:
+                print(msg, file=sys.stderr)
             return False
         except Exception:
             pass
@@ -713,16 +712,19 @@ def ralph_run(args: List[str]) -> int:
         print("No .tf directory found. Run in a project with .tf/.", file=sys.stderr)
         return 1
 
-    ralph_dir = ensure_ralph_dir(project_root)
+    # Create logger early for consistent logging
+    # We need to load config first to get the default log level
+    temp_config = load_config(project_root / ".tf/ralph")
+    log_level = resolve_log_level(cli_log_level, temp_config)
+    logger = create_logger(level=log_level, mode="serial")
+
+    ralph_dir = ensure_ralph_dir(project_root, logger)
     if not ralph_dir:
         return 1
 
     config = load_config(ralph_dir)
 
-    # Resolve log level from CLI, env vars, and config
-    log_level = resolve_log_level(cli_log_level, config)
-
-    ticket_query = sanitize_ticket_query(str(config.get("ticketQuery", DEFAULTS["ticketQuery"])))
+    ticket_query = sanitize_ticket_query(str(config.get("ticketQuery", DEFAULTS["ticketQuery"])), logger)
     workflow = str(config.get("workflow", DEFAULTS["workflow"]))
     workflow_flags = str(config.get("workflowFlags", DEFAULTS["workflowFlags"]))
 
@@ -742,8 +744,12 @@ def ralph_run(args: List[str]) -> int:
 
     ticket = ticket_override or select_ticket(ticket_query)
     if not ticket:
-        print("No ready tickets found.", file=sys.stderr)
+        logger.error("No ready tickets found")
         return 1
+
+    # Update logger with ticket context
+    logger = logger.with_context(ticket=ticket)
+    logger.log_ticket_start(ticket, mode="serial")
 
     session_path = None
     if session_dir:
@@ -752,14 +758,18 @@ def ralph_run(args: List[str]) -> int:
         else:
             session_path = session_dir / f"loop-{utc_now()}.jsonl"
 
-    rc = run_ticket(ticket, workflow, workflow_flags, dry_run, session_path=session_path)
+    rc = run_ticket(ticket, workflow, workflow_flags, dry_run, session_path=session_path, logger=logger, mode="serial")
     if dry_run:
+        logger.log_ticket_complete(ticket, "DRY_RUN", mode="serial")
         return rc
 
     if rc != 0:
-        update_state(ralph_dir, project_root, ticket, "FAILED", f"pi -p failed (exit {rc})")
+        error_msg = f"pi -p failed (exit {rc})"
+        logger.log_error_summary(ticket, error_msg)
+        update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
         return rc
 
+    logger.log_ticket_complete(ticket, "COMPLETE", mode="serial")
     update_state(ralph_dir, project_root, ticket, "COMPLETE", "")
     return 0
 
@@ -776,19 +786,21 @@ def ralph_start(args: List[str]) -> int:
         print("No .tf directory found. Run in a project with .tf/.", file=sys.stderr)
         return 1
 
-    ralph_dir = ensure_ralph_dir(project_root)
+    # Create logger early for consistent logging
+    temp_config = load_config(project_root / ".tf/ralph")
+    log_level = resolve_log_level(options.get("log_level"), temp_config)
+    logger = create_logger(level=log_level, mode="serial")
+
+    ralph_dir = ensure_ralph_dir(project_root, logger)
     if not ralph_dir:
         return 1
 
     config = load_config(ralph_dir)
 
-    # Resolve log level from CLI, env vars, and config
-    log_level = resolve_log_level(options.get("log_level"), config)
-
     max_iterations = options["max_iterations"] or int(config.get("maxIterations", DEFAULTS["maxIterations"]))
     sleep_between = int(config.get("sleepBetweenTickets", DEFAULTS["sleepBetweenTickets"]))
     sleep_retries = int(config.get("sleepBetweenRetries", DEFAULTS["sleepBetweenRetries"]))
-    ticket_query = sanitize_ticket_query(str(config.get("ticketQuery", DEFAULTS["ticketQuery"])))
+    ticket_query = sanitize_ticket_query(str(config.get("ticketQuery", DEFAULTS["ticketQuery"])), logger)
     completion_check = str(config.get("completionCheck", DEFAULTS["completionCheck"]))
     workflow = str(config.get("workflow", DEFAULTS["workflow"]))
     workflow_flags = str(config.get("workflowFlags", DEFAULTS["workflowFlags"]))
@@ -822,16 +834,20 @@ def ralph_start(args: List[str]) -> int:
     if use_parallel > 1:
         repo_root = git_repo_root()
         if repo_root is None:
-            print("[warn] git repo not found; falling back to serial.", file=sys.stderr)
+            logger.warn("git repo not found; falling back to serial")
             use_parallel = 1
 
     if use_parallel > 1 and session_dir and not session_per_ticket:
-        print("[warn] sessionPerTicket=false with parallel execution; using per-ticket sessions.", file=sys.stderr)
+        logger.warn("sessionPerTicket=false with parallel execution; using per-ticket sessions")
         session_per_ticket = True
+
+    mode = "parallel" if use_parallel > 1 else "serial"
+    logger = logger.with_context(mode=mode)
+    logger.info(f"Ralph loop starting (mode={mode}, max_iterations={max_iterations})")
 
     lock_acquired = False
     if not options["dry_run"]:
-        if not lock_acquire(ralph_dir):
+        if not lock_acquire(ralph_dir, logger):
             return 1
         lock_acquired = True
         set_state(ralph_dir, "RUNNING")
@@ -846,7 +862,7 @@ def ralph_start(args: List[str]) -> int:
         if use_parallel <= 1:
             while iteration < max_iterations:
                 if backlog_empty(completion_check):
-                    print("No ready tickets. Ralph loop complete.")
+                    logger.info("No ready tickets. Ralph loop complete")
                     if not options["dry_run"]:
                         set_state(ralph_dir, "COMPLETE")
                     if promise_on_complete:
@@ -857,6 +873,10 @@ def ralph_start(args: List[str]) -> int:
                 if not ticket:
                     time.sleep(sleep_retries / 1000)
                     continue
+
+                # Update logger with ticket context for this iteration
+                ticket_logger = logger.with_context(ticket=ticket, iteration=iteration)
+                ticket_logger.log_ticket_start(ticket, mode="serial", iteration=iteration)
 
                 session_path = None
                 if session_dir:
@@ -871,17 +891,22 @@ def ralph_start(args: List[str]) -> int:
                     workflow_flags,
                     options["dry_run"],
                     session_path=session_path,
+                    logger=ticket_logger,
+                    mode="serial",
                 )
                 if not options["dry_run"]:
                     if rc != 0:
-                        update_state(ralph_dir, project_root, ticket, "FAILED", f"pi -p failed (exit {rc})")
+                        error_msg = f"pi -p failed (exit {rc})"
+                        ticket_logger.log_error_summary(ticket, error_msg, iteration=iteration)
+                        update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
                         return rc
+                    ticket_logger.log_ticket_complete(ticket, "COMPLETE", mode="serial", iteration=iteration)
                     update_state(ralph_dir, project_root, ticket, "COMPLETE", "")
 
                 iteration += 1
                 time.sleep(sleep_between / 1000)
 
-            print(f"Max iterations reached ({max_iterations}).")
+            logger.info(f"Max iterations reached ({max_iterations})")
             if not options["dry_run"]:
                 set_state(ralph_dir, "COMPLETE")
             if promise_on_complete:
@@ -904,12 +929,12 @@ def ralph_start(args: List[str]) -> int:
         worktrees_dir.mkdir(parents=True, exist_ok=True)
         list_query = ticket_list_query(ticket_query)
 
-        if not ensure_pi() or not prompt_exists(project_root):
+        if not ensure_pi() or not prompt_exists(project_root, logger):
             return 1
 
         while iteration < max_iterations:
             if backlog_empty(completion_check):
-                print("No ready tickets. Ralph loop complete.")
+                logger.info("No ready tickets. Ralph loop complete")
                 if not options["dry_run"]:
                     set_state(ralph_dir, "COMPLETE")
                 if promise_on_complete:
@@ -928,11 +953,13 @@ def ralph_start(args: List[str]) -> int:
                     continue
                 selected = [fallback_ticket]
 
+            logger.info(f"Selected {len(selected)} ticket(s) for parallel processing: {', '.join(selected)}", iteration=iteration)
+
             if options["dry_run"]:
                 for ticket in selected:
                     cmd = build_cmd(workflow, ticket, workflow_flags)
                     session_note = f" --session {session_dir / (ticket + '.jsonl')}" if session_dir else ""
-                    print(f"Dry run: pi -p{session_note} \"{cmd}\" (worktree)")
+                    logger.info(f"Dry run: pi -p{session_note} \"{cmd}\" (worktree)", ticket=ticket)
                 iteration += len(selected)
                 time.sleep(sleep_between / 1000)
                 continue
@@ -946,6 +973,7 @@ def ralph_start(args: List[str]) -> int:
                     capture_output=True,
                 )
                 if add.returncode != 0:
+                    logger.log_error_summary(ticket, "worktree add failed", iteration=iteration)
                     update_state(ralph_dir, project_root, ticket, "FAILED", "worktree add failed", repo_root / ".tf/knowledge")
                     continue
 
@@ -964,16 +992,19 @@ def ralph_start(args: List[str]) -> int:
             for proc, ticket, worktree_path in processes:
                 rc = proc.wait()
                 if rc != 0:
+                    error_msg = f"pi -p failed (exit {rc})"
+                    logger.log_error_summary(ticket, error_msg, artifact_path=str(worktree_path / ".tf/knowledge"), iteration=iteration)
                     update_state(
                         ralph_dir,
                         project_root,
                         ticket,
                         "FAILED",
-                        f"pi -p failed (exit {rc})",
+                        error_msg,
                         worktree_path / ".tf/knowledge",
                     )
                     return rc
 
+                logger.log_ticket_complete(ticket, "COMPLETE", mode="parallel", iteration=iteration)
                 update_state(ralph_dir, project_root, ticket, "COMPLETE", "", worktree_path / ".tf/knowledge")
 
                 if not keep_worktrees:
@@ -987,7 +1018,7 @@ def ralph_start(args: List[str]) -> int:
             iteration += len(selected)
             time.sleep(sleep_between / 1000)
 
-        print(f"Max iterations reached ({max_iterations}).")
+        logger.info(f"Max iterations reached ({max_iterations})")
         if not options["dry_run"]:
             set_state(ralph_dir, "COMPLETE")
         if promise_on_complete:

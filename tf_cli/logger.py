@@ -1,0 +1,383 @@
+"""Ralph logging helper with levels, timestamps, context, and redaction."""
+
+from __future__ import annotations
+
+import re
+import sys
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional, TextIO
+
+
+class LogLevel(Enum):
+    """Log verbosity levels for Ralph."""
+
+    DEBUG = "debug"  # Most verbose, includes VERBOSE
+    INFO = "info"  # Normal operation
+    WARN = "warn"  # Warnings only
+    ERROR = "error"  # Errors only
+
+    # Legacy aliases for backward compatibility with ralph config
+    VERBOSE = "debug"  # Maps to DEBUG for legacy compatibility
+    QUIET = "error"  # Maps to ERROR for legacy compatibility
+    NORMAL = "info"  # Maps to INFO for legacy compatibility
+
+    @classmethod
+    def from_string(cls, value: str) -> LogLevel:
+        """Parse log level from string (case-insensitive)."""
+        mapping = {
+            "debug": cls.DEBUG,
+            "verbose": cls.VERBOSE,
+            "info": cls.INFO,
+            "normal": cls.NORMAL,
+            "warn": cls.WARN,
+            "warning": cls.WARN,
+            "error": cls.ERROR,
+            "quiet": cls.QUIET,
+        }
+        return mapping.get(value.lower().strip(), cls.INFO)
+
+
+def _utc_now() -> str:
+    """Return current UTC timestamp in ISO format."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class RedactionHelper:
+    """Helper to redact sensitive or overly-large values from log output."""
+
+    # Patterns that likely indicate sensitive data
+    SENSITIVE_PATTERNS: List[str] = [
+        r"api[_-]?key",
+        r"apikey",
+        r"token",
+        r"secret",
+        r"password",
+        r"auth",
+        r"credential",
+        r"private[_-]?key",
+        r"access[_-]?token",
+        r"bearer",
+    ]
+
+    # Default max length for values before truncation
+    DEFAULT_MAX_LENGTH: int = 1000
+
+    def __init__(
+        self,
+        max_length: int = DEFAULT_MAX_LENGTH,
+        sensitive_patterns: Optional[List[str]] = None,
+        redaction_marker: str = "[REDACTED]",
+        truncation_marker: str = "...[TRUNCATED]",
+    ):
+        self.max_length = max_length
+        self.sensitive_patterns = sensitive_patterns or self.SENSITIVE_PATTERNS
+        self.redaction_marker = redaction_marker
+        self.truncation_marker = truncation_marker
+        self._sensitive_regex = re.compile(
+            "|".join(f"({p})" for p in self.sensitive_patterns),
+            re.IGNORECASE,
+        )
+
+    def is_sensitive_key(self, key: str) -> bool:
+        """Check if a key name indicates sensitive data."""
+        return bool(self._sensitive_regex.search(key))
+
+    def redact_value(self, value: Any) -> Any:
+        """Redact a single value if it's sensitive or too large."""
+        if value is None:
+            return None
+
+        # Convert to string for checking
+        str_value = str(value)
+
+        # Check if value itself looks like a secret (long random strings)
+        if self._looks_like_secret(str_value):
+            return self.redaction_marker
+
+        # Truncate if too long
+        if len(str_value) > self.max_length:
+            return str_value[: self.max_length] + self.truncation_marker
+
+        return value
+
+    def redact_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Redact sensitive keys and large values in a dictionary."""
+        result: Dict[str, Any] = {}
+        for key, value in data.items():
+            if self.is_sensitive_key(key):
+                result[key] = self.redaction_marker
+            elif isinstance(value, dict):
+                result[key] = self.redact_dict(value)
+            elif isinstance(value, list):
+                result[key] = self.redact_list(value)
+            else:
+                result[key] = self.redact_value(value)
+        return result
+
+    def redact_list(self, data: List[Any]) -> List[Any]:
+        """Redact large values in a list."""
+        result: List[Any] = []
+        for item in data:
+            if isinstance(item, dict):
+                result.append(self.redact_dict(item))
+            elif isinstance(item, list):
+                result.append(self.redact_list(item))
+            else:
+                result.append(self.redact_value(item))
+        return result
+
+    def _looks_like_secret(self, value: str) -> bool:
+        """Heuristic: check if value looks like a secret token."""
+        # Skip short values
+        if len(value) < 20:
+            return False
+
+        # Check for common secret patterns
+        secret_indicators = [
+            "sk-",  # OpenAI-style secret key
+            "eyJ",  # JWT token start (base64 of {" )
+            "ghp_",  # GitHub personal access token
+            "gho_",
+            "ghu_",
+            "ghs_",
+            "ghr_",
+        ]
+        lower = value.lower()
+        for indicator in secret_indicators:
+            if lower.startswith(indicator):
+                return True
+
+        # High entropy check: if mostly alphanumeric with few spaces
+        # and length > 30, likely a token
+        if len(value) > 30 and value.count(" ") < 2:
+            alphanumeric = sum(1 for c in value if c.isalnum())
+            if alphanumeric / len(value) > 0.85:
+                return True
+
+        return False
+
+
+class RalphLogger:
+    """Structured logger for Ralph with levels, timestamps, and context."""
+
+    def __init__(
+        self,
+        level: LogLevel = LogLevel.INFO,
+        output: TextIO = sys.stderr,
+        context: Optional[Dict[str, Any]] = None,
+        redaction: Optional[RedactionHelper] = None,
+    ):
+        self.level = level
+        self.output = output
+        self.context = context or {}
+        self.redaction = redaction or RedactionHelper()
+
+    def with_context(self, **kwargs: Any) -> RalphLogger:
+        """Create a new logger with additional context fields."""
+        new_context = dict(self.context)
+        new_context.update(kwargs)
+        return RalphLogger(
+            level=self.level,
+            output=self.output,
+            context=new_context,
+            redaction=self.redaction,
+        )
+
+    def _should_log(self, level: LogLevel) -> bool:
+        """Check if a message at the given level should be logged.
+
+        Level hierarchy (most verbose to least):
+        VERBOSE/DEBUG -> INFO/NORMAL -> WARN -> ERROR/QUIET
+        """
+        # Map aliases to canonical levels for comparison
+        canonical_map = {
+            LogLevel.VERBOSE: LogLevel.DEBUG,
+            LogLevel.NORMAL: LogLevel.INFO,
+            LogLevel.QUIET: LogLevel.ERROR,
+        }
+
+        level_value = canonical_map.get(level, level)
+        current_value = canonical_map.get(self.level, self.level)
+
+        severity = {
+            LogLevel.DEBUG: 10,
+            LogLevel.INFO: 20,
+            LogLevel.WARN: 30,
+            LogLevel.ERROR: 40,
+        }
+        return severity.get(level_value, 20) >= severity.get(current_value, 20)
+
+    def _format_message(
+        self,
+        level: LogLevel,
+        message: str,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Format a log message with timestamp, level, context, and message."""
+        timestamp = _utc_now()
+        parts = [timestamp, level.value.upper()]
+
+        # Add context fields if present
+        context = dict(self.context)
+        if extra:
+            context.update(extra)
+
+        # Redact sensitive data
+        context = self.redaction.redact_dict(context)
+
+        # Format context as key=value pairs
+        for key, value in sorted(context.items()):
+            if value is not None:
+                # Escape values that contain spaces
+                str_value = str(value)
+                if " " in str_value:
+                    str_value = f'"{str_value}"'
+                parts.append(f"{key}={str_value}")
+
+        parts.append(message)
+        return " | ".join(parts)
+
+    def _log(
+        self,
+        level: LogLevel,
+        message: str,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Internal log method."""
+        if not self._should_log(level):
+            return
+
+        formatted = self._format_message(level, message, extra)
+        print(formatted, file=self.output, flush=True)
+
+    def debug(self, message: str, **extra: Any) -> None:
+        """Log a debug message."""
+        self._log(LogLevel.DEBUG, message, extra or None)
+
+    def info(self, message: str, **extra: Any) -> None:
+        """Log an info message."""
+        self._log(LogLevel.INFO, message, extra or None)
+
+    def warn(self, message: str, **extra: Any) -> None:
+        """Log a warning message."""
+        self._log(LogLevel.WARN, message, extra or None)
+
+    def error(self, message: str, **extra: Any) -> None:
+        """Log an error message."""
+        self._log(LogLevel.ERROR, message, extra or None)
+
+    def log_ticket_start(
+        self,
+        ticket_id: str,
+        mode: str = "serial",
+        iteration: Optional[int] = None,
+    ) -> None:
+        """Log the start of ticket processing."""
+        extra: Dict[str, Any] = {"ticket": ticket_id, "mode": mode}
+        if iteration is not None:
+            extra["iteration"] = iteration
+        self.info(f"Starting ticket processing: {ticket_id}", **extra)
+
+    def log_ticket_complete(
+        self,
+        ticket_id: str,
+        status: str,
+        mode: str = "serial",
+        iteration: Optional[int] = None,
+    ) -> None:
+        """Log the completion of ticket processing."""
+        extra: Dict[str, Any] = {"ticket": ticket_id, "status": status, "mode": mode}
+        if iteration is not None:
+            extra["iteration"] = iteration
+        level = LogLevel.INFO if status == "COMPLETE" else LogLevel.ERROR
+        self._log(level, f"Ticket processing {status.lower()}: {ticket_id}", extra)
+
+    def log_phase_transition(
+        self,
+        ticket_id: str,
+        from_phase: str,
+        to_phase: str,
+        mode: str = "serial",
+    ) -> None:
+        """Log a workflow phase transition."""
+        self.info(
+            f"Phase transition: {from_phase} -> {to_phase}",
+            ticket=ticket_id,
+            phase=to_phase,
+            previous_phase=from_phase,
+            mode=mode,
+        )
+
+    def log_tool_execution(
+        self,
+        ticket_id: str,
+        tool_name: str,
+        success: bool = True,
+        mode: str = "serial",
+    ) -> None:
+        """Log a tool/command execution."""
+        status = "success" if success else "failure"
+        level = LogLevel.INFO if success else LogLevel.ERROR
+        self._log(
+            level,
+            f"Tool execution {status}: {tool_name}",
+            {"ticket": ticket_id, "tool": tool_name, "result": status, "mode": mode},
+        )
+
+    def log_decision(
+        self,
+        ticket_id: str,
+        decision: str,
+        reason: str,
+        mode: str = "serial",
+    ) -> None:
+        """Log a decision with its rationale."""
+        self.info(
+            f"Decision: {decision}",
+            ticket=ticket_id,
+            decision=decision,
+            reason=reason,
+            mode=mode,
+        )
+
+    def log_error_summary(
+        self,
+        ticket_id: str,
+        error_msg: str,
+        artifact_path: Optional[str] = None,
+        mode: str = "serial",
+    ) -> None:
+        """Log an error summary with pointers to more info."""
+        extra: Dict[str, Any] = {"ticket": ticket_id, "error": error_msg, "mode": mode}
+        if artifact_path:
+            extra["artifact_path"] = artifact_path
+        self.error("Error summary", **extra)
+
+
+def create_logger(
+    level: Optional[LogLevel] = None,
+    output: TextIO = sys.stderr,
+    ticket_id: Optional[str] = None,
+    iteration: Optional[int] = None,
+    mode: str = "serial",
+) -> RalphLogger:
+    """Factory function to create a configured RalphLogger.
+
+    Args:
+        level: Minimum log level (defaults to INFO)
+        output: Output stream (defaults to stderr)
+        ticket_id: Optional ticket ID for context
+        iteration: Optional iteration number for context
+        mode: Execution mode (serial/parallel)
+
+    Returns:
+        Configured RalphLogger instance
+    """
+    context: Dict[str, Any] = {"mode": mode}
+    if ticket_id:
+        context["ticket"] = ticket_id
+    if iteration is not None:
+        context["iteration"] = iteration
+
+    return RalphLogger(level=level or LogLevel.INFO, output=output, context=context)
