@@ -11,6 +11,44 @@ from pathlib import Path
 from typing import Optional, List, Tuple
 
 
+def is_interactive() -> bool:
+    """Check if running in an interactive terminal."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def confirm_changes(results: List[dict], max_changes: Optional[int] = None) -> bool:
+    """Prompt user to confirm changes.
+    
+    Returns True if user confirms, False otherwise.
+    """
+    changes = [r for r in results if r["current"] != r["proposed"] and r["proposed"] != "unknown"]
+    unknowns = [r for r in results if r["proposed"] == "unknown"]
+    
+    print(f"\n{'='*60}")
+    print("CONFIRM PRIORITY CHANGES")
+    print(f"{'='*60}")
+    print(f"\nTickets to update: {len(changes)}")
+    if unknowns:
+        print(f"Tickets with unknown priority (will be skipped): {len(unknowns)}")
+    if max_changes and len(changes) > max_changes:
+        print(f"(Capped by --max-changes: only first {max_changes} will be applied)")
+    
+    print(f"\n{'Ticket':<12} {'Current':<10} {'New':<10} {'Reason'}")
+    print("-" * 60)
+    
+    for r in changes[:max_changes] if max_changes else changes:
+        print(f"{r['id']:<12} {r['current']:<10} {r['proposed']:<10} {r['reason'][:30]}")
+    
+    print(f"\n{'='*60}")
+    
+    try:
+        response = input("\nApply these changes? [y/N]: ").strip().lower()
+        return response in ('y', 'yes')
+    except (EOFError, KeyboardInterrupt):
+        print("\nCancelled.")
+        return False
+
+
 @dataclass
 class ClassificationResult:
     """Result of priority classification."""
@@ -582,6 +620,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Apply priority changes (default is dry-run)",
     )
     parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompt (required with --apply in non-interactive mode)",
+    )
+    parser.add_argument(
+        "--max-changes",
+        type=int,
+        metavar="N",
+        help="Maximum number of tickets to modify (safety cap)",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Apply changes even for ambiguous/unknown classifications",
+    )
+    parser.add_argument(
         "--ids",
         help="Comma-separated list of ticket IDs to process",
     )
@@ -708,23 +762,49 @@ def main(argv: Optional[List[str]] = None) -> int:
         if skipped > 0:
             print(f"\nNote: {skipped} ticket(s) with ambiguous priority skipped (use --include-unknown to show)")
     
-    # Apply changes if requested (only for non-unknown priorities)
+    # Safety: Check for --yes requirement in non-interactive mode
+    changes_to_make = []
+    if args.apply:
+        changes_to_make = [r for r in results if r["current"] != r["proposed"]]
+        # Without --force, skip unknown priorities
+        if not args.force:
+            changes_to_make = [r for r in changes_to_make if r["proposed"] != "unknown"]
+        
+        if changes_to_make:
+            # Check if we need confirmation
+            if not args.yes:
+                if is_interactive():
+                    # Interactive mode: prompt for confirmation
+                    if not confirm_changes(changes_to_make, args.max_changes):
+                        print("\nOperation cancelled by user.")
+                        return 0
+                else:
+                    # Non-interactive mode: require --yes
+                    print("Error: --apply in non-interactive mode requires --yes flag", file=sys.stderr)
+                    print("Run with --yes to confirm, or use --max-changes to limit scope", file=sys.stderr)
+                    return 1
+            
+            # Apply max-changes limit
+            if args.max_changes and len(changes_to_make) > args.max_changes:
+                print(f"\nNote: Limiting to {args.max_changes} changes (out of {len(changes_to_make)} total)")
+                changes_to_make = changes_to_make[:args.max_changes]
+    
+    # Apply changes if requested
     applied_count = 0
     failed_updates = []
-    if args.apply:
-        for r in results:
-            if r["current"] != r["proposed"] and r["proposed"] != "unknown":
-                success, error = update_ticket_priority(
-                    ticket_id=r["id"],
-                    old_priority=r["current"],
-                    new_priority=r["proposed"],
-                    reason=r["reason"],
-                    project_root=project_root,
-                )
-                if success:
-                    applied_count += 1
-                else:
-                    failed_updates.append((r["id"], error))
+    if args.apply and changes_to_make:
+        for r in changes_to_make:
+            success, error = update_ticket_priority(
+                ticket_id=r["id"],
+                old_priority=r["current"],
+                new_priority=r["proposed"],
+                reason=r["reason"],
+                project_root=project_root,
+            )
+            if success:
+                applied_count += 1
+            else:
+                failed_updates.append((r["id"], error))
         
         if applied_count > 0 and not args.json:
             print(f"\nApplied priority changes to {applied_count} ticket(s).")

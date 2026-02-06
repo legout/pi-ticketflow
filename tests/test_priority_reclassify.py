@@ -487,7 +487,7 @@ tags: []
 # Test ticket"""
         mock_run.return_value = (0, ticket_output, "")
 
-        result = pr.main(["--ids", "abc-1234", "--json", "--apply"])
+        result = pr.main(["--ids", "abc-1234", "--json", "--apply", "--yes"])
         assert result == 0
 
         captured = capsys.readouterr()
@@ -564,6 +564,185 @@ tags: [bug]
         assert "abc-1234" in content
 
 
+class TestSafetyUX:
+    """Test safety UX features: --yes, --max-changes, --force."""
+
+    @patch("shutil.which")
+    @patch("tf_cli.priority_reclassify_new.find_project_root")
+    @patch("tf_cli.priority_reclassify_new.run_tk_command")
+    def test_apply_requires_yes_in_non_interactive_mode(self, mock_run, mock_find, mock_which, capsys):
+        """Test that --apply requires --yes when not in a TTY."""
+        mock_which.return_value = "/usr/bin/tk"
+        mock_find.return_value = Path("/tmp/project")
+
+        ticket_output = """---
+id: abc-1234
+priority: P2
+status: open
+type: task
+tags: [security]
+---
+# Security issue
+
+This is a security vulnerability."""
+        mock_run.return_value = (0, ticket_output, "")
+
+        # Without --yes, should fail in non-interactive mode
+        result = pr.main(["--ids", "abc-1234", "--apply"])
+        assert result == 1
+
+        captured = capsys.readouterr()
+        assert "requires --yes flag" in captured.err
+
+    @patch("shutil.which")
+    @patch("tf_cli.priority_reclassify_new.find_project_root")
+    @patch("tf_cli.priority_reclassify_new.run_tk_command")
+    def test_apply_with_yes_succeeds(self, mock_run, mock_find, mock_which, capsys):
+        """Test that --apply with --yes works in non-interactive mode."""
+        mock_which.return_value = "/usr/bin/tk"
+        mock_find.return_value = Path("/tmp/project")
+
+        ticket_output = """---
+id: abc-1234
+priority: P2
+status: open
+type: task
+tags: []
+---
+# Test ticket"""
+        mock_run.return_value = (0, ticket_output, "")
+
+        # With --yes, should succeed
+        result = pr.main(["--ids", "abc-1234", "--apply", "--yes"])
+        assert result == 0
+
+    @patch("shutil.which")
+    @patch("tf_cli.priority_reclassify_new.find_project_root")
+    @patch("tf_cli.priority_reclassify_new.run_tk_command")
+    def test_max_changes_limits_updates(self, mock_run, mock_find, mock_which, capsys, tmp_path):
+        """Test that --max-changes caps the number of updates."""
+        mock_which.return_value = "/usr/bin/tk"
+        mock_find.return_value = tmp_path
+
+        # Create ticket files for realistic update scenario
+        tickets_dir = tmp_path / ".tickets"
+        tickets_dir.mkdir(parents=True)
+        
+        for i, tag in enumerate(["security", "security", "security"]):  # All P0
+            ticket_file = tickets_dir / f"abc-{i:04d}.md"
+            ticket_file.write_text(f"""---
+id: abc-{i:04d}
+priority: P2
+status: open
+type: task
+tags: [{tag}]
+---
+# Ticket {i}
+""")
+
+        def mock_ticket_show(args):
+            ticket_id = args[1]
+            content = f"""---
+id: {ticket_id}
+priority: P2
+status: open
+type: task
+tags: [security]
+---
+# Security issue"""
+            return (0, content, "")
+
+        mock_run.side_effect = mock_ticket_show
+
+        result = pr.main(["--ids", "abc-0000,abc-0001,abc-0002", "--apply", "--yes", "--max-changes", "2"])
+        assert result == 0
+
+        captured = capsys.readouterr()
+        assert "Limiting to 2 changes" in captured.out or "Applied priority changes to 2" in captured.out
+
+    @patch("shutil.which")
+    @patch("tf_cli.priority_reclassify_new.find_project_root")
+    @patch("tf_cli.priority_reclassify_new.run_tk_command")
+    def test_force_applies_unknown_priorities(self, mock_run, mock_find, mock_which, capsys):
+        """Test that --force applies even unknown priority classifications."""
+        mock_which.return_value = "/usr/bin/tk"
+        mock_find.return_value = Path("/tmp/project")
+
+        # Ticket with no clear classification
+        ticket_output = """---
+id: abc-1234
+priority: P2
+status: open
+type: task
+tags: []
+---
+# Ambiguous ticket
+
+Description with no keywords."""
+        mock_run.return_value = (0, ticket_output, "")
+
+        result = pr.main(["--ids", "abc-1234", "--apply", "--yes", "--force"])
+        assert result == 0
+
+        captured = capsys.readouterr()
+        # Should apply the unknown priority when --force is used
+        assert "Applied" in captured.out or "unknown" in captured.out
+
+    @patch("shutil.which")
+    @patch("tf_cli.priority_reclassify_new.find_project_root")
+    @patch("tf_cli.priority_reclassify_new.run_tk_command")
+    def test_unknown_skipped_without_force(self, mock_run, mock_find, mock_which, capsys):
+        """Test that unknown priorities are skipped without --force."""
+        mock_which.return_value = "/usr/bin/tk"
+        mock_find.return_value = Path("/tmp/project")
+
+        # Ticket with no clear classification
+        ticket_output = """---
+id: abc-1234
+priority: P2
+status: open
+type: task
+tags: []
+---
+# Ambiguous ticket
+
+Description with no keywords."""
+        mock_run.return_value = (0, ticket_output, "")
+
+        result = pr.main(["--ids", "abc-1234", "--apply", "--yes"])
+        assert result == 0
+
+        captured = capsys.readouterr()
+        # Should indicate skipped unknown
+        assert "skipped" in captured.out.lower() or "unknown" in captured.out.lower()
+
+    @patch("shutil.which")
+    @patch("tf_cli.priority_reclassify_new.find_project_root")
+    @patch("tf_cli.priority_reclassify_new.run_tk_command")
+    @patch("tf_cli.priority_reclassify_new.is_interactive")
+    @patch("tf_cli.priority_reclassify_new.confirm_changes")
+    def test_interactive_confirmation(self, mock_confirm, mock_is_tty, mock_run, mock_find, mock_which):
+        """Test that interactive mode prompts for confirmation."""
+        mock_which.return_value = "/usr/bin/tk"
+        mock_find.return_value = Path("/tmp/project")
+        mock_is_tty.return_value = True
+        mock_confirm.return_value = False  # User cancels
+
+        ticket_output = """---
+id: abc-1234
+priority: P2
+status: open
+type: task
+tags: [security]
+---
+# Security issue"""
+        mock_run.return_value = (0, ticket_output, "")
+
+        result = pr.main(["--ids", "abc-1234", "--apply"])
+        assert result == 0  # Returns 0 on cancellation (not an error)
+        mock_confirm.assert_called_once()
+
+
 class TestIntegration:
     """Integration tests requiring actual tk."""
 
@@ -585,5 +764,8 @@ class TestIntegration:
         assert "--tag" in result.stdout
         assert "--include-closed" in result.stdout
         assert "--apply" in result.stdout
+        assert "--yes" in result.stdout
+        assert "--max-changes" in result.stdout
+        assert "--force" in result.stdout
         assert "--json" in result.stdout
         assert "--report" in result.stdout
