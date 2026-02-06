@@ -80,3 +80,12 @@
   - Status: COMPLETE
   - Commit: 5b1c421
   - Unblocks: pt-gn5z
+- pt-zoqp: COMPLETE (2026-02-06T14:02:56Z)
+  - Summary: Define priority rubric mapping (P0-P4 → tk priority 0-4)
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Status: COMPLETE
+
+- pt-gn5z: COMPLETE (2026-02-06T14:03:00Z)
+  - Summary: Add /tf-priority-reclassify prompt and Python CLI entrypoint
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE

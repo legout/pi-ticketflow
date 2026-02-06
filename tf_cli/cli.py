@@ -310,7 +310,10 @@ def install_main(argv: list[str]) -> int:
         "--repo", help="Path to the repo root (defaults to current directory)"
     )
     parser.add_argument("--source", help="uvx --from source (git URL or path)")
-    parser.add_argument("--project", help="Install into <path>/.tf/bin/tf")
+    parser.add_argument(
+        "--project",
+        help="DEPRECATED (tf is installed globally). Use 'tf init' in projects instead.",
+    )
     parser.add_argument("--path", help="Install shim to an explicit path")
     parser.add_argument(
         "--global",
@@ -339,20 +342,18 @@ def install_main(argv: list[str]) -> int:
 
     if args.path:
         dest = Path(args.path).expanduser()
-        cli_root_file = Path.home() / ".tf/cli-root"
-        cli_source_file = Path.home() / ".tf/cli-source"
-        tf_base = Path.home() / ".tf"
-    elif args.project:
-        project_root = Path(args.project).expanduser()
-        dest = project_root / ".tf/bin/tf"
-        cli_root_file = project_root / ".tf/cli-root"
-        cli_source_file = project_root / ".tf/cli-source"
-        tf_base = project_root / ".tf"
     else:
+        # TF is always installed globally.
+        if args.project:
+            print(
+                "WARNING: --project is deprecated. Installing tf globally; "
+                "use 'tf init' inside the project instead.",
+                file=sys.stderr,
+            )
         dest = Path.home() / ".local/bin/tf"
-        cli_root_file = Path.home() / ".tf/cli-root"
-        cli_source_file = Path.home() / ".tf/cli-source"
-        tf_base = Path.home() / ".tf"
+
+    cli_root_file = Path.home() / ".tf/cli-root"
+    cli_source_file = Path.home() / ".tf/cli-source"
 
     dest.parent.mkdir(parents=True, exist_ok=True)
 
@@ -393,8 +394,6 @@ def install_main(argv: list[str]) -> int:
         except Exception as e:
             print(f"WARNING: Could not install locally: {e}", file=sys.stderr)
 
-    ensure_tf_assets(tf_base, repo_root, uvx_source)
-
     if dest.parent == Path.home() / ".local/bin":
         path_env = os.environ.get("PATH", "")
         if str(dest.parent) not in path_env.split(os.pathsep):
@@ -410,30 +409,120 @@ def main(argv: Optional[list[str]] = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
+    if not argv or argv[0] in {"-h", "--help", "help"}:
+        print(
+            """Ticketflow CLI\n\nUsage:\n  tf install [--global] [--force-local]\n  tf setup\n  tf login\n  tf init [--project <path>]\n  tf sync [--project <path>]\n  tf doctor [--project <path>] [--fix]\n  tf update\n  tf next\n  tf backlog-ls [topic-id-or-path]\n  tf track <path>\n  tf priority-reclassify [--apply] [--ids ...] [--ready] [--status ...] [--tag ...]\n  tf ralph <subcommand> ...\n  tf agentsmd <subcommand> ...\n  tf seed ...\n  tf kb ...\n\nLegacy:\n  tf legacy <args...>\n\n(You can also use: tf new <command> ... for the old subcommand namespace.)\n"""
+        )
+        return 0
+
     # Handle --version/-v/-V before other commands
     if argv and argv[0] in ("--version", "-v", "-V"):
         print(get_version())
         return 0
 
-    if argv and argv[0] == "install":
-        return install_main(argv[1:])
+    command = argv[0]
+    rest = argv[1:]
 
-    if argv and argv[0] == "new":
+    if command == "install":
+        return install_main(rest)
+
+    # Back-compat namespace
+    if command == "new":
         from . import new_cli
 
-        return new_cli.main(argv[1:])
+        return new_cli.main(rest)
 
-    if argv and argv[0] == "seed":
+    if command == "setup":
+        from . import setup_new
+
+        return setup_new.main(rest)
+
+    if command == "login":
+        from . import login_new
+
+        return login_new.main(rest)
+
+    if command == "init":
+        from . import init_new
+
+        return init_new.main(rest)
+
+    if command == "sync":
+        from . import sync_new
+
+        return sync_new.main(rest)
+
+    if command == "update":
+        from . import update_new
+
+        return update_new.main(rest)
+
+    if command == "doctor":
+        from . import doctor_new
+
+        return doctor_new.main(rest)
+
+    if command == "next":
+        from . import next_new
+
+        return next_new.main(rest)
+
+    if command == "backlog-ls":
+        from . import backlog_ls_new
+
+        return backlog_ls_new.main(rest)
+
+    if command == "track":
+        from . import track_new
+
+        return track_new.main(rest)
+
+    if command == "priority-reclassify":
+        from . import priority_reclassify_new
+
+        return priority_reclassify_new.main(rest)
+
+    if command == "ralph":
+        from . import ralph_new
+
+        return ralph_new.main(rest)
+
+    if command == "agentsmd":
+        from . import agentsmd_new
+
+        return agentsmd_new.main(rest)
+
+    if command == "tags-suggest":
+        from . import tags_suggest_new
+
+        return tags_suggest_new.suggest_main(rest)
+
+    if command == "tags-classify":
+        from . import tags_suggest_new
+
+        return tags_suggest_new.classify_main(rest)
+
+    if command == "tags-keywords":
+        from . import tags_suggest_new
+
+        return tags_suggest_new.keywords_main(rest)
+
+    if command == "seed":
         from . import seed_cli
 
-        return seed_cli.main(argv[1:])
+        return seed_cli.main(rest)
 
-    if argv and argv[0] == "kb":
+    if command == "kb":
         from . import kb_cli
 
-        return kb_cli.main(argv[1:])
+        return kb_cli.main(rest)
 
-    return run_legacy(argv)
+    if command == "legacy":
+        return run_legacy(rest)
+
+    print(f"Unknown command: {command}", file=sys.stderr)
+    print("Run: tf --help", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
