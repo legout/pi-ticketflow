@@ -456,6 +456,88 @@ class RalphLogger:
 
         return result
 
+    def log_batch_selected(
+        self,
+        tickets: List[str],
+        component_tags: Dict[str, List[str]],
+        reason: str = "component_diversity",
+        mode: str = "parallel",
+        iteration: Optional[int] = None,
+    ) -> None:
+        """Log batch selection with ticket IDs and their component tags.
+
+        Args:
+            tickets: List of selected ticket IDs
+            component_tags: Dict mapping ticket_id -> list of component tags
+            reason: Selection rationale (component_diversity, fallback, etc.)
+            mode: Execution mode
+            iteration: Optional iteration number
+        """
+        extra: Dict[str, Any] = {
+            "event": "batch_selected",
+            "mode": mode,
+            "ticket_count": len(tickets),
+            "tickets": tickets,
+            "reason": reason,
+        }
+        if iteration is not None:
+            extra["iteration"] = iteration
+
+        # Add component tag info for each ticket
+        for ticket, tags in component_tags.items():
+            if tags:
+                extra[f"{ticket}_components"] = tags
+            else:
+                extra[f"{ticket}_components"] = ["untagged"]
+
+        tag_summary = ", ".join(
+            f"{ticket}({','.join(tags) if tags else 'untagged'})"
+            for ticket, tags in component_tags.items()
+        )
+        self.info(f"Selected batch: {tag_summary}", **extra)
+
+    def log_worktree_operation(
+        self,
+        ticket_id: str,
+        operation: str,  # "add" or "remove"
+        worktree_path: str,
+        success: bool,
+        error: Optional[str] = None,
+        mode: str = "parallel",
+        iteration: Optional[int] = None,
+    ) -> None:
+        """Log worktree add/remove operations with success/failure status.
+
+        Args:
+            ticket_id: The ticket being processed
+            operation: "add" or "remove"
+            worktree_path: Path to the worktree
+            success: Whether the operation succeeded
+            error: Optional error message on failure
+            mode: Execution mode
+            iteration: Optional iteration number
+        """
+        extra: Dict[str, Any] = {
+            "event": "worktree_operation",
+            "ticket": ticket_id,
+            "operation": operation,
+            "worktree_path": worktree_path,
+            "success": success,
+            "mode": mode,
+        }
+        if iteration is not None:
+            extra["iteration"] = iteration
+        if error:
+            extra["error"] = error
+
+        status = "success" if success else "failed"
+        msg = f"Worktree {operation} {status}: {worktree_path}"
+        if error:
+            msg = f"{msg} - {error}"
+
+        level = LogLevel.INFO if success else LogLevel.ERROR
+        self._log(level, msg, extra)
+
 
 def create_logger(
     level: Optional[LogLevel] = None,

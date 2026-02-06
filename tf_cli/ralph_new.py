@@ -952,6 +952,7 @@ def ralph_start(args: List[str]) -> int:
             ready = list_ready_tickets(list_query)
             selected = select_parallel_tickets(ready, batch_size, allow_untagged, tag_prefix)
 
+            used_fallback = False
             if not selected:
                 fallback_ticket = select_ticket(ticket_query)
                 if not fallback_ticket:
@@ -960,8 +961,21 @@ def ralph_start(args: List[str]) -> int:
                     time.sleep(sleep_sec)
                     continue
                 selected = [fallback_ticket]
+                used_fallback = True
 
-            logger.info(f"Selected {len(selected)} ticket(s) for parallel processing: {', '.join(selected)}", iteration=iteration)
+            # Build component tags map for logging
+            component_tags: Dict[str, List[str]] = {}
+            for ticket in selected:
+                comps = extract_components(ticket, tag_prefix, allow_untagged)
+                if comps:
+                    # Remove __untagged__ marker for display, show as empty/untagged
+                    display_comps = [c for c in comps if c != "__untagged__"]
+                    component_tags[ticket] = display_comps
+                else:
+                    component_tags[ticket] = []
+
+            reason = "fallback" if used_fallback else "component_diversity"
+            logger.log_batch_selected(selected, component_tags, reason=reason, mode=mode, iteration=iteration)
 
             if options["dry_run"]:
                 for ticket in selected:
@@ -975,15 +989,28 @@ def ralph_start(args: List[str]) -> int:
             processes: List[Tuple[subprocess.Popen, str, Path]] = []
             for ticket in selected:
                 worktree_path = worktrees_dir / ticket
-                subprocess.run(["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)], capture_output=True)
+                # Remove any existing worktree first
+                remove = subprocess.run(["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)], capture_output=True)
+                if remove.returncode == 0:
+                    logger.log_worktree_operation(
+                        ticket, "remove", str(worktree_path), success=True, mode=mode, iteration=iteration
+                    )
+                # Add new worktree
                 add = subprocess.run(
                     ["git", "-C", str(repo_root), "worktree", "add", "-B", f"ralph/{ticket}", str(worktree_path), "HEAD"],
                     capture_output=True,
                 )
                 if add.returncode != 0:
-                    logger.log_error_summary(ticket, "worktree add failed", iteration=iteration)
-                    update_state(ralph_dir, project_root, ticket, "FAILED", "worktree add failed", repo_root / ".tf/knowledge")
+                    error_msg = add.stderr.decode("utf-8", errors="replace") if add.stderr else "worktree add failed"
+                    logger.log_worktree_operation(
+                        ticket, "add", str(worktree_path), success=False, error=error_msg, mode=mode, iteration=iteration
+                    )
+                    logger.log_error_summary(ticket, f"worktree add failed: {error_msg}", iteration=iteration)
+                    update_state(ralph_dir, project_root, ticket, "FAILED", f"worktree add failed: {error_msg}", repo_root / ".tf/knowledge")
                     continue
+                logger.log_worktree_operation(
+                    ticket, "add", str(worktree_path), success=True, mode=mode, iteration=iteration
+                )
 
                 session_path = None
                 if session_dir:
@@ -1016,14 +1043,23 @@ def ralph_start(args: List[str]) -> int:
                     return rc
 
                 logger.log_ticket_complete(ticket, "COMPLETE", mode="parallel", iteration=iteration)
-                update_state(ralph_dir, project_root, ticket, "COMPLETE", "", worktree_path / ".tf/knowledge")
+                artifact_root = worktree_path / ".tf/knowledge"
+                update_state(ralph_dir, project_root, ticket, "COMPLETE", "", artifact_root)
 
                 if not keep_worktrees:
                     remove = subprocess.run(
                         ["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)],
                         capture_output=True,
                     )
-                    if remove.returncode != 0:
+                    if remove.returncode == 0:
+                        logger.log_worktree_operation(
+                            ticket, "remove", str(worktree_path), success=True, mode=mode, iteration=iteration
+                        )
+                    else:
+                        error_msg = remove.stderr.decode("utf-8", errors="replace") if remove.stderr else "unknown error"
+                        logger.log_worktree_operation(
+                            ticket, "remove", str(worktree_path), success=False, error=error_msg, mode=mode, iteration=iteration
+                        )
                         shutil.rmtree(worktree_path, ignore_errors=True)
 
             iteration += len(selected)
