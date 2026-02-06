@@ -450,6 +450,222 @@ def cmd_delete(
     return 0
 
 
+def _extract_title_from_frontmatter(topic_dir: Path) -> Optional[str]:
+    """Extract title from frontmatter in topic markdown files.
+    
+    Looks for title in order: first # heading, frontmatter title field.
+    
+    Args:
+        topic_dir: Path to the topic directory
+        
+    Returns:
+        Extracted title or None if not found
+    """
+    # Check common doc files in order of priority
+    doc_files = ["overview.md", "plan.md", "sources.md", "backlog.md"]
+    
+    for doc_name in doc_files:
+        doc_path = topic_dir / doc_name
+        if not doc_path.exists():
+            continue
+            
+        try:
+            content = doc_path.read_text(encoding="utf-8")
+            lines = content.splitlines()
+            
+            # Skip frontmatter if present
+            in_frontmatter = False
+            frontmatter_title = None
+            
+            for line in lines:
+                stripped = line.strip()
+                
+                # Detect frontmatter start/end
+                if stripped == "---":
+                    if not in_frontmatter:
+                        in_frontmatter = True
+                        continue
+                    else:
+                        in_frontmatter = False
+                        continue
+                
+                # Extract title from frontmatter
+                if in_frontmatter and stripped.startswith("title:"):
+                    frontmatter_title = stripped[6:].strip().strip('"\'')
+                    continue
+                
+                # Look for first # heading (outside frontmatter)
+                if not in_frontmatter and stripped.startswith("# "):
+                    return stripped[2:].strip()
+            
+            # If we found a title in frontmatter but no heading, use it
+            if frontmatter_title:
+                return frontmatter_title
+                
+        except (IOError, OSError):
+            continue
+    
+    return None
+
+
+def cmd_rebuild_index(
+    knowledge_dir: Path,
+    dry_run: bool = False,
+    format_json: bool = False,
+) -> int:
+    """Rebuild the knowledge base index from filesystem.
+    
+    Scans the topics/ directory and regenerates index.json with canonical
+    entries. Preserves existing metadata when available. Outputs entries
+    in stable order by topic ID.
+    
+    Args:
+        knowledge_dir: Path to the knowledge directory
+        dry_run: If True, print what would change without writing
+        format_json: Output dry-run results in JSON format
+        
+    Returns:
+        0 on success, 1 on error
+    """
+    topics_dir = knowledge_dir / "topics"
+    
+    if not topics_dir.exists():
+        if dry_run:
+            if format_json:
+                print(json.dumps({
+                    "dry_run": True,
+                    "would_write": False,
+                    "reason": "topics directory does not exist",
+                    "topics": [],
+                }))
+            else:
+                print("Dry-run: topics directory does not exist, would create empty index")
+            return 0
+        else:
+            print(f"Error: Topics directory not found: {topics_dir}", file=sys.stderr)
+            return 1
+    
+    # Read existing index for metadata preservation
+    existing_data = atomic_read_index(knowledge_dir)
+    existing_topics = {}
+    if existing_data and isinstance(existing_data, dict):
+        for t in existing_data.get("topics", []):
+            if isinstance(t, dict) and "id" in t:
+                existing_topics[t["id"]] = t
+    
+    # Discover all topic directories
+    discovered_topics: list[dict[str, Any]] = []
+    
+    for topic_dir in sorted(topics_dir.iterdir()):
+        if not topic_dir.is_dir():
+            continue
+            
+        topic_id = topic_dir.name
+        
+        # Start with existing metadata if available
+        if topic_id in existing_topics:
+            topic_entry = dict(existing_topics[topic_id])
+        else:
+            # Create new entry
+            topic_entry = {"id": topic_id}
+            
+            # Try to extract title
+            title = _extract_title_from_frontmatter(topic_dir)
+            if title:
+                topic_entry["title"] = title
+            else:
+                # Default title from ID
+                topic_entry["title"] = topic_id.replace("-", " ").replace("_", " ").title()
+        
+        # Ensure standard doc paths exist
+        doc_types = ["overview", "sources", "plan", "backlog"]
+        for doc_type in doc_types:
+            doc_path = topic_dir / f"{doc_type}.md"
+            if doc_path.exists():
+                rel_path = f"topics/{topic_id}/{doc_type}.md"
+                topic_entry[doc_type] = rel_path
+            elif doc_type in topic_entry:
+                # Remove stale path reference if file doesn't exist
+                del topic_entry[doc_type]
+        
+        discovered_topics.append(topic_entry)
+    
+    # Sort by topic ID for stable ordering
+    discovered_topics.sort(key=lambda t: t.get("id", ""))
+    
+    # Build new index data
+    new_data = {
+        "topics": discovered_topics,
+        "updated": datetime.datetime.now().isoformat(),
+    }
+    
+    # Calculate changes for dry-run output
+    existing_ids = set(existing_topics.keys())
+    new_ids = {t.get("id") for t in discovered_topics}
+    
+    added_ids = new_ids - existing_ids
+    removed_ids = existing_ids - new_ids
+    unchanged_ids = existing_ids & new_ids
+    
+    if dry_run:
+        if format_json:
+            output = {
+                "dry_run": True,
+                "would_write": True,
+                "knowledge_dir": str(knowledge_dir),
+                "current_topics": len(existing_topics),
+                "new_topics": len(discovered_topics),
+                "added": sorted(added_ids),
+                "removed": sorted(removed_ids),
+                "unchanged": sorted(unchanged_ids),
+                "proposed_index": new_data,
+            }
+            print(json.dumps(output, indent=2))
+        else:
+            print(f"Dry-run: Would rebuild index at {knowledge_dir / 'index.json'}")
+            print(f"  Current topics: {len(existing_topics)}")
+            print(f"  New topics: {len(discovered_topics)}")
+            
+            if added_ids:
+                print(f"\n  Added ({len(added_ids)}):")
+                for tid in sorted(added_ids):
+                    topic = next((t for t in discovered_topics if t.get("id") == tid), None)
+                    title = topic.get("title", "Untitled") if topic else "Unknown"
+                    print(f"    + {tid} - {title}")
+            
+            if removed_ids:
+                print(f"\n  Removed ({len(removed_ids)}):")
+                for tid in sorted(removed_ids):
+                    old_topic = existing_topics.get(tid, {})
+                    title = old_topic.get("title", "Untitled")
+                    print(f"    - {tid} - {title}")
+            
+            if unchanged_ids:
+                print(f"\n  Unchanged ({len(unchanged_ids)}):")
+                for tid in sorted(unchanged_ids):
+                    print(f"    = {tid}")
+            
+            if not added_ids and not removed_ids:
+                print("\n  No changes detected.")
+        
+        return 0
+    
+    # Perform the write
+    try:
+        atomic_write_index(knowledge_dir, new_data)
+        print(f"Rebuilt index: {len(discovered_topics)} topics")
+        
+        if added_ids:
+            print(f"  Added: {len(added_ids)}")
+        if removed_ids:
+            print(f"  Removed: {len(removed_ids)}")
+        
+        return 0
+    except (OSError, PermissionError) as e:
+        print(f"Error: Failed to write index: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_validate(
     knowledge_dir: Path,
     format_json: bool = False,
@@ -583,23 +799,26 @@ Usage:
   tf kb show <topic-id> [--json] [--knowledge-dir <path>]
   tf kb index [--json] [--knowledge-dir <path>]
   tf kb validate [--json] [--knowledge-dir <path>]
+  tf kb rebuild-index [--dry-run] [--json] [--knowledge-dir <path>]
   tf kb archive <topic-id> [--reason TEXT] [--knowledge-dir <path>]
   tf kb restore <topic-id> [--knowledge-dir <path>]
   tf kb delete <topic-id> [--knowledge-dir <path>]
   tf kb --help
 
 Commands:
-  ls          List all knowledge base topics
-              --type seed|plan|spike|baseline  Filter by topic type
-              --archived                       Include archived topics
-  show        Show details for a specific topic
-  index       Show index status and statistics
-  validate    Validate knowledge base integrity
-              Detects missing files, orphan dirs, and duplicate IDs
-  archive     Move a topic to the archive
-              --reason TEXT  Optional reason for archiving
-  restore     Restore a topic from the archive
-  delete      Permanently delete a topic (active or archived)
+  ls             List all knowledge base topics
+                 --type seed|plan|spike|baseline  Filter by topic type
+                 --archived                       Include archived topics
+  show           Show details for a specific topic
+  index          Show index status and statistics
+  validate       Validate knowledge base integrity
+                 Detects missing files, orphan dirs, and duplicate IDs
+  rebuild-index  Regenerate index.json from filesystem
+                 --dry-run  Preview changes without writing
+  archive        Move a topic to the archive
+                 --reason TEXT  Optional reason for archiving
+  restore        Restore a topic from the archive
+  delete         Permanently delete a topic (active or archived)
 
 Options:
   --json      Output in JSON format
@@ -623,6 +842,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     format_json = False
     topic_type: Optional[str] = None
     include_archived = False
+    dry_run = False
     
     # Extract global flags before subcommand parsing
     filtered_argv = []
@@ -631,6 +851,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         arg = argv[i]
         if arg == "--json":
             format_json = True
+        elif arg == "--dry-run":
+            dry_run = True
         elif arg == "--knowledge-dir" and i + 1 < len(argv):
             knowledge_dir_override = Path(argv[i + 1]).expanduser()
             i += 1
@@ -675,6 +897,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     
     if command == "validate":
         return cmd_validate(knowledge_dir, format_json=format_json)
+    
+    if command == "rebuild-index":
+        return cmd_rebuild_index(knowledge_dir, dry_run=dry_run, format_json=format_json)
     
     if command == "archive":
         if not rest or rest[0].startswith("-"):

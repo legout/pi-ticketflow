@@ -1,0 +1,4 @@
+tf_cli/kb_cli.py
+tests/test_kb_rebuild_index.py
+/home/volker/coding/pi-ticketflow/tf_cli/kb_cli.py
+/home/volker/coding/pi-ticketflow/tests/test_kb_rebuild_index.py
