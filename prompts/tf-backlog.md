@@ -84,6 +84,11 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
 - Apply linking criteria to existing tickets
 - Update `backlog.md` with links column
 
+**Session Handling:**
+- At start: Check for `.active-planning.json`. If exists and `state: active`, capture `session_id` and `root_seed` for later finalization. Skip session finalization if state is not `active`.
+- Track ticket creation success/failure during steps 5-7 for error handling.
+- At end (if session was active): Record backlog metadata, write archived snapshot, deactivate session.
+
 1. Locate topic directory
 2. Detect mode (seed vs baseline vs plan)
 3. Read relevant artifacts and plan status (warn if plan not approved)
@@ -183,6 +188,66 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
 
 10. Write `backlog.md` with ticket summary (include dependencies, component tags, and links)
 
+11. **Session Finalization** (if an active session was found at start):
+    - Ensure `sessions/` directory exists: `mkdir -p .tf/knowledge/sessions`
+    - Read `.active-planning.json` to get current session state
+    - Verify session is still `state: active` (skip if changed)
+    - Build session data:
+      - Set `backlog.topic` to the topic-id
+      - Set `backlog.backlog_md` to `topics/{topic-id}/backlog.md`
+      - Set `backlog.tickets` to array of created ticket IDs (may be empty if all skipped)
+      - Update `updated` timestamp to now
+    - **If all tickets created successfully** (or zero tickets due to all duplicates):
+      - Write archived session snapshot to `sessions/{session_id}.json`:
+        ```json
+        {
+          "schema_version": 1,
+          "session_id": "{session_id}",
+          "state": "archived",
+          "root_seed": "{root_seed}",
+          "spikes": [...],
+          "plan": "...",
+          "backlog": {
+            "topic": "{topic-id}",
+            "backlog_md": "topics/{topic-id}/backlog.md",
+            "tickets": ["id1", "id2", ...]
+          },
+          "created": "...",
+          "updated": "{ISO8601 timestamp}",
+          "completed_at": "{ISO8601 timestamp}"
+        }
+        ```
+      - Remove `.active-planning.json` to deactivate the session
+      - Emit notice: `[tf] Session archived: {session_id} ({count} tickets created)`
+    - **If ticket creation failed part-way** (any `tk create` returned error):
+      - Write error session snapshot to `sessions/{session_id}.json`:
+        ```json
+        {
+          "schema_version": 1,
+          "session_id": "{session_id}",
+          "state": "error",
+          "root_seed": "{root_seed}",
+          "spikes": [...],
+          "plan": "...",
+          "backlog": {
+            "topic": "{topic-id}",
+            "backlog_md": "topics/{topic-id}/backlog.md",
+            "tickets": ["id1", ...]
+          },
+          "error": {
+            "message": "Ticket creation failed during backlog generation",
+            "failed_at": "step-{N}",
+            "tickets_created": ["id1", ...],
+            "timestamp": "{ISO8601 timestamp}"
+          },
+          "created": "...",
+          "updated": "{ISO8601 timestamp}",
+          "completed_at": null
+        }
+        ```
+      - **Do NOT remove** `.active-planning.json` (leave active for retry)
+      - Emit notice: `[tf] Session error: {session_id} (ticket creation failed, {count} tickets created before error)`
+
 ## Ticket Templates
 
 **Seed**
@@ -271,16 +336,20 @@ Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" 
 - Dependencies applied via `tk dep` when inferred
 - Related tickets linked via `tk link` when applicable
 - `backlog.md` written to topic directory
+- **Session finalization** (if session was active): Session snapshot written to `sessions/{session_id}.json` with `state: archived` (or `state: error` on failure), `.active-planning.json` removed on success
 
 **`--links-only` mode:**
 - No new tickets created
 - Existing tickets from `backlog.md` linked via `tk link` when applicable
 - `backlog.md` updated with Links column
+- **No session finalization** (session remains active for full backlog generation)
 
 ## Next Steps
 
-Start implementation:
+The planning session is now complete. Start implementation:
 
 ```
 /tf <ticket-id>
 ```
+
+To begin a new planning session, run `/tf-seed <idea>`.
