@@ -83,6 +83,22 @@ def read_toml(path: Path) -> Dict:
             key = key.strip()
             value = value.strip()
 
+            # Strip inline comments (while respecting quotes)
+            # Find first # that is not inside quotes
+            in_quotes = None
+            comment_pos = -1
+            for i, char in enumerate(value):
+                if char in ('"', "'"):
+                    if in_quotes is None:
+                        in_quotes = char
+                    elif in_quotes == char:
+                        in_quotes = None
+                elif char == '#' and in_quotes is None:
+                    comment_pos = i
+                    break
+            if comment_pos >= 0:
+                value = value[:comment_pos].strip()
+
             # Handle string values (remove quotes)
             if value.startswith('"') and value.endswith('"'):
                 value = value[1:-1]
@@ -294,21 +310,23 @@ MANIFEST_CHECKS = [
 ]
 
 
-def detect_manifest_versions(project_root: Path) -> Tuple[Optional[str], List[str], Dict[str, str]]:
+def detect_manifest_versions(project_root: Path) -> Tuple[Optional[str], Optional[str], List[str], Dict[str, str]]:
     """Detect and return versions from all available package manifests.
 
     Args:
         project_root: Path to the project root
 
     Returns:
-        Tuple of (canonical_version, found_manifests, all_versions)
+        Tuple of (canonical_version, canonical_manifest, found_manifests, all_versions)
         - canonical_version: The version from the highest priority manifest, or None
+        - canonical_manifest: The name of the manifest that provided canonical_version, or None
         - found_manifests: List of manifest filenames that exist
         - all_versions: Dict mapping manifest name to its version (or "invalid" if unreadable)
     """
     found_manifests: List[str] = []
     all_versions: Dict[str, str] = {}
     canonical_version: Optional[str] = None
+    canonical_manifest: Optional[str] = None
 
     for manifest_name, version_func in MANIFEST_CHECKS:
         version = version_func(project_root)
@@ -321,10 +339,11 @@ def detect_manifest_versions(project_root: Path) -> Tuple[Optional[str], List[st
                 # First valid version becomes canonical
                 if canonical_version is None:
                     canonical_version = version
+                    canonical_manifest = manifest_name
             else:
                 all_versions[manifest_name] = "invalid"
 
-    return canonical_version, found_manifests, all_versions
+    return canonical_version, canonical_manifest, found_manifests, all_versions
 
 
 def get_version_file_version(project_root: Path) -> Optional[str]:
@@ -453,7 +472,7 @@ def check_version_consistency(
     Returns:
         True if consistent (or would be fixed), False if mismatch and not fixed
     """
-    canonical_version, found_manifests, all_versions = detect_manifest_versions(project_root)
+    canonical_version, canonical_manifest, found_manifests, all_versions = detect_manifest_versions(project_root)
     version_file_version = get_version_file_version(project_root)
     git_tag_version = get_git_tag_version(project_root)
 
@@ -487,7 +506,7 @@ def check_version_consistency(
 
         if mismatches:
             print(f"[warn] Version mismatch between package manifests:")
-            print(f"       Canonical (first valid): {found_manifests[0]} = {canonical_version}")
+            print(f"       Canonical (first valid): {canonical_manifest} = {canonical_version}")
             for manifest, version in mismatches:
                 print(f"       Mismatch: {manifest} = {version}")
             print("       Consider aligning versions across all manifests")
@@ -497,7 +516,7 @@ def check_version_consistency(
     if git_tag_version is not None:
         normalized_canonical = normalize_version(canonical_version)
         if git_tag_version != normalized_canonical:
-            print(f"[warn] Git tag ({git_tag_version}) does not match {found_manifests[0]} ({canonical_version})")
+            print(f"[warn] Git tag ({git_tag_version}) does not match {canonical_manifest} ({canonical_version})")
             print("       This may indicate a version mismatch in the release")
             # Don't fail the check for git tag mismatch, just warn
         else:
@@ -524,7 +543,7 @@ def check_version_consistency(
                 return False
             else:
                 print(
-                    f"[warn] VERSION file ({version_file_version}) does not match {found_manifests[0]} ({canonical_version})"
+                    f"[warn] VERSION file ({version_file_version}) does not match {canonical_manifest} ({canonical_version})"
                 )
                 print(
                     "       To fix: run 'tf doctor --fix' or update VERSION file manually"
@@ -598,7 +617,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="tf new doctor")
     parser.add_argument("--project", help="Operate on project at <path>")
     parser.add_argument(
-        "--fix", action="store_true", help="Auto-fix VERSION file to match package.json"
+        "--fix", action="store_true", help="Auto-fix VERSION file to match canonical manifest (pyproject.toml, Cargo.toml, or package.json)"
     )
     parser.add_argument(
         "--dry-run",

@@ -299,11 +299,44 @@ version = "1.0.0"
 enabled = true
 disabled = false
 """)
-        
+
         result = read_toml(toml_file)
-        
+
         assert result["tool"]["enabled"] is True
         assert result["tool"]["disabled"] is False
+
+    def test_parses_inline_comments(self, tmp_path: Path) -> None:
+        """Should strip inline comments from values."""
+        toml_file = tmp_path / "test.toml"
+        toml_file.write_text("""
+[project]
+name = "test"  # project name
+version = "1.2.3"  # release version
+
+[tool]
+# This is a full-line comment
+value = "data"  # inline comment
+""")
+
+        result = read_toml(toml_file)
+
+        assert result["project"]["name"] == "test"
+        assert result["project"]["version"] == "1.2.3"
+        assert result["tool"]["value"] == "data"
+
+    def test_parses_inline_comments_with_hash_in_quotes(self, tmp_path: Path) -> None:
+        """Should not strip # inside quoted strings."""
+        toml_file = tmp_path / "test.toml"
+        toml_file.write_text('''
+[project]
+name = "test # not a comment"
+version = "1.0.0"  # real comment
+''')
+
+        result = read_toml(toml_file)
+
+        assert result["project"]["name"] == "test # not a comment"
+        assert result["project"]["version"] == "1.0.0"
 
 
 class TestDetectManifestVersions:
@@ -313,10 +346,11 @@ class TestDetectManifestVersions:
         """Should detect a single manifest file."""
         package_file = tmp_path / "package.json"
         package_file.write_text(json.dumps({"version": "1.2.3"}))
-        
-        canonical, found, versions = detect_manifest_versions(tmp_path)
-        
+
+        canonical, canonical_manifest, found, versions = detect_manifest_versions(tmp_path)
+
         assert canonical == "1.2.3"
+        assert canonical_manifest == "package.json"
         assert found == ["package.json"]
         assert versions == {"package.json": "1.2.3"}
 
@@ -330,11 +364,12 @@ version = "1.0.0"
 """)
         package_file = tmp_path / "package.json"
         package_file.write_text(json.dumps({"version": "2.0.0"}))
-        
-        canonical, found, versions = detect_manifest_versions(tmp_path)
-        
+
+        canonical, canonical_manifest, found, versions = detect_manifest_versions(tmp_path)
+
         # pyproject.toml has priority
         assert canonical == "1.0.0"
+        assert canonical_manifest == "pyproject.toml"
         assert found == ["pyproject.toml", "package.json"]
         assert versions == {"pyproject.toml": "1.0.0", "package.json": "2.0.0"}
 
@@ -347,19 +382,21 @@ name = "my-project"
 """)
         package_file = tmp_path / "package.json"
         package_file.write_text(json.dumps({"version": "1.2.3"}))
-        
-        canonical, found, versions = detect_manifest_versions(tmp_path)
-        
+
+        canonical, canonical_manifest, found, versions = detect_manifest_versions(tmp_path)
+
         # pyproject.toml exists but has no version, so package.json becomes canonical
         assert canonical == "1.2.3"
+        assert canonical_manifest == "package.json"
         assert found == ["pyproject.toml", "package.json"]
         assert versions == {"pyproject.toml": "invalid", "package.json": "1.2.3"}
 
     def test_returns_none_when_no_manifests(self, tmp_path: Path) -> None:
         """Should return None when no manifests exist."""
-        canonical, found, versions = detect_manifest_versions(tmp_path)
-        
+        canonical, canonical_manifest, found, versions = detect_manifest_versions(tmp_path)
+
         assert canonical is None
+        assert canonical_manifest is None
         assert found == []
         assert versions == {}
 
