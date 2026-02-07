@@ -1,3 +1,0 @@
-tf_cli/logger.py
-tf_cli/ralph_new.py
-tests/test_logger.py

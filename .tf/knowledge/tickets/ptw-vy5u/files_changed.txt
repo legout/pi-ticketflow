@@ -1,2 +1,0 @@
-VERSIONING.md
-README.md

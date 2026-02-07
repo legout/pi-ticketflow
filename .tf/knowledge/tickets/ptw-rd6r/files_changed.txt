@@ -1,2 +1,0 @@
-tf_cli/doctor_new.py
-tests/test_doctor_version.py

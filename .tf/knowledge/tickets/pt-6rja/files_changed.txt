@@ -1,3 +1,0 @@
-tf_cli/kb_cli.py
-tf_cli/cli.py
-/home/volker/coding/pi-ticketflow/tf_cli/kb_cli.py

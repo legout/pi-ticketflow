@@ -1,6 +1,0 @@
-pyproject.toml
-tf_cli/__init__.py
-tf_cli/_version.py
-VERSIONING.md
-MANIFEST.in
-tf_cli/_version.py

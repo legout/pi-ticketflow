@@ -1,2 +1,0 @@
-prompts/tf-backlog.md
-skills/tf-planning/SKILL.md

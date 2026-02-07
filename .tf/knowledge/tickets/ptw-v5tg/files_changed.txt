@@ -1,2 +1,0 @@
-tests/smoke_test_version.py
-README.md

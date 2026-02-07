@@ -1,4 +1,0 @@
-/Users/volker/coding/libs/pi-tk-workflow/tf_cli/component_classifier.py
-/Users/volker/coding/libs/pi-tk-workflow/tf_cli/tags_suggest_new.py
-/Users/volker/coding/libs/pi-tk-workflow/tf_cli/new_cli.py
-/Users/volker/coding/libs/pi-tk-workflow/tests/test_component_classifier.py

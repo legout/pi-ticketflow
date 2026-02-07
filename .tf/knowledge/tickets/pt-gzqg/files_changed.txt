@@ -1,0 +1,5 @@
+.gitignore
+.pi/ralph/progress.md
+.tf/knowledge/tickets/
+.tf/ralph/progress.md
+.tf/ralph/sessions/

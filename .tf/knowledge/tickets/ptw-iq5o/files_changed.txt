@@ -1,7 +1,0 @@
-pyproject.toml
-tests/test_init_new.py
-tests/test_next_new.py
-tests/test_sync_new.py
-tests/test_track_new.py
-tests/test_update_new.py
-tests/test_version.py

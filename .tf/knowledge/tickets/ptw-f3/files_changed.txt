@@ -1,1 +1,0 @@
-/home/volker/.pi/agent/skills/tf-planning/SKILL.md
