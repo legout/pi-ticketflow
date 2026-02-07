@@ -14,9 +14,9 @@ This document defines the deprecation policy for legacy TF (TicketFlow) namespac
 
 ### Deprecation Scope
 
-| Namespace/Artifact | Status | Replacement | Deprecation Notice | Removal Target |
+| Namespace/Artifact | Status | Replacement | Deprecation Notice | Removal Date |
 |-------------------|--------|-------------|-------------------|----------------|
-| `scripts/tf_legacy.sh` | Deprecated | `tf_cli/` Python modules | 2026-02-07 | 2026-04-01 |
+| `scripts/tf_legacy.sh` | **Removed** | `tf_cli/` Python modules | 2026-02-07 | **2026-02-07** |
 | `*_new.py` module suffix | Deprecated | Remove `_new` suffix | 2026-02-07 | 2026-03-15 |
 | `tf new` command prefix | Deprecated | Direct `tf` commands | 2026-02-07 | 2026-03-01 |
 
@@ -67,7 +67,7 @@ During this phase:
 - Documentation references removed
 
 **Milestones:**
-- [ ] Delete `scripts/tf_legacy.sh`
+- [x] Delete `scripts/tf_legacy.sh` (completed 2026-02-07, ticket pt-g42s)
 - [ ] Rename all `*_new.py` → `*.py`
 - [ ] Remove `tf new` command aliases
 - [ ] Archive deprecation policy to `docs/history/`
@@ -78,11 +78,18 @@ During this phase:
 
 ### 3.1 Legacy Bash Script (`scripts/tf_legacy.sh`)
 
-**Current State:**
+**Status: REMOVED (2026-02-07)**
+
+**Previous State:**
 - 4,078 lines of bash code
 - Implements: `ralph`, `agentsmd`, `seed`, `track`, `next`, `backlog-ls`, `login`, `sync`, `update`, `doctor`
-- **Not currently invoked** by any active code path (`find_legacy_script()` returns None)
 - Full feature parity achieved in Python CLI
+
+**Removal Details:**
+- File removed from repository per deprecation policy
+- `tf_cli/cli.py` fallback logic removed
+- All functionality available via `tf <command>` Python CLI
+- Can be restored from git history if needed
 
 **Migration Path:**
 ```bash
@@ -255,10 +262,10 @@ Before final removal of each artifact, the following must be satisfied:
 - [ ] Team sign-off on removal date
 
 ### `scripts/tf_legacy.sh` Specific
-- [ ] All CI/CD pipelines migrated
-- [ ] No direct script invocations in documentation
-- [ ] Git backup verified (git history retains file)
-- [ ] Removal ticket created (CLN-10: pt-g42s)
+- [x] All CI/CD pipelines migrated
+- [x] No direct script invocations in documentation
+- [x] Git backup verified (git history retains file)
+- [x] Removal ticket created and completed (CLN-10: pt-g42s)
 
 ### `_new.py` Suffix Specific
 - [ ] All imports updated in source files

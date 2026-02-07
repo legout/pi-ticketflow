@@ -12,13 +12,14 @@ Generate small, actionable implementation tickets from seed (greenfield), baseli
 ## Usage
 
 ```
-/tf-backlog <seed-baseline-or-plan-path-or-topic-id> [--no-deps] [--no-component-tags] [--no-links] [--links-only]
+/tf-backlog [<seed-baseline-or-plan-path-or-topic-id>] [--no-deps] [--no-component-tags] [--no-links] [--links-only]
 ```
 
 ## Arguments
 
 - `$1` - Path to seed/baseline/plan directory or topic ID (`seed-*`, `baseline-*`, or `plan-*`)
-- If omitted: auto-locates if exactly one seed, baseline, or plan exists
+- **If omitted with active session**: Uses the active session's `root_seed` as the topic
+- **If omitted without active session**: Auto-locates if exactly one seed, baseline, or plan exists
 
 ## Options
 
@@ -38,6 +39,13 @@ To create a backlog without session finalization, ensure no session is active fi
 
 ## Examples
 
+**With active session (uses session's root_seed as default):**
+```
+/tf-backlog                    # Uses active session's root_seed
+/tf-backlog --no-component-tags # Uses session default with flags
+```
+
+**With explicit topic (bypasses session default):**
 ```
 /tf-backlog seed-build-a-cli
 /tf-backlog baseline-myapp
@@ -86,6 +94,26 @@ Useful when:
 ## Execution
 
 Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" procedure:
+
+**Session-Aware Topic Resolution (Phase A):**
+
+At the start of execution, determine the topic to use:
+
+A.1 **Check for active session**:
+   - Read `.tf/knowledge/.active-planning.json` if it exists
+   - Verify `state` is `"active"` (not "archived" or "completed")
+   - If active, capture `root_seed` for potential use as default topic
+
+A.2 **Resolve the topic argument**:
+   - **If explicit topic argument provided**: Use it (bypass session default)
+   - **If no argument provided and session is active**: 
+     - Use the session's `root_seed` as the topic
+     - Emit notice: `[tf] Using session default: {root_seed}`
+   - **If no argument provided and no active session**: 
+     - Fall back to auto-locate (existing behavior: use if exactly one topic exists)
+     - Emit notice: `[tf] Auto-located topic: {topic}` or prompt user if multiple topics
+
+A.3 **Proceed with resolved topic** for all subsequent steps
 
 **Special case: `--links-only` mode**
 - If `--links-only` is provided: Skip ticket creation (steps 5-7), go directly to linking step

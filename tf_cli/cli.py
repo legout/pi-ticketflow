@@ -5,14 +5,12 @@ import os
 import shutil
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
 from typing import Optional
 
 from tf_cli.version import get_version
 
 DEFAULT_UVX_SOURCE = "git+https://github.com/legout/pi-ticketflow"
-DEFAULT_RAW_REPO_URL = "https://raw.githubusercontent.com/legout/pi-ticketflow/main"
 
 
 def read_root_file(path: Path) -> str:
@@ -55,107 +53,6 @@ def resolve_repo_root(repo_arg: Optional[str] = None) -> Optional[Path]:
             return parent
 
     return None
-
-
-def find_legacy_script() -> Optional[Path]:
-    env_path = os.environ.get("TF_LEGACY_SCRIPT", "").strip()
-    if env_path:
-        path = Path(env_path).expanduser()
-        if path.is_file():
-            return path
-
-    cwd = Path.cwd()
-    for parent in [cwd, *cwd.parents]:
-        candidate = parent / ".tf/scripts/tf_legacy.sh"
-        if candidate.is_file():
-            return candidate
-
-    global_legacy = Path.home() / ".tf/scripts/tf_legacy.sh"
-    if global_legacy.is_file():
-        return global_legacy
-
-    repo_root = resolve_repo_root()
-    if repo_root:
-        candidate = repo_root / "scripts/tf_legacy.sh"
-        if candidate.is_file():
-            return candidate
-
-    return None
-
-
-def raw_base_from_source(source: str) -> Optional[str]:
-    cleaned = source.strip()
-    if cleaned.startswith("git+"):
-        cleaned = cleaned[4:]
-    if not cleaned.startswith("https://github.com/"):
-        return None
-
-    cleaned = cleaned.split("#", 1)[0].split("?", 1)[0]
-    cleaned = cleaned[len("https://github.com/") :]
-    if cleaned.endswith(".git"):
-        cleaned = cleaned[:-4]
-
-    if "@" in cleaned:
-        repo_part, ref = cleaned.split("@", 1)
-    else:
-        repo_part, ref = cleaned, "main"
-
-    if "/" not in repo_part:
-        return None
-
-    owner, repo = repo_part.split("/", 1)
-    ref = ref or "main"
-    return f"https://raw.githubusercontent.com/{owner}/{repo}/{ref}"
-
-
-def ensure_tf_assets(base: Path, repo_root: Optional[Path], uvx_source: str) -> None:
-    config_dest = base / "config/settings.json"
-    helper_dest = base / "scripts/tf_config.py"
-    legacy_dest = base / "scripts/tf_legacy.sh"
-
-    raw_base = raw_base_from_source(uvx_source) or DEFAULT_RAW_REPO_URL
-
-    def ensure_file(dest: Path, rel_path: str, executable: bool = False) -> None:
-        if dest.exists():
-            return
-
-        source_path = None
-        if repo_root:
-            candidate = repo_root / rel_path
-            if candidate.is_file():
-                source_path = candidate
-
-        dest.parent.mkdir(parents=True, exist_ok=True)
-
-        if source_path:
-            shutil.copy2(source_path, dest)
-        else:
-            url = f"{raw_base}/{rel_path}"
-            try:
-                with urllib.request.urlopen(url) as resp:
-                    dest.write_bytes(resp.read())
-            except Exception as exc:
-                print(f"WARNING: Failed to install {rel_path}: {exc}", file=sys.stderr)
-                return
-
-        if executable:
-            dest.chmod(dest.stat().st_mode | 0o111)
-
-    ensure_file(config_dest, "config/settings.json")
-    ensure_file(helper_dest, "scripts/tf_config.py", executable=True)
-    ensure_file(legacy_dest, "scripts/tf_legacy.sh", executable=True)
-
-
-def run_legacy(args: list[str]) -> int:
-    legacy = find_legacy_script()
-    if not legacy:
-        print("ERROR: Legacy shell CLI not found.", file=sys.stderr)
-        print(
-            "Run 'tf install' from the repo, or reinstall using install.sh.",
-            file=sys.stderr,
-        )
-        return 1
-    return subprocess.call(["bash", str(legacy), *args])
 
 
 def render_uvx_shim(uvx_source: str, local_install: bool = False) -> str:
@@ -411,7 +308,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if not argv or argv[0] in {"-h", "--help", "help"}:
         print(
-            """Ticketflow CLI\n\nUsage:\n  tf install [--global] [--force-local]\n  tf setup\n  tf login\n  tf init [--project <path>]\n  tf sync [--project <path>]\n  tf doctor [--project <path>] [--fix]\n  tf update\n  tf next\n  tf backlog-ls [topic-id-or-path]\n  tf track <path>\n  tf priority-reclassify [--apply] [--ids ...] [--ready] [--status ...] [--tag ...]\n  tf ralph <subcommand> ...\n  tf agentsmd <subcommand> ...\n  tf seed ...\n  tf kb ...\n\nLegacy:\n  tf legacy <args...>\n\n(You can also use: tf new <command> ... for the old subcommand namespace.)\n"""
+            """Ticketflow CLI\n\nUsage:\n  tf install [--global] [--force-local]\n  tf setup\n  tf login\n  tf init [--project <path>]\n  tf sync [--project <path>]\n  tf doctor [--project <path>] [--fix]\n  tf update\n  tf next\n  tf backlog-ls [topic-id-or-path]\n  tf track <path>\n  tf priority-reclassify [--apply] [--ids ...] [--ready] [--status ...] [--tag ...]\n  tf ralph <subcommand> ...\n  tf agentsmd <subcommand> ...\n  tf seed ...\n  tf kb ...\n\n(You can also use: tf new <command> ... for the old subcommand namespace.)\n"""
         )
         return 0
 
@@ -516,9 +413,6 @@ def main(argv: Optional[list[str]] = None) -> int:
         from . import kb_cli
 
         return kb_cli.main(rest)
-
-    if command == "legacy":
-        return run_legacy(rest)
 
     print(f"Unknown command: {command}", file=sys.stderr)
     print("Run: tf --help", file=sys.stderr)
