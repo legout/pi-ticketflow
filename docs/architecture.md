@@ -432,7 +432,7 @@ created = apply_dependencies(created, mode="chain")
 write_backlog_md(created, topic_id="seed-foo")
 ```
 
-See `tf_cli/TICKET_FACTORY.md` for complete API documentation.
+See `docs/ticket_factory.md` for complete API documentation.
 
 ---
 
