@@ -619,6 +619,140 @@ class TestCreateLoggerFactory:
         assert logger.context == {"mode": "serial"}
 
 
+class TestTicketTitleLogging:
+    """Test ticket_title field in Ralph logging output."""
+
+    def test_ticket_title_appears_in_log_output(self):
+        """Verify ticket_title appears in verbose log output when provided."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_ticket_start(
+            ticket_id="pt-abc123",
+            ticket_title="Fix authentication bug",
+            mode="serial",
+            iteration=1,
+        )
+        content = output.getvalue()
+        assert 'ticket_title="Fix authentication bug"' in content
+        assert "pt-abc123" in content
+
+    def test_ticket_title_appears_in_ticket_complete(self):
+        """Verify ticket_title appears in ticket completion log."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_ticket_complete(
+            ticket_id="pt-abc123",
+            status="COMPLETE",
+            ticket_title="Fix authentication bug",
+            mode="serial",
+        )
+        content = output.getvalue()
+        assert 'ticket_title="Fix authentication bug"' in content
+        assert "status=COMPLETE" in content
+
+    def test_ticket_title_appears_in_command_executed(self):
+        """Verify ticket_title appears in command execution log."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_command_executed(
+            ticket_id="pt-abc123",
+            command="pi -p '/tf pt-abc123'",
+            exit_code=0,
+            ticket_title="Fix authentication bug",
+            mode="serial",
+        )
+        content = output.getvalue()
+        assert 'ticket_title="Fix authentication bug"' in content
+        assert "exit_code=0" in content
+
+    def test_ticket_title_appears_in_error_summary(self):
+        """Verify ticket_title appears in error summary log."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_error_summary(
+            ticket_id="pt-abc123",
+            error_msg="Command failed",
+            ticket_title="Fix authentication bug",
+            mode="serial",
+        )
+        content = output.getvalue()
+        assert 'ticket_title="Fix authentication bug"' in content
+        assert 'error="Command failed"' in content
+
+    def test_ticket_title_appears_in_worktree_operation(self):
+        """Verify ticket_title appears in worktree operation log."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_worktree_operation(
+            ticket_id="pt-abc123",
+            operation="add",
+            worktree_path="/path/to/worktree",
+            success=True,
+            ticket_title="Fix authentication bug",
+            mode="parallel",
+        )
+        content = output.getvalue()
+        assert 'ticket_title="Fix authentication bug"' in content
+        assert "operation=add" in content
+
+    def test_graceful_fallback_when_title_unavailable(self):
+        """Verify graceful fallback when ticket_title is not provided."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_ticket_start(
+            ticket_id="pt-abc123",
+            mode="serial",
+        )
+        content = output.getvalue()
+        assert "ticket_title" not in content
+        assert "pt-abc123" in content
+        assert "Starting ticket processing" in content
+
+    def test_ticket_title_not_included_when_none(self):
+        """Verify ticket_title field is omitted when explicitly set to None."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_ticket_complete(
+            ticket_id="pt-abc123",
+            status="FAILED",
+            ticket_title=None,
+            mode="serial",
+        )
+        content = output.getvalue()
+        assert "ticket_title" not in content
+        assert "status=FAILED" in content
+
+    def test_ticket_title_with_special_characters(self):
+        """Verify ticket_title handles titles with special characters."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_ticket_start(
+            ticket_id="pt-abc123",
+            ticket_title='Fix "broken" authentication (urgent!)',
+            mode="serial",
+        )
+        content = output.getvalue()
+        # Values with spaces/quotes should be wrapped in quotes
+        assert 'ticket_title=' in content
+        assert "Fix" in content
+        assert "broken" in content
+
+    def test_sensitive_ticket_title_not_redacted_by_default(self):
+        """Verify normal ticket titles are not redacted."""
+        output = io.StringIO()
+        logger = RalphLogger(level=LogLevel.DEBUG, output=output)
+        logger.log_ticket_start(
+            ticket_id="pt-abc123",
+            ticket_title="Implement API key validation",
+            mode="serial",
+        )
+        content = output.getvalue()
+        # "API key" in the title should NOT trigger redaction
+        # (redaction is based on field name, not value content)
+        assert "Implement API key validation" in content
+        assert "[REDACTED]" not in content
+
+
 class TestCapturedStderrOutput:
     """Test that logs go to stderr (captured output)."""
 
