@@ -1,6 +1,83 @@
 {
   "topics": [
     {
+      "id": "plan-auto-planning-sessions-linkage",
+      "title": "Automatic planning sessions for seed↔spike↔plan↔backlog linkage",
+      "keywords": [
+        "planning-session",
+        "auto-linking",
+        "seed",
+        "spike",
+        "plan",
+        "backlog",
+        "sessions",
+        "knowledge-base"
+      ],
+      "plan": "topics/plan-auto-planning-sessions-linkage/plan.md",
+      "backlog": "topics/plan-auto-planning-sessions-linkage/backlog.md"
+    },
+    {
+      "id": "plan-critical-cleanup-simplification",
+      "title": "Critical cleanup and simplification of pi-ticketflow",
+      "keywords": [
+        "cleanup",
+        "simplification",
+        "refactor",
+        "legacy",
+        "docs",
+        "quality"
+      ],
+      "plan": "topics/plan-critical-cleanup-simplification/plan.md",
+      "backlog": "topics/plan-critical-cleanup-simplification/backlog.md",
+      "sources": "topics/plan-critical-cleanup-simplification/sources.md"
+    },
+    {
+      "id": "plan-kb-management-cli",
+      "title": "Knowledge base management commands (tf kb ...)",
+      "keywords": [
+        "knowledge-base",
+        "topics",
+        "cli",
+        "python",
+        "archive",
+        "delete",
+        "validate",
+        "rebuild-index"
+      ],
+      "plan": "topics/plan-kb-management-cli/plan.md",
+      "backlog": "topics/plan-kb-management-cli/backlog.md"
+    },
+    {
+      "id": "plan-simple-kanban-ui-for-tf",
+      "title": "Simple Kanban UI for Ticketflow (.tf)",
+      "keywords": [
+        "ui",
+        "tui",
+        "kanban",
+        "dashboard",
+        "tickets",
+        "knowledge-base",
+        "ralph"
+      ],
+      "plan": "topics/plan-simple-kanban-ui-for-tf/plan.md"
+    },
+    {
+      "id": "seed-add-more-logging-to-ralph-loop",
+      "title": "Add more logging to the Ralph loop (tk ralph start/run)",
+      "keywords": [
+        "ralph",
+        "logging",
+        "observability",
+        "workflow",
+        "tk",
+        "cli",
+        "debugging"
+      ],
+      "overview": "topics/seed-add-more-logging-to-ralph-loop/overview.md",
+      "sources": "topics/seed-add-more-logging-to-ralph-loop/sources.md",
+      "backlog": "topics/seed-add-more-logging-to-ralph-loop/backlog.md"
+    },
+    {
       "id": "seed-add-versioning",
       "title": "Add versioning",
       "keywords": [
@@ -10,7 +87,24 @@
         "release"
       ],
       "overview": "topics/seed-add-versioning/overview.md",
-      "sources": "topics/seed-add-versioning/sources.md"
+      "sources": "topics/seed-add-versioning/sources.md",
+      "backlog": "topics/seed-add-versioning/backlog.md"
+    },
+    {
+      "id": "seed-automatic-planning-sessions-linkage",
+      "title": "Automatic planning sessions for seed↔spike↔plan↔backlog linkage",
+      "keywords": [
+        "planning-session",
+        "auto-linking",
+        "seed",
+        "spike",
+        "plan",
+        "backlog",
+        "knowledge-base",
+        "index-json"
+      ],
+      "overview": "topics/seed-automatic-planning-sessions-linkage/overview.md",
+      "sources": "topics/seed-automatic-planning-sessions-linkage/sources.md"
     },
     {
       "id": "seed-backlog-deps-and-tags",
@@ -24,8 +118,88 @@
         "automation"
       ],
       "overview": "topics/seed-backlog-deps-and-tags/overview.md",
-      "sources": "topics/seed-backlog-deps-and-tags/sources.md"
+      "sources": "topics/seed-backlog-deps-and-tags/sources.md",
+      "backlog": "topics/seed-backlog-deps-and-tags/backlog.md"
+    },
+    {
+      "id": "seed-kb-management-commands",
+      "title": "Knowledge base management commands (tf kb ...)",
+      "keywords": [
+        "knowledge-base",
+        "topics",
+        "index-json",
+        "archive",
+        "delete",
+        "validate",
+        "rebuild-index",
+        "cli",
+        "python"
+      ],
+      "overview": "topics/seed-kb-management-commands/overview.md",
+      "sources": "topics/seed-kb-management-commands/sources.md"
+    },
+    {
+      "id": "seed-pi-command-reclassify-priorities",
+      "title": "Add a Pi command to reclassify ticket priorities (P0–P4)",
+      "keywords": [
+        "priorities",
+        "triage",
+        "ticketflow",
+        "tk",
+        "workflow",
+        "pi-command",
+        "automation"
+      ],
+      "overview": "topics/seed-pi-command-reclassify-priorities/overview.md",
+      "sources": "topics/seed-pi-command-reclassify-priorities/sources.md",
+      "backlog": "topics/seed-pi-command-reclassify-priorities/backlog.md"
+    },
+    {
+      "id": "spike-pi-non-interactive-logs",
+      "title": "Show logs/progress in Pi non-interactive mode",
+      "keywords": [
+        "pi",
+        "non-interactive",
+        "logging",
+        "json",
+        "extensions",
+        "tool-events"
+      ],
+      "overview": "topics/spike-pi-non-interactive-logs/overview.md",
+      "sources": "topics/spike-pi-non-interactive-logs/sources.md"
+    },
+    {
+      "id": "seed-add-ticket-title-in-the-logging-when-run",
+      "title": "Add ticket title in verbose logging for tf ralph",
+      "keywords": [
+        "ralph",
+        "logging",
+        "verbose",
+        "observability",
+        "ticket-title",
+        "cli"
+      ],
+      "overview": "topics/seed-add-ticket-title-in-the-logging-when-run/overview.md",
+      "sources": "topics/seed-add-ticket-title-in-the-logging-when-run/sources.md",
+      "backlog": "topics/seed-add-ticket-title-in-the-logging-when-run/backlog.md"
+    },
+    {
+      "id": "seed-when-executing-tf-backlog-in-an-active-s",
+      "title": "Auto-use active session seed/spikes/plan in /tf-backlog",
+      "keywords": [
+        "planning-session",
+        "tf-backlog",
+        "seed",
+        "spike",
+        "plan",
+        "auto-linking",
+        "knowledge-base",
+        "workflow"
+      ],
+      "overview": "topics/seed-when-executing-tf-backlog-in-an-active-s/overview.md",
+      "sources": "topics/seed-when-executing-tf-backlog-in-an-active-s/sources.md",
+      "backlog": "topics/seed-when-executing-tf-backlog-in-an-active-s/backlog.md"
     }
   ],
-  "updated": "2026-02-05"
+  "updated": "2026-02-07T14:23:31.701646+00:00"
 }
