@@ -667,3 +667,4 @@ The smoke test validates:
 - **[docs/ralph.md](docs/ralph.md)** - Autonomous processing
 - **[docs/ticket_factory.md](docs/ticket_factory.md)** - Ticket creation API for backlog generation
 - **[docs/ticket_factory_refactoring.md](docs/ticket_factory_refactoring.md)** - Migration guide from inline scripts
+- **[docs/artifact-policy.md](docs/artifact-policy.md)** - Source-controlled vs runtime artifacts

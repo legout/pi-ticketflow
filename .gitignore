@@ -1,2 +1,46 @@
+# Runtime / Generated Artifacts
+# See docs/artifact-policy.md for the full policy
+
+# Python build artifacts
+*.egg-info/
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Testing artifacts
 .coverage
 htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TF Workflow - Runtime artifacts
+.tf/knowledge/tickets/
+.tf/ralph/sessions/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
