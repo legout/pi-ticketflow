@@ -1,6 +1,6 @@
 ---
 id: ptw-f1
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T15:25:00Z
@@ -27,3 +27,21 @@ Warning
 - [ ] Add note about `--no-deps` flag in the Backlog Generation procedure introduction
 - [ ] Mention flag in step 1 (detect mode) or early in the procedure
 - [ ] Ensure implementers are aware of the option before they start creating tickets
+
+## Notes
+
+**2026-02-05T16:48:38Z**
+
+## Implementation Complete
+
+Added documentation for the &#96;--no-deps&#96; flag in the Backlog Generation procedure:
+
+1. **Added Flags section** in procedure introduction documenting the &#96;--no-deps&#96; option
+2. **Updated Step 2 (detect mode)** with a note referencing the flag and pointing to step 9
+
+All acceptance criteria met:
+- [x] Flag documented in procedure introduction
+- [x] Flag mentioned early in procedure (step 2)
+- [x] Implementers aware of option before creating tickets
+
+Commit: 291b99a

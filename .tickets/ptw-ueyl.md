@@ -1,6 +1,6 @@
 ---
 id: ptw-ueyl
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T13:38:19Z
@@ -28,3 +28,31 @@ Seed success metric: users can reliably retrieve the installed version via CLI. 
 
 ## References
 - Seed: seed-add-versioning
+
+## Notes
+
+**2026-02-05T16:33:43Z**
+
+Implemented tf --version, -v, and -V flags across all entry points.
+
+Changes:
+- tf_cli/cli.py: Added -V flag support alongside --version and -v
+- scripts/tf_legacy.sh: Added version flag support with proper newline handling
+- tests/test_cli_version.py: Added test for -V flag
+
+All 9 tests pass. Commit: 6258afe
+
+**2026-02-07T16:30:55Z**
+
+Implemented and documented tf --version, -v, -V flags.
+
+Changes:
+- Updated help text in tf_cli/cli.py to document version flags
+
+All acceptance criteria met:
+- tf --version prints version and exits 0
+- tf -V works and is documented
+- No breaking changes
+
+Tests: 128 version-related tests pass.
+Commit: 0cd4169

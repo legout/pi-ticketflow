@@ -1,6 +1,6 @@
 ---
 id: ptw-f3
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T15:25:00Z
@@ -28,3 +28,25 @@ Suggestion
 - [ ] Implement cumulative scoring for tickets with multiple keywords
 - [ ] Document the scoring logic in the skill
 - [ ] Add examples showing improved ordering
+
+## Notes
+
+**2026-02-05T16:53:37Z**
+
+--note ## Implementation Complete
+
+Added keyword scoring system to tf-planning skill for smarter ticket ordering during backlog generation.
+
+### Changes Made
+- New Step 7: Score and order tickets using keyword weights
+- Weights: setup(10), configure(8), define(6), design(5), implement(3), test(1)
+- Cumulative scoring for tickets with multiple keywords
+- Added comprehensive examples section
+- Updated backlog.md format to include Score column
+
+### Review Results
+- Critical: 0 | Major: 0 | Minor: 0
+- All acceptance criteria satisfied
+
+### Commit
+38de3e2 ptw-f3: Add keyword scoring system for smarter ticket ordering

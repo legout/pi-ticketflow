@@ -1,6 +1,6 @@
 ---
 id: pt-1zkq
-status: open
+status: closed
 deps: [pt-pa5v]
 links: []
 created: 2026-02-07T12:36:41Z
@@ -30,3 +30,9 @@ Root directory currently includes stale proposal/report artifacts and stray file
 - Plan: plan-critical-cleanup-simplification
 
 
+
+## Notes
+
+**2026-02-07T17:10:36Z**
+
+Archived 5 stale root-level docs to docs/archive/ with ARCHIVE_INDEX.md traceability. Deleted empty EOF file. All acceptance criteria met. Reviews: 0 Critical/Major/Minor issues. Commit: eece478

@@ -1,6 +1,6 @@
 ---
 id: ptw-ztdh
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T14:00:22Z
@@ -29,3 +29,19 @@ The seed expects /tf-tags-suggest to remain the fallback when automatic tagging 
 ## References
 - Seed: seed-backlog-deps-and-tags
 
+
+## Notes
+
+**2026-02-05T16:46:33Z**
+
+Implemented documentation updates to clarify shared component classifier usage.
+
+Changes:
+- Updated tf_cli/component_classifier.py with module-level documentation explaining it's the shared source of truth
+- Updated tf_cli/tags_suggest_new.py docstring to reference the shared classifier
+- Updated docs/commands.md with 'Component Tag Assignment' and 'Shared Classifier' sections
+- Updated prompts/tf-backlog.md to explicitly reference the shared module
+
+All 24 existing tests pass. No functional changes - documentation only.
+
+Commit: 58b77b0

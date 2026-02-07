@@ -1,6 +1,6 @@
 ---
 id: ptw-v5tg
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T13:38:20Z
@@ -28,3 +28,17 @@ Version output should not regress silently; a small test helps catch breakage ea
 
 ## References
 - Seed: seed-add-versioning
+
+## Notes
+
+**2026-02-05T16:35:35Z**
+
+Implemented minimal smoke test for tf --version
+
+Changes:
+- Added tests/smoke_test_version.py (stdlib-only, no pytest required)
+- Validates exit code 0, non-empty output, and SemVer format
+- Added Development section to README with test instructions
+
+Tested: python tests/smoke_test_version.py (all checks pass)
+Commit: 40723f5

@@ -1,6 +1,6 @@
 ---
 id: ptw-q4f4
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T14:44:27Z
@@ -31,3 +31,9 @@ Consider adding more markers for test categorization (e.g., unit, e2e, smoke) to
 - [ ] New markers defined in pyproject.toml
 - [ ] Existing tests categorized with appropriate markers
 
+
+## Notes
+
+**2026-02-05T17:08:35Z**
+
+Added pytest markers for test categorization: unit (231 tests), e2e (2 tests), smoke (3 tests). Also marked existing integration tests (15 tests). All markers registered and tests passing. Commit: 0afd3e3

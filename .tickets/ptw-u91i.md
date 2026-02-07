@@ -1,6 +1,6 @@
 ---
 id: ptw-u91i
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T14:44:27Z
@@ -25,3 +25,20 @@ Add '--cov-report=html' to [tool.pytest.ini_options] addopts
 - [ ] HTML coverage report generated on test runs
 - [ ] Report directory added to .gitignore
 
+
+## Notes
+
+**2026-02-05T17:09:39Z**
+
+## Implementation Complete
+
+**Changes:**
+- Added  to  in pyproject.toml
+- Added  to .gitignore
+
+**Commit:** e44e9bb2e9aaa1a0f84d9b9c7ce723b90c56f3df
+
+**Verification:**
+- TOML syntax validated successfully
+- HTML coverage reports will now be generated on test runs
+- Report directory properly ignored by git

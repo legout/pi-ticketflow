@@ -1,6 +1,6 @@
 ---
 id: ptw-pq0f
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-05T14:44:27Z
@@ -25,3 +25,16 @@ Add '--cov-fail-under=4' to [tool.pytest.ini_options] addopts (or use fail_under
 - [ ] Coverage check runs with pytest by default
 - [ ] Tests fail if coverage drops below threshold
 
+
+## Notes
+
+**2026-02-05T17:05:12Z**
+
+Implemented: Added '--cov-fail-under=4' to pytest addopts in pyproject.toml
+
+Changes:
+- Modified [tool.pytest.ini_options] addopts to include '--cov-fail-under=4'
+- This ensures coverage failures happen during regular test runs
+- TOML syntax validated
+
+Commit: 807e896
