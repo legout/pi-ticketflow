@@ -8,15 +8,9 @@ from typing import Optional
 
 import shutil
 
+from .utils import find_project_root
+
 DEFAULT_QUERY = "tk ready | head -1 | awk '{print $1}'"
-
-
-def find_project_root() -> Optional[Path]:
-    cwd = Path.cwd()
-    for parent in [cwd, *cwd.parents]:
-        if (parent / ".tf").is_dir():
-            return parent
-    return None
 
 
 def load_ticket_query(ralph_config: Path) -> Optional[str]:

@@ -1,27 +1,11 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 from pathlib import Path
 from typing import List, Optional
 
-
-def read_json(path: Path):
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-def find_project_root() -> Optional[Path]:
-    cwd = Path.cwd()
-    for parent in [cwd, *cwd.parents]:
-        if (parent / ".tf").is_dir():
-            return parent
-    return None
+from .utils import find_project_root, read_json
 
 
 def resolve_knowledge_dir(project_root: Path) -> Path:

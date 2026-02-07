@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from .utils import find_project_root, merge, read_json
+
 DEFAULT_MCP_SERVERS = [
     "context7",
     "exa",
@@ -29,15 +31,6 @@ OPTIONAL_EXTENSIONS = [
     "pi-review-loop",
     "pi-web-access",
 ]
-
-
-def read_json(path: Path) -> Dict:
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
 
 
 def read_toml(path: Path) -> Dict:
@@ -109,24 +102,6 @@ def read_toml(path: Path) -> Dict:
     return result
 
 
-def merge(a: Dict, b: Dict) -> Dict:
-    out = dict(a)
-    for k, v in b.items():
-        if isinstance(v, dict) and isinstance(out.get(k), dict):
-            out[k] = merge(out[k], v)
-        else:
-            out[k] = v
-    return out
-
-
-def find_project_root() -> Optional[Path]:
-    cwd = Path.cwd()
-    for parent in [cwd, *cwd.parents]:
-        if (parent / ".tf").is_dir():
-            return parent
-    return None
-
-
 def resolve_target_base(args: argparse.Namespace) -> tuple[Path, bool, Path]:
     if args.project:
         project_root = Path(args.project).expanduser()
@@ -147,9 +122,13 @@ def resolve_target_base(args: argparse.Namespace) -> tuple[Path, bool, Path]:
 
 
 def load_workflow_config(project_root: Path) -> Dict:
-    global_config = Path.home() / ".tf/config/settings.json"
+    """Load TF workflow configuration for this project.
+
+    After the install/init refactor, configuration is project-local.
+    """
+
     project_config = project_root / ".tf/config/settings.json"
-    return merge(read_json(global_config), read_json(project_config))
+    return read_json(project_config)
 
 
 def get_checker_tools(config: Dict) -> List[str]:
@@ -220,10 +199,13 @@ def check_mcp_config(config: Dict, target_base: Path) -> None:
     mcp_servers = get_mcp_servers(config)
     if not mcp_servers:
         return
-    mcp_file = target_base / "mcp.json"
+
+    # MCP config is global Pi config (not project-local).
+    mcp_file = (Path.home() / ".pi" / "agent") / "mcp.json"
+
     if not mcp_file.exists():
         print(
-            f"[info] mcp.json not found at {mcp_file} (MCP research optional; run 'tf new login')"
+            f"[info] mcp.json not found at {mcp_file} (MCP research optional; run 'tf login')"
         )
         return
 

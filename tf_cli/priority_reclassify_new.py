@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Tuple
 
+from .utils import find_project_root
+
 
 def is_interactive() -> bool:
     """Check if running in an interactive terminal."""
@@ -128,15 +130,6 @@ TYPE_DEFAULTS = {
     "chore": "P3",
     "docs": "P4",
 }
-
-
-def find_project_root() -> Optional[Path]:
-    """Find the project root by looking for .tf directory."""
-    cwd = Path.cwd()
-    for parent in [cwd, *cwd.parents]:
-        if (parent / ".tf").is_dir():
-            return parent
-    return None
 
 
 def run_tk_command(args: List[str]) -> Tuple[int, str, str]:
