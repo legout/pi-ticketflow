@@ -93,7 +93,7 @@ DEFAULTS: Dict[str, Any] = {
     "includePlanningDocs": True,
     "promiseOnComplete": True,
     "lessonsMaxCount": 50,
-    "sessionDir": ".tf/ralph/sessions",
+    "sessionDir": "~/.pi/agent/sessions",
     "sessionPerTicket": True,
     "parallelWorkers": 1,
     "parallelWorktreesDir": ".tf/ralph/worktrees",
