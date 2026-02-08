@@ -21,18 +21,17 @@ Usage:
   curl -fsSL https://raw.githubusercontent.com/legout/pi-ticketflow/main/install.sh | bash -s -- --project /path/to/project
 
 Options:
-  --global              Install Pi assets into ~/.pi/agent and the tf CLI into ~/.local/bin/tf.
-                        Creates ~/.tf/config/settings.json for global defaults if missing.
-  --project <path>      Install Pi assets into <path>/.pi and TF runtime/state into <path>/.tf.
-                        Installs the tf CLI to <path>/.tf/bin/tf.
+  --global              Install the tf CLI into ~/.local/bin/tf.
+                        (Workflow files are installed per-project via `tf init`.)
+  --project <path>      DEPRECATED. Project installs are no longer supported.
+                        Install globally and run `tf init` inside the project.
   --remote              Force remote mode (download from GitHub)
   --help                Show this help
 
 Notes:
-  - Pi-discoverable files (agents, prompts, skills) remain under .pi/ or ~/.pi/agent/.
-  - TF-owned state always lives under .tf/ in the project (knowledge, ralph, config, scripts).
-  - Global defaults live in ~/.tf/config/settings.json when installed globally.
-  - After a global install, run 'tf init' in each project to scaffold .tf/.
+  - Pi extensions + MCP/web-search keys are configured globally via: `tf setup` / `tf login`.
+  - TF workflow files (agents/prompts/skills/config) are installed per-project via: `tf init` and ensured via `tf sync`.
+  - TF-owned state always lives under .tf/ in the project (knowledge, ralph).
 EOF
 }
 
@@ -65,7 +64,13 @@ route_dest_base() {
   local rel="$1"
   case "$rel" in
     agents/*|skills/*|prompts/*)
-      echo "$PI_BASE"
+      # After the refactor, TF workflow files are project-local.
+      # Global installs only install the CLI shim.
+      if [ "$IS_GLOBAL" = true ]; then
+        echo ""
+      else
+        echo "$PI_BASE"
+      fi
       ;;
     *)
       if [ "$IS_GLOBAL" = true ]; then
@@ -236,85 +241,6 @@ install_local() {
   log "Installed $count files (excluding CLI)"
 }
 
-ensure_global_config() {
-  local use_remote="$1"
-  local dest="$HOME/.tf/config/settings.json"
-  local helper_dest="$HOME/.tf/scripts/tf_config.py"
-  local legacy_dest="$HOME/.tf/scripts/tf_legacy.sh"
-
-  if [ ! -f "$dest" ]; then
-    if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
-      log "WARNING: Cannot create $dest"
-      return 0
-    fi
-
-    if [ "$use_remote" = true ]; then
-      if download_file "$REPO_URL/config/settings.json" "$dest"; then
-        log "Created global config at: $dest"
-      else
-        log "WARNING: Failed to download global config"
-      fi
-    else
-      local script_dir
-      script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-      if [ -f "$script_dir/config/settings.json" ]; then
-        cp "$script_dir/config/settings.json" "$dest"
-        log "Created global config at: $dest"
-      else
-        log "WARNING: Missing config/settings.json; global config not created"
-      fi
-    fi
-  fi
-
-  if ! mkdir -p "$(dirname "$helper_dest")" 2>/dev/null; then
-    log "WARNING: Cannot create $helper_dest"
-    return 0
-  fi
-
-  local script_dir=""
-  if [ "$use_remote" != true ]; then
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  fi
-
-  if [ ! -f "$helper_dest" ]; then
-    if [ "$use_remote" = true ]; then
-      if download_file "$REPO_URL/scripts/tf_config.py" "$helper_dest"; then
-        chmod +x "$helper_dest"
-        log "Created global config helper at: $helper_dest"
-      else
-        log "WARNING: Failed to download global config helper"
-      fi
-    else
-      if [ -f "$script_dir/scripts/tf_config.py" ]; then
-        cp "$script_dir/scripts/tf_config.py" "$helper_dest"
-        chmod +x "$helper_dest"
-        log "Created global config helper at: $helper_dest"
-      else
-        log "WARNING: Missing scripts/tf_config.py; global config helper not created"
-      fi
-    fi
-  fi
-
-  if [ ! -f "$legacy_dest" ]; then
-    if [ "$use_remote" = true ]; then
-      if download_file "$REPO_URL/scripts/tf_legacy.sh" "$legacy_dest"; then
-        chmod +x "$legacy_dest"
-        log "Created global legacy CLI at: $legacy_dest"
-      else
-        log "WARNING: Failed to download legacy CLI"
-      fi
-    else
-      if [ -f "$script_dir/scripts/tf_legacy.sh" ]; then
-        cp "$script_dir/scripts/tf_legacy.sh" "$legacy_dest"
-        chmod +x "$legacy_dest"
-        log "Created global legacy CLI at: $legacy_dest"
-      else
-        log "WARNING: Missing scripts/tf_legacy.sh; legacy CLI not created"
-      fi
-    fi
-  fi
-}
-
 main() {
   PI_BASE=""
   TF_BASE=""
@@ -388,36 +314,28 @@ main() {
   fi
 
   if [ "$IS_GLOBAL" = true ]; then
-    ensure_global_config "$use_remote"
+    : # no global TF config/assets are installed anymore
   else
     mkdir -p "$TF_BASE/knowledge" "$TF_BASE/ralph"
   fi
 
   echo ""
   if [ "$IS_GLOBAL" = true ]; then
-    echo "Installed Pi assets to: $PI_BASE"
     echo "Installed CLI to: $HOME/.local/bin/tf"
     echo ""
     echo "Next steps:"
-    echo "  1. Run interactive setup (extensions + API keys):"
+    echo "  1. Configure Pi extensions + MCP/web-search keys (global):"
     echo "     tf setup"
-    echo "  2. In each project, scaffold TF state:"
+    echo "  2. In each project, install TF workflow files + config:"
     echo "     tf init"
-    echo "  3. Start working:"
-    echo "     /tf <ticket>"
-  else
-    echo "Installed Pi assets to: $PI_BASE"
-    echo "Installed TF runtime/state to: $TF_BASE"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Run interactive setup:"
-    echo "     ./.tf/bin/tf setup"
-    echo "  2. Sync configuration to agents/prompts:"
-    echo "     ./.tf/bin/tf sync"
-    echo "  3. Initialize Ralph:"
-    echo "     ./.tf/bin/tf ralph init"
+    echo "  3. After editing .tf/config/settings.json, sync models:"
+    echo "     tf sync"
     echo "  4. Start working:"
     echo "     /tf <ticket>"
+  else
+    echo "WARNING: Project installs are deprecated. Install tf globally and use 'tf init' in the project." >&2
+    echo "Installed Pi assets to: $PI_BASE"
+    echo "Installed TF runtime/state to: $TF_BASE"
   fi
 }
 

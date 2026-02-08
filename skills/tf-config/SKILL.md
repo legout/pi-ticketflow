@@ -101,9 +101,8 @@ Structure:
 
 ### Agent Files
 
-Located at (project overrides global):
-- `.pi/agents/*.md` (project)
-- `~/.pi/agent/agents/*.md` (global)
+Located at (project-local):
+- `.pi/agents/*.md`
 
 Each agent file has frontmatter:
 ```yaml
@@ -123,16 +122,16 @@ Check complete installation status:
 
 1. **Check extensions** (see Prerequisites Check above)
 
-2. **Check agent files exist**:
-   - `agents/reviewer-general.md`
-   - `agents/reviewer-spec-audit.md`
-   - `agents/reviewer-second-opinion.md`
-   - `agents/review-merge.md`
-   - `agents/fixer.md`
-   - `agents/closer.md`
+2. **Check agent files exist** (project-local):
+   - `.pi/agents/reviewer-general.md`
+   - `.pi/agents/reviewer-spec-audit.md`
+   - `.pi/agents/reviewer-second-opinion.md`
+   - `.pi/agents/review-merge.md`
+   - `.pi/agents/fixer.md`
+   - `.pi/agents/closer.md`
 
-3. **Check workflow config exists**:
-   - Look for `config/settings.json`
+3. **Check workflow config exists** (project-local):
+   - `.tf/config/settings.json`
 
 4. **Check `tk` CLI**:
    ```bash
@@ -150,21 +149,21 @@ Update agent **and prompt** files from config:
 **Agent mapping (config key → agent file)**:
 | Config Key | Agent File |
 |------------|------------|
-| `models.reviewer-general` | `agents/reviewer-general.md` |
-| `models.reviewer-spec-audit` | `agents/reviewer-spec-audit.md` |
-| `models.reviewer-second-opinion` | `agents/reviewer-second-opinion.md` |
-| `models.review-merge` | `agents/review-merge.md` |
-| `models.fixer` | `agents/fixer.md` |
-| `models.closer` | `agents/closer.md` |
-| `models.researcher` | `agents/researcher.md` |
-| `models.researcher-fetch` | `agents/researcher-fetch.md` |
+| `models.reviewer-general` | `.pi/agents/reviewer-general.md` |
+| `models.reviewer-spec-audit` | `.pi/agents/reviewer-spec-audit.md` |
+| `models.reviewer-second-opinion` | `.pi/agents/reviewer-second-opinion.md` |
+| `models.review-merge` | `.pi/agents/review-merge.md` |
+| `models.fixer` | `.pi/agents/fixer.md` |
+| `models.closer` | `.pi/agents/closer.md` |
+| `models.researcher` | `.pi/agents/researcher.md` |
+| `models.researcher-fetch` | `.pi/agents/researcher-fetch.md` |
 
 **Prompt mapping (config key → prompt file)**:
 | Config Key | Prompt File |
 |------------|-------------|
-| `models.planning` | `prompts/tf-plan.md`, `prompts/tf-plan-consult.md`, `prompts/tf-plan-revise.md`, `prompts/tf-plan-review.md`, `prompts/tf-seed.md`, `prompts/tf-backlog.md`, `prompts/tf-backlog-ls.md`, `prompts/tf-spike.md`, `prompts/tf-backlog-from-openspec.md`, `prompts/tf-baseline.md`, `prompts/tf-followups.md` |
-| `models.general` | `prompts/tf-next.md` |
-| `models.config` | `prompts/tf-sync.md` |
+| `models.planning` | `.pi/prompts/tf-plan.md`, `.pi/prompts/tf-plan-consult.md`, `.pi/prompts/tf-plan-revise.md`, `.pi/prompts/tf-plan-review.md`, `.pi/prompts/tf-seed.md`, `.pi/prompts/tf-backlog.md`, `.pi/prompts/tf-backlog-ls.md`, `.pi/prompts/tf-spike.md`, `.pi/prompts/tf-backlog-from-openspec.md`, `.pi/prompts/tf-baseline.md`, `.pi/prompts/tf-followups.md` |
+| `models.general` | `.pi/prompts/tf-next.md` |
+| `models.config` | `.pi/prompts/tf-sync.md` |
 
 **Steps**:
 

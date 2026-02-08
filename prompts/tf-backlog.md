@@ -95,6 +95,48 @@ Useful when:
 
 Follow the **TF Planning Skill** "Backlog Generation (Seed, Baseline, or Plan)" procedure:
 
+**Phase 0: Flag Parsing**
+
+Parse all command-line flags before proceeding:
+
+```python
+import sys
+
+# Parse flags from input
+args = sys.argv[1:] if len(sys.argv) > 1 else []
+flags = {
+    'no_deps': False,
+    'no_component_tags': False,
+    'no_links': False,
+    'links_only': False,
+}
+positionals = []
+
+for arg in args:
+    if arg == '--no-deps':
+        flags['no_deps'] = True
+    elif arg == '--no-component-tags':
+        flags['no_component_tags'] = True
+    elif arg == '--no-links':
+        flags['no_links'] = True
+    elif arg == '--links-only':
+        flags['links_only'] = True
+    elif arg.startswith('--'):
+        # Unknown flag - warn and ignore
+        print(f"[tf] Warning: Unknown flag '{arg}' ignored")
+    else:
+        positionals.append(arg)
+
+# The topic (if provided) is the first positional argument
+topic_arg = positionals[0] if positionals else None
+```
+
+**Behavior flags:**
+- `--no-deps`: Set `flags['no_deps'] = True` → Skip dependency inference (step 7)
+- `--no-component-tags`: Set `flags['no_component_tags'] = True` → Skip component tagging (step 8)
+- `--no-links`: Set `flags['no_links'] = True` → Skip linking (step 9)
+- `--links-only`: Set `flags['links_only'] = True` → Skip ticket creation, only link existing
+
 **Session-Aware Topic Resolution (Phase A):**
 
 At the start of execution, determine the topic to use:
@@ -200,14 +242,18 @@ B.4 **Track inputs used** for final summary:
          scored,
          topic_id=TOPIC_ID,
          mode='seed',  # or 'baseline', 'plan'
-         component_tags=True,
+         component_tags=not flags['no_component_tags'],  # Respect --no-component-tags
          existing_titles=existing_titles_set,
          priority=2,
      )
 
-     # Apply dependencies and links
-     created = apply_dependencies(created, mode='chain')
-     created = apply_links(created)
+     # Apply dependencies (respect --no-deps flag)
+     dep_mode = 'none' if flags['no_deps'] else 'chain'
+     created = apply_dependencies(created, mode=dep_mode)
+
+     # Apply links (respect --no-links flag)
+     if not flags['no_links']:
+         created = apply_links(created)
 
      # Write backlog.md and print summary
      write_backlog_md(created, topic_id=TOPIC_ID)

@@ -22,21 +22,21 @@ The chain is triggered by:
 **Config (project):**
 - `<project>/.tf/config/settings.json`
 
-**Prompt template:**
-- `~/.pi/agent/prompts/tf.md`
+**Prompt template (project-local):**
+- `<project>/.pi/prompts/tf.md`
 
-**Agent files:**
-- `~/.pi/agent/agents/reviewer-general.md`
-- `~/.pi/agent/agents/reviewer-spec-audit.md`
-- `~/.pi/agent/agents/reviewer-second-opinion.md`
-- `~/.pi/agent/agents/researcher.md`
-- `~/.pi/agent/agents/researcher-fetch.md`
-- `~/.pi/agent/agents/review-merge.md`
-- `~/.pi/agent/agents/fixer.md`
-- `~/.pi/agent/agents/closer.md`
+**Agent files (project-local):**
+- `<project>/.pi/agents/reviewer-general.md`
+- `<project>/.pi/agents/reviewer-spec-audit.md`
+- `<project>/.pi/agents/reviewer-second-opinion.md`
+- `<project>/.pi/agents/researcher.md`
+- `<project>/.pi/agents/researcher-fetch.md`
+- `<project>/.pi/agents/review-merge.md`
+- `<project>/.pi/agents/fixer.md`
+- `<project>/.pi/agents/closer.md`
 
 **Sync command:**
-- `~/.pi/agent/prompts/tf-sync.md` (run `/tf-sync`)
+- `<project>/.pi/prompts/tf-sync.md` (run `/tf-sync`) or run `tf sync`
 
 ---
 

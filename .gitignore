@@ -37,6 +37,8 @@ yarn-error.log*
 .tf/ralph/logs/
 .tf/ralph/progress.md
 .pi/ralph/progress.md
+.pi/
+.tf/
 
 # IDE / Editor
 .vscode/

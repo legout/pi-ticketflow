@@ -11,16 +11,14 @@ import json
 from pathlib import Path
 from unittest import mock
 
+from tf_cli.doctor import (
+    build_parser,
+    run_doctor,
+)
+
 import pytest
 
 pytestmark = pytest.mark.integration
-
-from tf_cli.doctor import (
-    build_parser,
-    check_extension,
-    load_workflow_config,
-    run_doctor,
-)
 
 
 class TestRunDoctorVersionIntegration:
@@ -40,17 +38,13 @@ class TestRunDoctorVersionIntegration:
         """Mock all external dependencies to isolate version check testing."""
         with (
             mock.patch("shutil.which", return_value="/usr/bin/tk"),
-            mock.patch("tf_cli.doctor.check_cmd") as mock_check_cmd,
+            mock.patch("tf_cli.doctor.check_cmd"),
             mock.patch("tf_cli.doctor.get_pi_list_cache", return_value=""),
-            mock.patch("tf_cli.doctor.check_extension") as mock_check_ext,
+            mock.patch("tf_cli.doctor.check_extension"),
             mock.patch("tf_cli.doctor.load_workflow_config", return_value={}),
-            mock.patch("tf_cli.doctor.check_mcp_config") as mock_check_mcp,
+            mock.patch("tf_cli.doctor.check_mcp_config"),
         ):
-            yield {
-                "check_cmd": mock_check_cmd,
-                "check_ext": mock_check_ext,
-                "check_mcp": mock_check_mcp,
-            }
+            yield
 
     def test_run_doctor_passes_with_matching_versions(
         self, minimal_project: Path, mock_dependencies, capsys

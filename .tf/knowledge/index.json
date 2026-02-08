@@ -2,7 +2,7 @@
   "topics": [
     {
       "id": "plan-auto-planning-sessions-linkage",
-      "title": "Automatic planning sessions for seed↔spike↔plan↔backlog linkage",
+      "title": "Automatic planning sessions for seed\u2194spike\u2194plan\u2194backlog linkage",
       "keywords": [
         "planning-session",
         "auto-linking",
@@ -48,20 +48,6 @@
       "backlog": "topics/plan-kb-management-cli/backlog.md"
     },
     {
-      "id": "plan-simple-kanban-ui-for-tf",
-      "title": "Simple Kanban UI for Ticketflow (.tf)",
-      "keywords": [
-        "ui",
-        "tui",
-        "kanban",
-        "dashboard",
-        "tickets",
-        "knowledge-base",
-        "ralph"
-      ],
-      "plan": "topics/plan-simple-kanban-ui-for-tf/plan.md"
-    },
-    {
       "id": "seed-add-more-logging-to-ralph-loop",
       "title": "Add more logging to the Ralph loop (tk ralph start/run)",
       "keywords": [
@@ -92,7 +78,7 @@
     },
     {
       "id": "seed-automatic-planning-sessions-linkage",
-      "title": "Automatic planning sessions for seed↔spike↔plan↔backlog linkage",
+      "title": "Automatic planning sessions for seed\u2194spike\u2194plan\u2194backlog linkage",
       "keywords": [
         "planning-session",
         "auto-linking",
@@ -140,7 +126,7 @@
     },
     {
       "id": "seed-pi-command-reclassify-priorities",
-      "title": "Add a Pi command to reclassify ticket priorities (P0–P4)",
+      "title": "Add a Pi command to reclassify ticket priorities (P0\u2013P4)",
       "keywords": [
         "priorities",
         "triage",
@@ -199,7 +185,205 @@
       "overview": "topics/seed-when-executing-tf-backlog-in-an-active-s/overview.md",
       "sources": "topics/seed-when-executing-tf-backlog-in-an-active-s/sources.md",
       "backlog": "topics/seed-when-executing-tf-backlog-in-an-active-s/backlog.md"
+    },
+    {
+      "id": "seed-add-progressbar-to-tk-ralph",
+      "title": "Add a progress bar to tk ralph (optional) + suppress Pi output",
+      "keywords": [
+        "ralph",
+        "progressbar",
+        "cli",
+        "logging",
+        "quiet-mode",
+        "pi-output"
+      ],
+      "overview": "topics/seed-add-progressbar-to-tk-ralph/overview.md",
+      "sources": "topics/seed-add-progressbar-to-tk-ralph/sources.md"
+    },
+    {
+      "id": "spike-python-cli-progressbar-tools",
+      "title": "Python CLI progressbar tools with optional status or logging",
+      "keywords": [
+        "progressbar",
+        "cli",
+        "python",
+        "tqdm",
+        "rich",
+        "logging",
+        "tk-ralph"
+      ],
+      "overview": "topics/spike-python-cli-progressbar-tools/overview.md",
+      "sources": "topics/spike-python-cli-progressbar-tools/sources.md"
+    },
+    {
+      "id": "plan-add-progressbar-to-tk-ralph",
+      "title": "Add progress bar + quiet/pi-output suppression to tk ralph",
+      "keywords": [
+        "ralph",
+        "progressbar",
+        "cli",
+        "logging",
+        "quiet",
+        "pi-output",
+        "tqdm",
+        "rich"
+      ],
+      "overview": "topics/plan-add-progressbar-to-tk-ralph/plan.md",
+      "sources": "topics/plan-add-progressbar-to-tk-ralph/sources.md",
+      "plan": "topics/plan-add-progressbar-to-tk-ralph/plan.md",
+      "backlog": "topics/plan-add-progressbar-to-tk-ralph/backlog.md"
+    },
+    {
+      "id": "spike-kanban-style-tui-in-python",
+      "title": "Kanban-style TUI in Python",
+      "keywords": [
+        "kanban",
+        "tui",
+        "terminal",
+        "python",
+        "textual",
+        "urwid",
+        "prompt-toolkit"
+      ],
+      "overview": "topics/spike-kanban-style-tui-in-python/overview.md",
+      "sources": "topics/spike-kanban-style-tui-in-python/sources.md"
+    },
+    {
+      "id": "seed-kanban-style-tui-for-tf",
+      "title": "Kanban-style TUI (Python) for tickets + topic browsing",
+      "keywords": [
+        "tui",
+        "kanban",
+        "textual",
+        "tickets",
+        "topics",
+        "search",
+        "filter"
+      ],
+      "overview": "topics/seed-kanban-style-tui-for-tf/overview.md",
+      "sources": "topics/seed-kanban-style-tui-for-tf/sources.md"
+    },
+    {
+      "id": "plan-ticketflow-kanban-tui",
+      "title": "Ticketflow Kanban-style TUI (Python)",
+      "keywords": [
+        "tui",
+        "kanban",
+        "textual",
+        "ticketflow",
+        "tickets",
+        "topics",
+        "search",
+        "filter"
+      ],
+      "overview": "topics/plan-ticketflow-kanban-tui/plan.md",
+      "sources": "topics/plan-ticketflow-kanban-tui/sources.md",
+      "plan": "topics/plan-ticketflow-kanban-tui/plan.md",
+      "backlog": "topics/plan-ticketflow-kanban-tui/backlog.md"
+    },
+    {
+      "id": "seed-auto-followups-implemented-tickets",
+      "title": "Auto-create follow-ups for implemented tickets",
+      "keywords": [
+        "followups",
+        "tickets",
+        "knowledge-base",
+        "automation",
+        "cli",
+        "review"
+      ],
+      "overview": "topics/seed-auto-followups-implemented-tickets/overview.md",
+      "sources": "topics/seed-auto-followups-implemented-tickets/sources.md"
+    },
+    {
+      "id": "plan-implement-auto-followups",
+      "title": "Implement auto followups",
+      "keywords": [
+        "followups",
+        "automation",
+        "knowledge-base",
+        "tickets",
+        "review",
+        "cli"
+      ],
+      "overview": "topics/plan-implement-auto-followups/plan.md",
+      "sources": "topics/plan-implement-auto-followups/sources.md",
+      "plan": "topics/plan-implement-auto-followups/plan.md",
+      "backlog": "topics/plan-implement-auto-followups/backlog.md"
+    },
+    {
+      "id": "seed-move-ralph-session-away-from-tf-ralph-us",
+      "title": "Move Ralph session storage away from .tf/ralph (use Pi standard dir)",
+      "keywords": [
+        "ralph",
+        "sessions",
+        "pi",
+        "storage",
+        "cli"
+      ],
+      "overview": "topics/seed-move-ralph-session-away-from-tf-ralph-us/overview.md",
+      "sources": "topics/seed-move-ralph-session-away-from-tf-ralph-us/sources.md",
+      "backlog": "topics/seed-move-ralph-session-away-from-tf-ralph-us/backlog.md"
+    },
+    {
+      "id": "seed-fix-progressbar-counter-currently-it-sho",
+      "title": "Fix tf ralph progress counter to use open ticket count",
+      "keywords": [
+        "ralph",
+        "progress",
+        "progressbar",
+        "tickets",
+        "cli"
+      ],
+      "overview": "topics/seed-fix-progressbar-counter-currently-it-sho/overview.md",
+      "sources": "topics/seed-fix-progressbar-counter-currently-it-sho/sources.md"
+    },
+    {
+      "id": "seed-add-ralph-loop-timeout-restarts",
+      "title": "Add timeout + restart handling for Ralph ticket implementation",
+      "keywords": [
+        "ralph",
+        "timeout",
+        "restart",
+        "retries",
+        "watchdog",
+        "workflow",
+        "reliability"
+      ],
+      "overview": "topics/seed-add-ralph-loop-timeout-restarts/overview.md",
+      "sources": "topics/seed-add-ralph-loop-timeout-restarts/sources.md",
+      "backlog": "topics/seed-add-ralph-loop-timeout-restarts/backlog.md"
+    },
+    {
+      "id": "plan-fix-ralph-progressbar-counter",
+      "title": "Fix tf ralph --progress counter total",
+      "keywords": [
+        "ralph",
+        "progress",
+        "progressbar",
+        "tickets",
+        "counter",
+        "cli"
+      ],
+      "overview": "topics/plan-fix-ralph-progressbar-counter/plan.md",
+      "sources": "topics/plan-fix-ralph-progressbar-counter/sources.md",
+      "plan": "topics/plan-fix-ralph-progressbar-counter/plan.md"
+    },
+    {
+      "id": "seed-fix-ralph-agents-md",
+      "title": "Fix Ralph AGENTS.md lessons learned persistence",
+      "keywords": [
+        "ralph",
+        "lessons-learned",
+        "agents-md",
+        "bug-fix",
+        "workflow",
+        "state-management"
+      ],
+      "overview": "topics/seed-fix-ralph-agents-md/overview.md",
+      "sources": "topics/seed-fix-ralph-agents-md/sources.md",
+      "backlog": "topics/seed-fix-ralph-agents-md/backlog.md"
     }
   ],
-  "updated": "2026-02-07T14:23:31.701646+00:00"
+  "updated": "2026-02-08T23:04:54.548399+00:00"
 }

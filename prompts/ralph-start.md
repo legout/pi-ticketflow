@@ -22,28 +22,25 @@ Start the Ralph autonomous loop for continuous ticket processing.
 
 ## Prerequisites
 
-- Ralph initialized: `./.tf/bin/tf ralph init`
+- Global environment setup done (extensions + MCP/web-search config): `tf setup`
+- Project initialized (installs TF prompts/agents/skills into `.pi/`): `tf init`
+- Ralph initialized (creates `.tf/ralph/` state): `tf ralph init`
 - Tickets ready in backlog: `tk ready`
-- `/tf` prompt installed (global or project)
 
 ## Preflight: Ensure `/tf` Prompt Exists
 
 Before starting, confirm the prompt is available **as a Pi prompt** (not a shell command):
 
 ```bash
-# Project-local prompt (if installed)
 ls .pi/prompts/tf.md 2>/dev/null
-
-# Global prompt (fallback)
-ls ~/.pi/agent/prompts/tf.md 2>/dev/null
 ```
 
-If neither exists, install prompts:
+If it does not exist, run:
 
 ```bash
-tf setup --project <path>   # or: tf update --project <path>
-# or
- tf setup --global          # or: tf update --global
+tf init
+# or (to re-ensure workflow files)
+tf sync
 ```
 
 ## Execution
@@ -104,8 +101,8 @@ This avoids prompt/subagent confusion and guarantees fresh context per ticket.
 
 In another terminal:
 ```bash
-./.tf/bin/tf ralph status     # Current state
-./.tf/bin/tf ralph lessons    # View lessons learned
+tf ralph status     # Current state
+tf ralph lessons    # View lessons learned
 ```
 
 ## Stopping

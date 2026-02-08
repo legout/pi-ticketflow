@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""TF config helper - Configuration management for TF workflow toolkit.
-
-This module provides utilities for loading, validating, and synchronizing
-TF workflow configuration across agents and prompts.
-"""
 import argparse
 import json
 import os
@@ -12,7 +7,7 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path for tf_cli imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from tf_cli.frontmatter import (
     resolve_meta_model,
@@ -24,47 +19,16 @@ from tf_cli.utils import merge, read_json
 
 
 def resolve_project_root(base: Path) -> Path:
-    """Resolve the project root directory from a base path.
-    
-    Project installs pass base=<project>/.pi
-    Global installs pass base=~/.pi/agent, but the active project is cwd
-    """
+    # Project installs pass base=<project>/.pi
     if str(base).endswith("/.pi"):
         return base.parent
+    # Global installs pass base=~/.pi/agent, but the active project is cwd
     return Path.cwd()
 
 
 def resolve_project_config(base: Path) -> Path:
     # TF workflow config lives in .tf/config (project-local override)
     return resolve_project_root(base) / ".tf/config/settings.json"
-
-
-def validate_workflow_config(config: dict) -> list[str]:
-    """Validate workflow configuration and return list of issues.
-    
-    Checks for required keys and common misconfigurations.
-    """
-    issues = []
-    
-    # Check for metaModels
-    if not config.get("metaModels"):
-        issues.append("Missing 'metaModels' section in config")
-    
-    # Check for workflow section
-    workflow = config.get("workflow", {})
-    if not workflow:
-        issues.append("Missing 'workflow' section in config")
-    else:
-        # Check knowledgeDir
-        if not workflow.get("knowledgeDir"):
-            issues.append("workflow.knowledgeDir not set (will use default '.tf/knowledge')")
-        
-        # Check for at least one checker if checkers section exists
-        checkers = config.get("checkers", {})
-        if checkers and not any(checkers.values()):
-            issues.append("Checkers section exists but is empty")
-    
-    return issues
 
 
 def load_workflow_config(base: Path, ignore_project: bool) -> dict:
