@@ -419,6 +419,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         return ui.main(rest)
 
+    if command == "hello":
+        from . import hello
+
+        return hello.main(rest)
+
     print(f"Unknown command: {command}", file=sys.stderr)
     print("Run: tf --help", file=sys.stderr)
     return 1
