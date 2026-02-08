@@ -103,6 +103,8 @@ DEFAULTS: Dict[str, Any] = {
     "parallelAutoMerge": True,
     "logLevel": "normal",  # quiet, normal, verbose, debug
     "captureJson": False,  # Capture Pi JSON mode output for debugging
+    "attemptTimeoutMs": 600000,  # 10 minutes default (0 = no timeout)
+    "maxRestarts": 0,  # 0 = no restarts, N = up to N restarts per ticket
 }
 
 
@@ -149,8 +151,20 @@ Environment Variables:
   RALPH_QUIET           Set to 1 to enable quiet mode
   RALPH_CAPTURE_JSON    Set to 1 to enable JSON mode capture (same as --capture-json)
 
+Configuration (in .tf/ralph/config.json):
+  attemptTimeoutMs      Per-ticket attempt timeout in milliseconds (default: 600000 = 10 min)
+                        Set to 0 to disable timeout.
+  maxRestarts           Maximum restarts per ticket on timeout/failure (default: 0)
+                        Set to N to allow up to N restarts before marking as failed.
+
+Configuration Environment Variables:
+  RALPH_ATTEMPT_TIMEOUT_MS  Override attemptTimeoutMs (in milliseconds)
+  RALPH_MAX_RESTARTS        Override maxRestarts (integer)
+
 Notes:
   - CLI flags take precedence over environment variables
+  - Config file settings take precedence over defaults
+  - Environment variables take precedence over config file for timeout/restart settings
   - Parallel mode uses git worktrees + component tags (same as legacy).
   - JSON capture is opt-in; JSONL may contain file paths or snippets.
   - --progress is only supported in serial mode (--parallel 1 or default).
@@ -272,6 +286,7 @@ def run_ticket(
     ticket_title: Optional[str] = None,
     pi_output: str = "inherit",
     pi_output_file: Optional[str] = None,
+    timeout_ms: int = 0,
 ) -> int:
     log = logger or create_logger(mode=mode, ticket_id=ticket, ticket_title=ticket_title)
     if not ticket:
@@ -328,37 +343,58 @@ def run_ticket(
         args += ["--session", str(session_path)]
     args.append(cmd)
 
+    # Calculate timeout in seconds (0 = no timeout)
+    timeout_secs: Optional[float] = timeout_ms / 1000.0 if timeout_ms > 0 else None
+    if timeout_secs:
+        log.info(f"Attempt timeout: {timeout_ms}ms ({timeout_secs}s)", ticket=ticket)
+
     # Handle pi output routing
-    if jsonl_path and pi_output == "file":
-        # Both JSON capture and pi output to file - combine them
-        logs_dir.mkdir(parents=True, exist_ok=True) if logs_dir else None
-        pi_log_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(jsonl_path, "w", encoding="utf-8") as jsonl_file:
+    try:
+        if jsonl_path and pi_output == "file":
+            # Both JSON capture and pi output to file - combine them
+            logs_dir.mkdir(parents=True, exist_ok=True) if logs_dir else None
+            pi_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(jsonl_path, "w", encoding="utf-8") as jsonl_file:
+                with open(pi_log_path, "w", encoding="utf-8") as pi_log_file:
+                    # JSON capture goes to jsonl_file, pi output goes to pi_log_file
+                    # We need to capture both separately
+                    result = subprocess.run(
+                        args, cwd=cwd, stdout=pi_log_file, stderr=subprocess.STDOUT,
+                        timeout=timeout_secs
+                    )
+            log.info(f"JSONL trace written to: {jsonl_path}", ticket=ticket, jsonl_path=str(jsonl_path))
+            log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
+        elif jsonl_path:
+            # Only JSON capture
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            with open(jsonl_path, "w", encoding="utf-8") as jsonl_file:
+                result = subprocess.run(
+                    args, cwd=cwd, stdout=jsonl_file, stderr=subprocess.STDOUT,
+                    timeout=timeout_secs
+                )
+            log.info(f"JSONL trace written to: {jsonl_path}", ticket=ticket, jsonl_path=str(jsonl_path))
+        elif pi_output == "file" and pi_log_path:
+            # Only pi output to file
+            pi_log_path.parent.mkdir(parents=True, exist_ok=True)
             with open(pi_log_path, "w", encoding="utf-8") as pi_log_file:
-                # JSON capture goes to jsonl_file, pi output goes to pi_log_file
-                # We need to capture both separately
-                result = subprocess.run(args, cwd=cwd, stdout=pi_log_file, stderr=subprocess.STDOUT)
-        log.info(f"JSONL trace written to: {jsonl_path}", ticket=ticket, jsonl_path=str(jsonl_path))
-        log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
-    elif jsonl_path:
-        # Only JSON capture
-        logs_dir.mkdir(parents=True, exist_ok=True)
-        with open(jsonl_path, "w", encoding="utf-8") as jsonl_file:
-            result = subprocess.run(args, cwd=cwd, stdout=jsonl_file, stderr=subprocess.STDOUT)
-        log.info(f"JSONL trace written to: {jsonl_path}", ticket=ticket, jsonl_path=str(jsonl_path))
-    elif pi_output == "file" and pi_log_path:
-        # Only pi output to file
-        pi_log_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(pi_log_path, "w", encoding="utf-8") as pi_log_file:
-            result = subprocess.run(args, cwd=cwd, stdout=pi_log_file, stderr=subprocess.STDOUT)
-        log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
-    elif pi_output == "discard":
-        # Discard output
-        with open(os.devnull, "w") as devnull:
-            result = subprocess.run(args, cwd=cwd, stdout=devnull, stderr=subprocess.STDOUT)
-    else:
-        # inherit - default behavior
-        result = subprocess.run(args, cwd=cwd)
+                result = subprocess.run(
+                    args, cwd=cwd, stdout=pi_log_file, stderr=subprocess.STDOUT,
+                    timeout=timeout_secs
+                )
+            log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
+        elif pi_output == "discard":
+            # Discard output
+            with open(os.devnull, "w") as devnull:
+                result = subprocess.run(
+                    args, cwd=cwd, stdout=devnull, stderr=subprocess.STDOUT,
+                    timeout=timeout_secs
+                )
+        else:
+            # inherit - default behavior
+            result = subprocess.run(args, cwd=cwd, timeout=timeout_secs)
+    except subprocess.TimeoutExpired:
+        log.error(f"Attempt timed out after {timeout_ms}ms", ticket=ticket)
+        return -1  # Special return code to indicate timeout for restart handling
 
     # On failure with file capture, print exit code + log path
     if result.returncode != 0 and pi_output == "file" and pi_log_path:
@@ -474,6 +510,60 @@ def log_level_to_flag(level: LogLevel) -> str:
         LogLevel.DEBUG: "--debug",
     }
     return mapping.get(level, "")
+
+
+def resolve_attempt_timeout_ms(config: Dict[str, Any]) -> int:
+    """Resolve attempt timeout from env var or config.
+
+    Priority:
+    1. RALPH_ATTEMPT_TIMEOUT_MS environment variable
+    2. Config file (attemptTimeoutMs)
+    3. Default (600000 = 10 minutes)
+
+    Returns:
+        Timeout in milliseconds (0 = no timeout)
+    """
+    # Environment variable takes highest priority
+    env_timeout = os.environ.get("RALPH_ATTEMPT_TIMEOUT_MS", "").strip()
+    if env_timeout:
+        try:
+            return int(env_timeout)
+        except ValueError:
+            pass
+
+    # Config file
+    config_timeout = config.get("attemptTimeoutMs", DEFAULTS["attemptTimeoutMs"])
+    try:
+        return int(config_timeout)
+    except (ValueError, TypeError):
+        return DEFAULTS["attemptTimeoutMs"]
+
+
+def resolve_max_restarts(config: Dict[str, Any]) -> int:
+    """Resolve max restarts from env var or config.
+
+    Priority:
+    1. RALPH_MAX_RESTARTS environment variable
+    2. Config file (maxRestarts)
+    3. Default (0 = no restarts)
+
+    Returns:
+        Maximum number of restarts (0 = no restarts)
+    """
+    # Environment variable takes highest priority
+    env_restarts = os.environ.get("RALPH_MAX_RESTARTS", "").strip()
+    if env_restarts:
+        try:
+            return int(env_restarts)
+        except ValueError:
+            pass
+
+    # Config file
+    config_restarts = config.get("maxRestarts", DEFAULTS["maxRestarts"])
+    try:
+        return int(config_restarts)
+    except (ValueError, TypeError):
+        return DEFAULTS["maxRestarts"]
 
 
 def resolve_session_dir(project_root: Path, config: Dict[str, Any]) -> Optional[Path]:
@@ -1055,33 +1145,66 @@ def ralph_run(args: List[str]) -> int:
         else:
             session_path = session_dir / f"loop-{utc_now()}.jsonl"
 
-    rc = run_ticket(
-        ticket,
-        workflow,
-        workflow_flags,
-        dry_run,
-        session_path=session_path,
-        logger=logger,
-        mode="serial",
-        capture_json=capture_json,
-        logs_dir=logs_dir,
-        ticket_title=ticket_title,
-        pi_output=pi_output,
-        pi_output_file=pi_output_file,
-    )
-    if dry_run:
-        logger.log_ticket_complete(ticket, "DRY_RUN", mode="serial", ticket_title=ticket_title)
-        return rc
+    # Resolve timeout and restart configuration
+    timeout_ms = resolve_attempt_timeout_ms(config)
+    max_restarts = resolve_max_restarts(config)
 
-    if rc != 0:
+    if dry_run:
+        logger.info(f"Dry run config: timeout={timeout_ms}ms, max_restarts={max_restarts}", ticket=ticket)
+
+    # Attempt ticket with optional restart loop
+    attempt = 0
+    max_attempts = max_restarts + 1 if max_restarts > 0 else 1
+
+    while attempt < max_attempts:
+        if attempt > 0:
+            logger.info(f"Restart attempt {attempt}/{max_restarts}", ticket=ticket)
+
+        rc = run_ticket(
+            ticket,
+            workflow,
+            workflow_flags,
+            dry_run,
+            session_path=session_path,
+            logger=logger,
+            mode="serial",
+            capture_json=capture_json,
+            logs_dir=logs_dir,
+            ticket_title=ticket_title,
+            pi_output=pi_output,
+            pi_output_file=pi_output_file,
+            timeout_ms=timeout_ms,
+        )
+
+        if dry_run:
+            logger.log_ticket_complete(ticket, "DRY_RUN", mode="serial", ticket_title=ticket_title)
+            return rc
+
+        # Success case
+        if rc == 0:
+            logger.log_ticket_complete(ticket, "COMPLETE", mode="serial", ticket_title=ticket_title)
+            update_state(ralph_dir, project_root, ticket, "COMPLETE", "")
+            return 0
+
+        # Timeout case - check if we should restart
+        if rc == -1:  # Timeout
+            attempt += 1
+            if attempt < max_attempts:
+                logger.warn(f"Attempt timed out, restarting ({attempt}/{max_restarts})", ticket=ticket)
+                continue
+            else:
+                error_msg = f"Attempt timed out after {max_attempts} attempt(s) (timeout: {timeout_ms}ms)"
+                logger.log_error_summary(ticket, error_msg, ticket_title=ticket_title)
+                update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                return rc
+
+        # Non-timeout failure - don't restart
         error_msg = f"pi -p failed (exit {rc})"
         logger.log_error_summary(ticket, error_msg, ticket_title=ticket_title)
         update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
         return rc
 
-    logger.log_ticket_complete(ticket, "COMPLETE", mode="serial", ticket_title=ticket_title)
-    update_state(ralph_dir, project_root, ticket, "COMPLETE", "")
-    return 0
+    return 1
 
 
 def ralph_start(args: List[str]) -> int:
