@@ -103,8 +103,8 @@ DEFAULTS: Dict[str, Any] = {
     "parallelAutoMerge": True,
     "logLevel": "normal",  # quiet, normal, verbose, debug
     "captureJson": False,  # Capture Pi JSON mode output for debugging
-    "attemptTimeoutMs": 600000,  # 10 minutes default (0 = no timeout)
-    "maxRestarts": 0,  # 0 = no restarts, N = up to N restarts per ticket
+    "attemptTimeoutMs": 600000,  # 10 minutes default (0 = no timeout). Serial mode only.
+    "maxRestarts": 0,  # 0 = no restarts, N = up to N restarts per ticket. Serial mode only.
 }
 
 
@@ -153,9 +153,9 @@ Environment Variables:
 
 Configuration (in .tf/ralph/config.json):
   attemptTimeoutMs      Per-ticket attempt timeout in milliseconds (default: 600000 = 10 min)
-                        Set to 0 to disable timeout.
+                        Set to 0 to disable timeout. Serial mode only.
   maxRestarts           Maximum restarts per ticket on timeout/failure (default: 0)
-                        Set to N to allow up to N restarts before marking as failed.
+                        Set to N to allow up to N restarts before marking as failed. Serial mode only.
 
 Configuration Environment Variables:
   RALPH_ATTEMPT_TIMEOUT_MS  Override attemptTimeoutMs (in milliseconds)
@@ -1357,6 +1357,17 @@ def ralph_start(args: List[str]) -> int:
         logger.warn("sessionPerTicket=false with parallel execution; using per-ticket sessions")
         session_per_ticket = True
 
+    # Safety check: timeout/restart is not supported in parallel mode
+    # Per constraint: prefer warn+disable over partial/unsafe behavior
+    timeout_ms = resolve_attempt_timeout_ms(config)
+    max_restarts = resolve_max_restarts(config)
+    if use_parallel > 1 and (timeout_ms > 0 or max_restarts > 0):
+        logger.warn(
+            f"Timeout ({timeout_ms}ms) and restart ({max_restarts}) settings are not supported in parallel mode. "
+            "Falling back to serial mode for safe cleanup semantics."
+        )
+        use_parallel = 1
+
     # Validate: --progress is only supported in serial mode
     progress = options.get("progress", False)
     if progress and use_parallel > 1:
@@ -1387,10 +1398,6 @@ def ralph_start(args: List[str]) -> int:
         loop_session_path: Optional[Path] = None
         if session_dir and not session_per_ticket:
             loop_session_path = session_dir / f"loop-{utc_now()}.jsonl"
-
-        # Resolve timeout and restart configuration for serial mode
-        timeout_ms = resolve_attempt_timeout_ms(config)
-        max_restarts = resolve_max_restarts(config)
 
         if use_parallel <= 1:
             # Initialize progress display if requested
