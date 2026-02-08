@@ -39,6 +39,7 @@ prompts/tf-spike.md
 prompts/tf-backlog-from-openspec.md
 prompts/tf-baseline.md
 prompts/tf-followups.md
+prompts/tf-followups-scan.md
 prompts/tf-tags-suggest.md
 prompts/tf-deps-sync.md
 prompts/tf-dedup.md
