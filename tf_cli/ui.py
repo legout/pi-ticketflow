@@ -12,6 +12,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+# Import ticket loading and board classification
+from tf_cli.ticket_loader import TicketLoader, Ticket
+from tf_cli.board_classifier import BoardClassifier, BoardColumn, ClassifiedTicket, BoardView
+
 
 def resolve_knowledge_dir() -> Path:
     """Resolve the knowledge directory from config or default.
@@ -417,8 +421,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             Static, Header, Footer, ListView, ListItem, Label,
             TabbedContent, TabPane, Input, Markdown
         )
-        from textual.containers import Horizontal, Vertical
+        from textual.containers import Horizontal, Vertical, VerticalScroll
         from textual.reactive import reactive
+        from textual.binding import Binding
     except ImportError:
         print("Error: Textual is not installed. Run: pip install textual", file=sys.stderr)
         return 1
@@ -542,6 +547,176 @@ def main(argv: Optional[list[str]] = None) -> int:
             except Exception:
                 pass  # Ignore search errors
     
+    class TicketBoard(Static):
+        """Widget for displaying Kanban-style ticket board."""
+        
+        board_view: reactive[Optional[BoardView]] = reactive(None)
+        selected_ticket: reactive[Optional[ClassifiedTicket]] = reactive(None)
+        
+        def compose(self) -> ComposeResult:
+            """Compose the ticket board layout."""
+            with Horizontal():
+                # Left side: Board columns
+                with Vertical(id="board-container"):
+                    yield Static("[b]Ticket Board[/b]", id="board-header")
+                    with Horizontal(id="board-columns"):
+                        # Four columns: Ready, Blocked, In Progress, Closed
+                        with VerticalScroll(id="col-ready", classes="board-column"):
+                            yield Static("[green]READY[/green]", classes="column-header")
+                            yield ListView(id="list-ready")
+                        
+                        with VerticalScroll(id="col-blocked", classes="board-column"):
+                            yield Static("[red]BLOCKED[/red]", classes="column-header")
+                            yield ListView(id="list-blocked")
+                        
+                        with VerticalScroll(id="col-in-progress", classes="board-column"):
+                            yield Static("[yellow]IN PROGRESS[/yellow]", classes="column-header")
+                            yield ListView(id="list-in-progress")
+                        
+                        with VerticalScroll(id="col-closed", classes="board-column"):
+                            yield Static("[dim]CLOSED[/dim]", classes="column-header")
+                            yield ListView(id="list-closed")
+                
+                # Right side: Ticket detail panel
+                with Vertical(id="ticket-detail-panel"):
+                    yield Static("[b]Ticket Detail[/b]", id="detail-header")
+                    yield VerticalScroll(Static("Select a ticket to view details", id="ticket-detail-content"), id="detail-scroll")
+        
+        def on_mount(self) -> None:
+            """Load tickets when mounted."""
+            self.load_tickets()
+        
+        def load_tickets(self) -> None:
+            """Load and classify tickets from disk."""
+            try:
+                classifier = BoardClassifier()
+                self.board_view = classifier.classify_all()
+                self.update_board()
+                self.update_detail_counts()
+            except Exception as e:
+                self._show_error(f"Error loading tickets: {e}")
+        
+        def _show_error(self, message: str) -> None:
+            """Display an error message in all columns."""
+            for col_id in ["list-ready", "list-blocked", "list-in-progress", "list-closed"]:
+                list_view = self.query_one(f"#{col_id}", ListView)
+                list_view.clear()
+            self.query_one("#ticket-detail-content", Static).update(f"[red]{message}[/red]")
+        
+        def update_detail_counts(self) -> None:
+            """Update the board header with ticket counts."""
+            if not self.board_view:
+                return
+            counts = self.board_view.counts
+            header = self.query_one("#board-header", Static)
+            header.update(
+                f"[b]Ticket Board[/b] | "
+                f"[green]Ready: {counts['ready']}[/green] | "
+                f"[red]Blocked: {counts['blocked']}[/red] | "
+                f"[yellow]In Progress: {counts['in_progress']}[/yellow] | "
+                f"[dim]Closed: {counts['closed']}[/dim]"
+            )
+        
+        def update_board(self) -> None:
+            """Update all board columns with tickets."""
+            if not self.board_view:
+                return
+            
+            # Update each column
+            column_map = {
+                BoardColumn.READY: "list-ready",
+                BoardColumn.BLOCKED: "list-blocked",
+                BoardColumn.IN_PROGRESS: "list-in-progress",
+                BoardColumn.CLOSED: "list-closed",
+            }
+            
+            for column, list_id in column_map.items():
+                list_view = self.query_one(f"#{list_id}", ListView)
+                list_view.clear()
+                
+                tickets = self.board_view.get_by_column(column)
+                for ct in tickets:
+                    # Format: ID - Title (truncated if needed)
+                    title = ct.title[:35] + "..." if len(ct.title) > 35 else ct.title
+                    priority_indicator = f"[P{ct.ticket.priority}] " if ct.ticket.priority is not None else ""
+                    label_text = f"{priority_indicator}{ct.id}: {title}"
+                    
+                    list_view.append(ListItem(
+                        Label(label_text),
+                        data=ct
+                    ))
+        
+        def on_list_view_selected(self, event: ListView.Selected) -> None:
+            """Handle ticket selection from any column."""
+            item = event.item
+            if hasattr(item, "data") and item.data:
+                self.selected_ticket = item.data
+                self.update_detail_view()
+        
+        def update_detail_view(self) -> None:
+            """Update the detail view for selected ticket."""
+            if not self.selected_ticket:
+                return
+            
+            ct = self.selected_ticket
+            ticket = ct.ticket
+            content = self.query_one("#ticket-detail-content", Static)
+            
+            # Build detail text
+            status_color = {
+                BoardColumn.READY: "green",
+                BoardColumn.BLOCKED: "red",
+                BoardColumn.IN_PROGRESS: "yellow",
+                BoardColumn.CLOSED: "dim",
+            }.get(ct.column, "white")
+            
+            lines = [
+                f"[b]{ticket.title}[/b]",
+                "",
+                f"ID: {ticket.id}",
+                f"Status: {ticket.status}",
+                f"Column: [{status_color}]{ct.column.value.upper()}[/{status_color}]",
+            ]
+            
+            if ticket.ticket_type:
+                lines.append(f"Type: {ticket.ticket_type}")
+            if ticket.priority is not None:
+                lines.append(f"Priority: {ticket.priority}")
+            if ticket.assignee:
+                lines.append(f"Assignee: @{ticket.assignee}")
+            if ticket.external_ref:
+                lines.append(f"External Ref: {ticket.external_ref}")
+            
+            if ticket.tags:
+                lines.append(f"Tags: {', '.join(ticket.tags)}")
+            
+            if ticket.deps:
+                lines.append("")
+                lines.append("[b]Dependencies:[/b]")
+                for dep in ticket.deps:
+                    # Check if this dep is blocking
+                    is_blocking = dep in ct.blocking_deps
+                    color = "red" if is_blocking else "dim"
+                    status_indicator = " [BLOCKING]" if is_blocking else ""
+                    lines.append(f"  • [{color}]{dep}[/{color}]{status_indicator}")
+            
+            if ticket.links:
+                lines.append("")
+                lines.append("[b]Linked Tickets:[/b]")
+                for link in ticket.links:
+                    lines.append(f"  • {link}")
+            
+            lines.append("")
+            lines.append("[b]Description:[/b]")
+            
+            # Load and display body (first 500 chars)
+            body = ticket.body[:500] if ticket.body else "(no description)"
+            if len(ticket.body) > 500:
+                body += "\n\n[i](truncated...)[/i]"
+            lines.append(body)
+            
+            content.update("\n".join(lines))
+    
     class TicketflowApp(App):
         """Textual app for Ticketflow."""
         
@@ -583,14 +758,84 @@ def main(argv: Optional[list[str]] = None) -> int:
             height: 1fr;
         }
         
+        /* Ticket Board Styles */
+        #board-container {
+            width: 65%;
+            border: solid $primary;
+            padding: 1;
+        }
+        
+        #board-header {
+            height: auto;
+            padding-bottom: 1;
+            border-bottom: solid $primary-darken-2;
+            margin-bottom: 1;
+        }
+        
+        #board-columns {
+            height: 1fr;
+        }
+        
+        .board-column {
+            width: 1fr;
+            border: solid $primary-darken-2;
+            margin: 0 1;
+            padding: 1;
+        }
+        
+        .board-column:first-child {
+            margin-left: 0;
+        }
+        
+        .board-column:last-child {
+            margin-right: 0;
+        }
+        
+        .column-header {
+            text-align: center;
+            border-bottom: solid $primary-darken-2;
+            padding-bottom: 1;
+            margin-bottom: 1;
+        }
+        
+        #list-ready, #list-blocked, #list-in-progress, #list-closed {
+            height: 1fr;
+            border: none;
+        }
+        
+        #ticket-detail-panel {
+            width: 35%;
+            border: solid $primary;
+            padding: 1;
+        }
+        
+        #detail-header {
+            height: auto;
+            padding-bottom: 1;
+            border-bottom: solid $primary-darken-2;
+            margin-bottom: 1;
+        }
+        
+        #detail-scroll {
+            height: 1fr;
+        }
+        
+        #ticket-detail-content {
+            height: auto;
+        }
+        
         ListView > ListItem.--highlight {
             background: $primary-darken-2;
+        }
+        
+        ListView:focus > ListItem.--highlight {
+            background: $primary;
         }
         """
         
         BINDINGS = [
-            ("q", "quit", "Quit"),
-            ("r", "refresh", "Refresh"),
+            Binding("q", "quit", "Quit"),
+            Binding("r", "refresh", "Refresh"),
         ]
         
         def compose(self) -> ComposeResult:
@@ -602,18 +847,22 @@ def main(argv: Optional[list[str]] = None) -> int:
                     yield TopicBrowser()
                 
                 with TabPane("Tickets", id="tab-tickets"):
-                    yield Static(
-                        "Ticket board coming soon!\n\n"
-                        "Use the Topics tab to browse knowledge base.",
-                        id="placeholder"
-                    )
+                    yield TicketBoard()
             
             yield Footer()
         
         def action_refresh(self) -> None:
             """Refresh the current view."""
-            topic_browser = self.query_one(TopicBrowser)
-            topic_browser.load_topics()
+            # Get the active tab
+            tabbed = self.query_one(TabbedContent)
+            active_pane = tabbed.active_pane
+            
+            if active_pane and active_pane.id == "tab-topics":
+                topic_browser = self.query_one(TopicBrowser)
+                topic_browser.load_topics()
+            elif active_pane and active_pane.id == "tab-tickets":
+                ticket_board = self.query_one(TicketBoard)
+                ticket_board.load_tickets()
     
     app = TicketflowApp()
     app.run()
