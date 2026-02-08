@@ -516,13 +516,113 @@ def main(argv: Optional[list[str]] = None) -> int:
             lines.append("")
             lines.append("[b]Available Documents:[/b]")
             
+            # Map doc types to key bindings
+            key_map = {
+                "overview": "[1]",
+                "sources": "[2]",
+                "plan": "[3]",
+                "backlog": "[4]",
+            }
+            
             for doc_type, doc in topic.available_docs.items():
-                lines.append(f"  • {doc_type}: {doc.path}")
+                key_hint = key_map.get(doc_type, "")
+                lines.append(f"  {key_hint} {doc_type}: {doc.path}")
             
             if not topic.available_docs:
-                lines.append("  (no documents available)")
+                lines.append("  [dim](no documents available)[/dim]")
+            else:
+                lines.append("")
+                lines.append("[dim]Press [1-4] to open, 'o' for first available[/dim]")
             
             content.update("\n".join(lines))
+        
+        def action_open_doc(self) -> None:
+            """Open the first available document (default action)."""
+            if not self.selected_topic:
+                self.notify("No topic selected", severity="warning")
+                return
+            
+            topic = self.selected_topic
+            if not topic.available_docs:
+                self.notify(f"No documents available for {topic.id}", severity="warning")
+                return
+            
+            # Open the first available doc
+            doc_type = list(topic.available_docs.keys())[0]
+            self._open_doc(topic, doc_type)
+        
+        def action_open_overview(self) -> None:
+            """Open overview document."""
+            self._open_doc_by_type("overview")
+        
+        def action_open_sources(self) -> None:
+            """Open sources document."""
+            self._open_doc_by_type("sources")
+        
+        def action_open_plan(self) -> None:
+            """Open plan document."""
+            self._open_doc_by_type("plan")
+        
+        def action_open_backlog(self) -> None:
+            """Open backlog document."""
+            self._open_doc_by_type("backlog")
+        
+        def _open_doc_by_type(self, doc_type: str) -> None:
+            """Open a document by type with error handling."""
+            if not self.selected_topic:
+                self.notify("No topic selected", severity="warning")
+                return
+            
+            self._open_doc(self.selected_topic, doc_type)
+        
+        def _open_doc(self, topic: Topic, doc_type: str) -> None:
+            """Open a topic document using $PAGER or $EDITOR.
+            
+            Args:
+                topic: The topic containing the document
+                doc_type: Type of document to open
+            """
+            doc = getattr(topic, doc_type, None)
+            
+            if not doc:
+                self.notify(f"{topic.id} has no {doc_type} document", severity="warning")
+                return
+            
+            if not doc.exists:
+                self.notify(f"{doc_type} document not found: {doc.path}", severity="error")
+                return
+            
+            # Resolve full path
+            knowledge_dir = resolve_knowledge_dir()
+            full_path = knowledge_dir / doc.path
+            
+            # Determine command to use
+            pager = os.environ.get("PAGER", "").strip()
+            editor = os.environ.get("EDITOR", "").strip()
+            
+            cmd = None
+            if pager:
+                cmd = f'{pager} "{full_path}"'
+            elif editor:
+                cmd = f'{editor} "{full_path}"'
+            else:
+                # Fallback to common pagers
+                for fallback in ["less", "more", "cat"]:
+                    result = os.system(f"which {fallback} > /dev/null 2>&1")
+                    if result == 0:
+                        cmd = f'{fallback} "{full_path}"'
+                        break
+            
+            if not cmd:
+                self.notify("No pager or editor found. Set $PAGER or $EDITOR.", severity="error")
+                return
+            
+            # Run the command
+            exit_code = os.system(cmd)
+            if exit_code != 0:
+                self.notify(f"Failed to open document (exit code: {exit_code})", severity="error")
+            else:
+                self.notify(f"Opened {doc_type}: {doc.path}")
         
         def on_input_changed(self, event: Input.Changed) -> None:
             """Handle search input."""
@@ -836,6 +936,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         BINDINGS = [
             Binding("q", "quit", "Quit"),
             Binding("r", "refresh", "Refresh"),
+            Binding("o", "open_doc", "Open Doc"),
+            Binding("1", "open_overview", "Overview"),
+            Binding("2", "open_sources", "Sources"),
+            Binding("3", "open_plan", "Plan"),
+            Binding("4", "open_backlog", "Backlog"),
         ]
         
         def compose(self) -> ComposeResult:
