@@ -1012,7 +1012,15 @@ def update_state(
 
     progress_path.write_text("\n".join(out) + "\n", encoding="utf-8")
 
-    if lesson_block and agents_path.exists():
+    if lesson_block:
+        if not agents_path.exists():
+            # Create minimal template if AGENTS.md doesn't exist
+            template = (
+                "# Ralph Lessons Learned\n\n"
+                "## Patterns\n\n"
+                "## Gotchas\n"
+            )
+            agents_path.write_text(template, encoding="utf-8")
         header = f"\n## Lesson from {ticket} ({now})\n\n"
         agents_path.write_text(agents_path.read_text(encoding="utf-8") + header + lesson_block + "\n", encoding="utf-8")
 
