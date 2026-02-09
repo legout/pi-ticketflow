@@ -1,26 +1,22 @@
 # Chain Summary: abc-123
 
-## Workflow Execution
-Completed: 2026-02-09T18:06:06Z
+## Workflow Chain
 
-## Artifacts
-| File | Description |
-|------|-------------|
-| `implementation.md` | Implementation summary and verification |
-| `review.md` | Consolidated review from 3 reviewers |
-| `fixes.md` | Fixes applied (4 Critical, 2 Major) |
-| `close-summary.md` | Final close summary |
-| `chain-summary.md` | This file |
-| `files_changed.txt` | Tracked changed files |
-| `ticket_id.txt` | Ticket ID reference |
+| Step | Status | Artifact |
+|------|--------|----------|
+| Re-Anchor | ✅ Complete | - |
+| Research | ✅ Complete (existing) | research.md |
+| Implement | ✅ Complete | implementation.md |
+| Reviews | ✅ Complete (3 reviewers) | review-general.md, review-spec.md, review-second.md |
+| Merge | ✅ Complete | review.md |
+| Fix | ✅ Complete (1 Major fixed) | fixes.md |
+| Close | ✅ Complete | close-summary.md |
 
-## Reviewers
-- reviewer-general
-- reviewer-spec-audit
-- reviewer-second-opinion
+## Files Changed
+- `demo/__main__.py`
 
 ## Commit
-c0fe841 - abc-123: Fix docstring placement and remove duplicate CLI entry point
+d7cc352f880e3ab03de44f2f3c3356522624ce5
 
-## Status
-✅ COMPLETE - 0 Critical, 0 Major issues remaining
+## Artifacts Location
+`.tf/knowledge/tickets/abc-123/`

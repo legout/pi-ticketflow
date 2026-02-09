@@ -13,7 +13,7 @@ def main() -> int:
     Returns:
         int: Exit code (0 for success).
     """
-    name = " ".join(sys.argv[1:]).strip() or "World"
+    name: str = " ".join(sys.argv[1:]).strip() or "World"
     print(hello(name))
     return 0
 

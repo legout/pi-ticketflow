@@ -2,20 +2,39 @@
 
 ## Applied Fixes
 
-### Major Fix (1)
-- **File**: `demo/__main__.py`
-- **Issue**: `main()` function didn't return an exit code, preventing proper shell exit code checking
-- **Change**: 
-  - Changed return type from `None` to `int`
-  - Added `return 0` at end of function
-  - Changed `if __name__ == "__main__":` block to use `sys.exit(main())`
-  - Added docstring `Returns` section documenting exit code
+### Major Issues Fixed (2)
 
-## Verification
-- All 3 tests passing
-- CLI returns exit code 0: `python -m demo; echo $?` → 0
+1. **Empty string handling in `demo/hello.py:28`**
+   - Added check: `if not name.strip(): name = "World"`
+   - Empty or whitespace-only strings now fall back to "World"
+   - Consistent behavior between CLI and library API
+
+2. **Inconsistent empty string handling in `demo/__main__.py:17`**
+   - Now consistent with library - both treat empty/whitespace as "World"
+
+### Minor Issues Fixed (2)
+
+3. **Type annotation in `demo/__main__.py:15`**
+   - Added explicit `name: str` type annotation
+
+4. **Updated test for new empty string behavior**
+   - Modified `test_hello_empty_string` to expect "Hello, World!"
+   - Added new `test_hello_whitespace_only` test
 
 ## Remaining Issues (Not Fixed)
-- Minor: Empty string test case behavior (documented edge case)
-- Minor: Missing CLI test coverage (follow-up ticket candidate)
-- Warnings/Suggestions: argparse migration ideas (follow-up ticket candidates)
+
+### Minor (2 remaining)
+- Missing CLI entry point tests - requires more complex subprocess testing
+- No `--help` or usage message - out of scope for demo ticket
+
+### Warnings (2)
+- CLI argument parsing edge cases - documented for follow-up
+- Empty string test behavior - resolved by fixes above
+
+### Suggestions (5)
+- All suggestions deferred to follow-up tickets
+
+## Test Results After Fixes
+```
+4 passed in 0.03s
+```

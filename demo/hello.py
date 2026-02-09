@@ -32,4 +32,6 @@ def hello(name: str = "World") -> str:
     Returns:
         str: A greeting string in the format "Hello, {name}!".
     """
+    if not name.strip():
+        name = "World"
     return f"Hello, {name}!"

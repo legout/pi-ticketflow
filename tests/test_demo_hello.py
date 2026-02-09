@@ -26,6 +26,12 @@ def test_hello_custom_name() -> None:
 
 
 def test_hello_empty_string() -> None:
-    """Test hello with empty string."""
+    """Test hello with empty string falls back to World."""
     result = hello("")
-    assert result == "Hello, !"
+    assert result == "Hello, World!"
+
+
+def test_hello_whitespace_only() -> None:
+    """Test hello with whitespace-only string falls back to World."""
+    result = hello("   ")
+    assert result == "Hello, World!"

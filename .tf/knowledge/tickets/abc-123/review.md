@@ -4,40 +4,43 @@
 No issues found.
 
 ## Major (should fix)
-- `demo/__main__.py:17-18` - `main()` function doesn't return an exit code. For CLI entry points, best practice is to return `0` on success to enable proper shell exit code checking (`echo $?`). Current implementation implicitly returns `None`. *[reviewer-second-opinion]*
+- `demo/hello.py:28` - Empty string produces awkward output "Hello, !" (reviewer-general)
+- `demo/__main__.py:17` - Inconsistent empty string handling: CLI falls back to "World" but library returns "Hello, !" (reviewer-second-opinion)
 
 ## Minor (nice to fix)
-- `tests/test_demo_hello.py:26` - The empty string test case produces `"Hello, !"` which may be unintended behavior. Consider validating the name parameter in `hello()` or documenting this as expected edge case behavior. *[reviewer-general]*
-- `tests/test_demo_hello.py` - Missing CLI test coverage. The `__main__.py` module contains logic for argument parsing via `sys.argv` and output via `print()`, but there are no tests for the CLI entry point. Consider adding tests that mock `sys.argv` and capture stdout. *[reviewer-second-opinion]*
+- `tests/test_demo_hello.py` - Missing CLI entry point tests (reviewer-general, reviewer-second-opinion)
+- `demo/hello.py:15-24` - Docstring examples don't include empty string case (reviewer-general)
+- `demo/__main__.py:15` - `name` variable lacks type annotation (reviewer-second-opinion)
+- `demo/__main__.py` - No `--help` or usage message (reviewer-second-opinion)
 
 ## Warnings (follow-up ticket)
-- `demo/__main__.py:12` - Uses basic `sys.argv` parsing. For CLI expansion, consider migrating to `argparse` for better help text, argument validation, and extensibility. *[reviewer-general, reviewer-second-opinion]*
-- `demo/__main__.py:12` - Direct `sys.argv` manipulation without validation could lead to unexpected behavior with quoted strings or special characters. For a demo this is acceptable, but production CLI tools should consider `argparse` for robust argument handling. *[reviewer-second-opinion]*
+- `demo/__main__.py:17` - CLI argument parsing has edge cases (e.g., multiple spaces) (reviewer-general)
+- `tests/test_demo_hello.py:25` - Empty string test asserts possibly unintentional behavior (reviewer-second-opinion)
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py` - Could add input sanitization (strip whitespace, handle None explicitly) for more robust library usage. *[reviewer-general]*
-- `tests/test_demo_hello.py` - Consider adding parameterized tests or additional edge cases (whitespace-only names, unicode names) for broader coverage. *[reviewer-general]*
-- `demo/__main__.py` - Consider migrating to `argparse` module for better help text (`python -m demo --help`), argument validation, and extensibility. This would provide a more complete CLI experience. *[reviewer-second-opinion]*
-- `tests/test_demo_hello.py` - Consider adding edge case tests for CLI invocation (e.g., multiple arguments, special characters in names) if the CLI is considered part of the public API. *[reviewer-second-opinion]*
+- Add `py.typed` marker file for type checking support (reviewer-general)
+- Add integration tests via subprocess for full CLI testing (reviewer-general, reviewer-second-opinion)
+- Consider documenting CLI as scope extension (reviewer-spec-audit)
+- Add `__version__` attribute for `--version` support (reviewer-second-opinion)
+- Consider mypy/pyright type checking in CI (reviewer-second-opinion)
 
 ## Positive Notes (All Reviewers)
-- ✅ Excellent docstrings with usage examples and CLI documentation
-- ✅ Proper use of `from __future__ import annotations` across all files
-- ✅ Type hints throughout the codebase
-- ✅ Clean module structure with `__all__` exports in `__init__.py`
-- ✅ Appropriate pytest markers for test categorization
-- ✅ CLI handles multi-word names correctly via `" ".join()`
-- ✅ Tests cover default, custom, and edge cases
-- ✅ All acceptance criteria met (spec audit confirms)
+- Excellent use of `from __future__ import annotations`
+- Comprehensive docstrings with Examples section
+- Proper type hints throughout
+- Clean separation: library in `hello.py`, CLI in `__main__.py`
+- Multi-word CLI names supported via `" ".join()`
+- Correct `__all__` export in `__init__.py`
+- Proper pytest marker categorization
+- All tests passing
 
 ## Summary Statistics
 - Critical: 0
-- Major: 1
-- Minor: 2
+- Major: 2
+- Minor: 4
 - Warnings: 2
-- Suggestions: 4
+- Suggestions: 5
 
-## Review Sources
-- reviewer-general: 0 Critical, 0 Major, 1 Minor, 1 Warning, 2 Suggestions
-- reviewer-spec-audit: 0 Critical, 0 Major, 0 Minor, 0 Warning, 0 Suggestions ✅
-- reviewer-second-opinion: 0 Critical, 1 Major, 1 Minor, 1 Warning, 2 Suggestions
+## Spec Compliance
+- All acceptance criteria met ✓
+- Implementation exceeds specification with CLI and enhanced tests

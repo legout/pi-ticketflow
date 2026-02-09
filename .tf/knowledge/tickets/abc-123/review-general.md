@@ -1,36 +1,38 @@
 # Review: abc-123
 
 ## Overall Assessment
-Clean, well-structured hello-world demo module following Python best practices. Comprehensive docstrings, type hints, and test coverage. No functional issues found - code is production-ready for its intended purpose.
+Clean, well-structured hello-world implementation with good documentation, type hints, and test coverage. Follows Python best practices and has clear separation between library and CLI concerns. Only minor issue with empty string handling that may not be the intended behavior.
 
 ## Critical (must fix)
 No issues found.
 
 ## Major (should fix)
-No issues found.
+- `demo/hello.py:28` - Empty string parameter produces awkward output "Hello, !". The test in `tests/test_demo_hello.py:37` asserts this behavior, but it's questionable whether this is intentional. Consider treating empty string as equivalent to default "World" for better UX.
 
 ## Minor (nice to fix)
-- `tests/test_demo_hello.py:26` - The empty string test case produces `"Hello, !"` which may be unintended behavior. Consider validating the name parameter in `hello()` or documenting this as expected edge case behavior.
+- `tests/test_demo_hello.py` - Missing tests for CLI entry point (`__main__.py`). The argument parsing logic (`" ".join(sys.argv[1:]).strip()`) is not covered by tests.
+- `demo/hello.py:15-24` - Docstring examples don't include the empty string case, which is tested separately. Consider adding a note about empty string behavior or treating it as default.
 
 ## Warnings (follow-up ticket)
-- `demo/__main__.py:12` - Uses basic `sys.argv` parsing. For CLI expansion, consider migrating to `argparse` for better help text, argument validation, and extensibility.
+- `demo/__main__.py:17` - The CLI argument parsing is simple but has edge cases (e.g., `python -m demo "  "` would preserve spaces in the middle but strip ends). For a production CLI, consider using `argparse` for better validation and help text.
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py` - Could add input sanitization (strip whitespace, handle None explicitly) for more robust library usage.
-- `tests/test_demo_hello.py` - Consider adding parameterized tests or additional edge cases (whitespace-only names, unicode names) for broader coverage.
+- Consider adding a `py.typed` marker file to indicate the package supports type checking.
+- Could add integration tests that actually invoke the CLI via subprocess to test the full stack.
 
 ## Positive Notes
-- Excellent docstrings with usage examples and CLI documentation (`demo/hello.py:1-26`)
-- Proper use of `from __future__ import annotations` across all files
-- Type hints throughout (`demo/hello.py:29`, `demo/__main__.py:9`)
-- Clean module structure with `__all__` exports (`demo/__init__.py:7`)
-- Appropriate pytest markers for test categorization (`tests/test_demo_hello.py:12`)
-- CLI handles multi-word names correctly via `" ".join()` (`demo/__main__.py:12`)
-- Tests cover default, custom, and edge cases
+- Excellent use of `from __future__ import annotations` for forward compatibility
+- Comprehensive docstrings with usage examples in both module and function
+- Proper type hints throughout all files
+- Clean separation of concerns: `hello.py` for library, `__main__.py` for CLI
+- Good test structure with pytestmark categorization (`pytest.mark.unit`)
+- Correct `__all__` export in `__init__.py`
+- CLI handles multi-word names gracefully via join
+- All tests passing
 
 ## Summary Statistics
 - Critical: 0
-- Major: 0
-- Minor: 1
+- Major: 1
+- Minor: 2
 - Warnings: 1
 - Suggestions: 2
