@@ -4,6 +4,22 @@ from __future__ import annotations
 
 This module provides a simple greeting function for demonstrating
 the IRF (Implement-Review-Fix) workflow. Ticket: abc-123
+
+The module exposes a single function `hello()` that returns a greeting
+string. It can be used as a library import or run as a CLI script.
+
+Examples:
+    >>> from demo.hello import hello
+    >>> hello()
+    'Hello, World!'
+    >>> hello("Alice")
+    'Hello, Alice!'
+
+CLI Usage:
+    $ python -m demo.hello
+    Hello, World!
+    $ python -m demo.hello Alice
+    Hello, Alice!
 """
 
 import sys
