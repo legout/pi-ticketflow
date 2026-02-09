@@ -1,4 +1,3 @@
 demo/__init__.py
 demo/hello.py
 tests/test_demo_hello.py
-pyproject.toml

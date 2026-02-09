@@ -99,8 +99,7 @@ done
   "includePlanningDocs": true,
   "promiseOnComplete": true,
   "lessonsMaxCount": 50,
-  "sessionDir": "~/.pi/agent/sessions",
-  "sessionPerTicket": true
+  "sessionDir": "~/.pi/agent/sessions"
 }
 ```
 
@@ -115,12 +114,13 @@ done
 | `sleepBetweenTickets` | 5000 | Ms to wait between tickets |
 | `promiseOnComplete` | true | Emit `<promise>COMPLETE</promise>` on completion |
 | `lessonsMaxCount` | 50 | Max lessons before pruning |
-| `sessionDir` | `~/.pi/agent/sessions` | Directory for saved session files (default: Pi's standard session dir) |
-| `sessionPerTicket` | `true` | Write one session file per ticket (false = one per loop) |
+| `sessionDir` | `~/.pi/agent/sessions` | Directory for Ralph session artifacts (Pi conversation logs) |
 
 ### Session Storage
 
-Ralph stores session artifacts (Pi conversation logs) per ticket. By default, these are written to Pi's standard session directory:
+Ralph stores session artifacts (Pi conversation logs) per ticket. Sessions are handled automatically—Ralph does not forward a `--session` argument to Pi; instead, Pi manages its own session directory.
+
+By default, session artifacts are written to Pi's standard session directory:
 
 ```
 ~/.pi/agent/sessions/
@@ -135,6 +135,8 @@ Override the default location in `.tf/ralph/config.json`:
   "sessionDir": "/custom/path/to/sessions"
 }
 ```
+
+**Note:** This setting only affects where Ralph writes its session artifact files. Pi's own session management operates independently.
 
 **Legacy Behavior:**
 

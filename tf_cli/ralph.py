@@ -100,7 +100,6 @@ DEFAULTS: Dict[str, Any] = {
     "promiseOnComplete": True,
     "lessonsMaxCount": 50,
     "sessionDir": "~/.pi/agent/sessions",
-    "sessionPerTicket": True,
     "parallelWorkers": 1,
     "parallelWorktreesDir": ".tf/ralph/worktrees",
     "parallelAllowUntagged": False,
