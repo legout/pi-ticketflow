@@ -207,14 +207,13 @@ cat .tf/knowledge/tickets/pt-abc123/files_changed.txt
 Pi session files (when `sessionDir` is configured):
 
 - **Location**: `.tf/ralph/sessions/<ticket-id>.jsonl`
-- **Format**: Pi session format (configurable via `sessionPerTicket`)
+- **Format**: Pi session format (JSONL)
 - **Use case**: Reviewing Pi tool calls and responses
 
 Configure in `.tf/ralph/config.json`:
 ```json
 {
-  "sessionDir": ".tf/ralph/sessions",
-  "sessionPerTicket": true
+  "sessionDir": ".tf/ralph/sessions"
 }
 ```
 
