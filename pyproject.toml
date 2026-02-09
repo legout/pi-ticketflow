@@ -15,6 +15,9 @@ dependencies = [
     #"textual-web>=0.4.2",
     # Datastar-py for SSE responses; pinned to match Datastar JS v1.0.0-RC.7
     "datastar-py>=0.7.0,<0.8.0",
+    # Markdown rendering for document viewer with code syntax highlighting
+    "markdown>=3.5.0",
+    "pygments>=2.16.0",
 ]
 
 [tool.setuptools.dynamic]

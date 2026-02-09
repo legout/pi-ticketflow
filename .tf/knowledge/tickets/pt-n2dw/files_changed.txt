@@ -1,0 +1,8 @@
+pyproject.toml
+tf_cli/web_ui.py
+tf_cli/templates/_doc_viewer.html
+tf_cli/templates/doc_viewer.html
+tf_cli/templates/topic_detail.html
+/home/volker/coding/pi-ticketflow/tf_cli/web_ui.py
+/home/volker/coding/pi-ticketflow/tf_cli/templates/_doc_viewer.html
+/home/volker/coding/pi-ticketflow/tf_cli/templates/doc_viewer.html

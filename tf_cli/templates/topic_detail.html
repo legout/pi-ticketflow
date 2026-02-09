@@ -94,6 +94,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .doc-item:hover {
+        border-color: var(--brand-primary);
+        box-shadow: var(--shadow-sm);
     }
 
     .doc-info {
@@ -179,7 +186,7 @@
     <ul class="doc-list">
         {% for doc_type in ['overview', 'sources', 'plan', 'backlog'] %}
             {% if doc_type in topic.available_docs %}
-            <li class="doc-item">
+            <li class="doc-item" data-on:click="@get('/topic/{{ topic.id|urlencode }}/doc/{{ doc_type }}')">
                 <div class="doc-info">
                     <span class="doc-icon">
                         {% if doc_type == 'overview' %}📄
@@ -192,6 +199,9 @@
                         <div class="doc-name">{{ doc_type }}</div>
                         <div class="doc-path">{{ topic_obj[doc_type].path if topic_obj and getattr(topic_obj, doc_type, None) else '' }}</div>
                     </div>
+                </div>
+                <div class="doc-actions">
+                    <button class="btn btn-primary btn-small">View</button>
                 </div>
             </li>
             {% endif %}

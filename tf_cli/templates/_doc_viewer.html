@@ -1,0 +1,37 @@
+<!-- Document viewer fragment for Datastar morphing -->
+<div id="doc-viewer">
+    <div class="doc-tabs">
+        {% for dt_info in doc_type_info %}
+            {% set dt = dt_info.type %}
+            {% set has_doc = doc_availability.get(dt, false) %}
+            {% if has_doc %}
+            <button
+                class="doc-tab {% if dt == doc_type %}active{% endif %}"
+                data-on:click="@get('/topic/{{ topic.id|urlencode }}/doc/{{ dt }}')"
+            >
+                {{ dt_info.icon }} {{ dt_info.title }}
+            </button>
+            {% else %}
+            <button class="doc-tab disabled" disabled title="Document not available">
+                {{ dt_info.icon }} {{ dt_info.title }}
+            </button>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div id="doc-content" class="markdown-content">
+        {% if read_error %}
+            <div class="doc-error">
+                <p>⚠️ Error reading document.</p>
+                <p class="doc-error-message">{{ read_error }}</p>
+            </div>
+        {% elif content_exists and content_html %}
+            {{ content_html|safe }}
+        {% else %}
+            <div class="doc-not-found">
+                <p>📄 Document not found.</p>
+                <p class="doc-not-found-hint">This document type ({{ doc_type }}) is not available for this topic.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>

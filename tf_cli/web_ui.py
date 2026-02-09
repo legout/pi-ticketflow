@@ -14,22 +14,17 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import markdown
+from markdown.extensions.codehilite import CodeHiliteExtension
+from markdown.extensions.fenced_code import FencedCodeExtension
+from markdown.extensions.tables import TableExtension
+from markdown.extensions.toc import TocExtension
 from sanic import Sanic, response
 from jinja2 import Environment, FileSystemLoader
 
 from tf_cli.board_classifier import BoardClassifier, BoardColumn
 from tf_cli.ticket_loader import TicketLoader
-from tf_cli.ui import TopicIndexLoader, TopicIndexLoadError
-
-
-def _find_repo_root() -> Path | None:
-    """Find the repository root by looking for .tf directory."""
-    current = Path(__file__).resolve()
-    for parent in [current, *current.parents]:
-        tf_dir = parent / ".tf"
-        if tf_dir.is_dir():
-            return parent
-    return None
+from tf_cli.ui import TopicIndexLoader, TopicIndexLoadError, resolve_knowledge_dir, _find_repo_root
 
 
 # Get templates directory (relative to this file)
@@ -50,6 +45,39 @@ env = Environment(
     loader=FileSystemLoader(str(_TEMPLATES_DIR)),
     autoescape=True
 )
+
+# Markdown extensions configuration for document rendering
+# Note: Raw HTML is disabled for security (prevents XSS via <script> tags)
+MD_EXTENSIONS = [
+    FencedCodeExtension(),
+    TableExtension(),
+    TocExtension(),
+    CodeHiliteExtension(
+        css_class="highlight",
+        guess_lang=True,
+        use_pygments=True,
+    ),
+]
+
+# Reusable Markdown instance (thread-safe for single-process server)
+_md = markdown.Markdown(extensions=MD_EXTENSIONS)
+
+
+def _render_markdown(content: str) -> str:
+    """Render markdown content to HTML with syntax highlighting.
+    
+    Args:
+        content: Raw markdown content
+        
+    Returns:
+        Rendered HTML string with raw HTML escaped for security
+    """
+    _md.reset()
+    # Escape raw HTML to prevent XSS attacks
+    # This ensures <script> and other HTML tags are rendered as text, not executed
+    import html
+    content = html.escape(content)
+    return _md.convert(content)
 
 
 def get_board_data():
@@ -303,6 +331,108 @@ async def topic_detail(request, topic_id: str):
         return response.html(rendered)
     except Exception as e:
         return response.html(f"<h1>Error rendering topic: {e}</h1>", status=500)
+
+
+@app.get("/topic/<topic_id>/doc/<doc_type>")
+async def topic_document(request, topic_id: str, doc_type: str):
+    """Document viewer for topic documents with inline rendering.
+    
+    Args:
+        topic_id: The topic ID (e.g., "seed-add-versioning")
+        doc_type: Document type - overview, sources, plan, or backlog
+    """
+    # Normalize and validate doc_type (case-insensitive)
+    doc_type = doc_type.lower()
+    valid_doc_types = ["overview", "sources", "plan", "backlog"]
+    if doc_type not in valid_doc_types:
+        return response.html(
+            f"<h1>Invalid document type: {doc_type}</h1>",
+            status=400
+        )
+    
+    try:
+        loader = TopicIndexLoader()
+        loader.load()
+        
+        topic = loader.get_by_id(topic_id)
+        
+        if not topic:
+            return response.html(f"<h1>Topic {topic_id} not found</h1>", status=404)
+        
+        # Get the document
+        doc = getattr(topic, doc_type, None)
+        
+        # Check if document exists
+        content_html = None
+        content_exists = False
+        read_error = None
+        
+        if doc and doc.exists:
+            knowledge_dir = resolve_knowledge_dir()
+            doc_path = (knowledge_dir / doc.path).resolve()
+            
+            # Security: Validate path is within knowledge_dir (prevents path traversal)
+            if not str(doc_path).startswith(str(knowledge_dir.resolve())):
+                return response.html("<h1>Access denied</h1>", status=403)
+            
+            try:
+                content = doc_path.read_text(encoding="utf-8")
+                content_html = _render_markdown(content)
+                content_exists = True
+            except FileNotFoundError:
+                # Document was listed in index but file is missing
+                content_exists = False
+            except (IOError, OSError) as e:
+                # Actual error reading file
+                read_error = str(e)
+                print(f"Error reading document {doc_path}: {e}", file=sys.stderr)
+        
+        # Check if this is a Datastar fragment request (has target header or fragment param)
+        is_fragment = request.headers.get("datastar-request") == "true" or \
+                      request.args.get("fragment", ["false"])[0].lower() == "true"
+        
+        # Prepare document type info for template (avoids hardcoding in templates)
+        doc_type_info = [
+            {"type": "overview", "icon": "📄", "title": "Overview"},
+            {"type": "sources", "icon": "📚", "title": "Sources"},
+            {"type": "plan", "icon": "📋", "title": "Plan"},
+            {"type": "backlog", "icon": "✅", "title": "Backlog"},
+        ]
+        
+        # Pre-compute document existence to avoid getattr in template
+        doc_availability = {
+            dt: getattr(topic, dt, None) is not None and getattr(topic, dt).exists
+            for dt in valid_doc_types
+        }
+        
+        if is_fragment:
+            # Return just the document viewer fragment for Datastar morphing
+            template = env.get_template("_doc_viewer.html")
+            rendered = template.render(
+                topic=_topic_to_dict(topic),
+                doc_type=doc_type,
+                content_html=content_html,
+                content_exists=content_exists,
+                read_error=read_error,
+                doc_type_info=doc_type_info,
+                doc_availability=doc_availability,
+            )
+        else:
+            # Return full page
+            template = env.get_template("doc_viewer.html")
+            rendered = template.render(
+                topic=_topic_to_dict(topic),
+                doc_type=doc_type,
+                content_html=content_html,
+                content_exists=content_exists,
+                read_error=read_error,
+                doc_type_info=doc_type_info,
+                doc_availability=doc_availability,
+            )
+        
+        return response.html(rendered)
+    except Exception as e:
+        return response.html(f"<h1>Error rendering document: {e}</h1>", status=500)
 
 
 def run_web_server(host: str = "127.0.0.1", port: int = 8000) -> int:
