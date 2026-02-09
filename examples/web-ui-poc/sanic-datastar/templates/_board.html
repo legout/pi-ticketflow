@@ -1,0 +1,83 @@
+<!-- Board columns - rendered as partial for Datastar updates -->
+<div class="board">
+    <div class="column">
+        <div class="column-header">
+            <span>Ready</span>
+            <span class="column-count">{{ columns.ready|length }}</span>
+        </div>
+        {% for ticket in columns.ready %}
+        <div class="ticket-card" data-on:click="@get('/ticket/{{ ticket.id }}')">
+            <div class="ticket-header">
+                <span class="ticket-id">{{ ticket.id }}</span>
+                <span class="ticket-priority priority-p{{ ticket.priority }}">P{{ ticket.priority }}</span>
+            </div>
+            <div class="ticket-title">{{ ticket.title or '(no title)' }}</div>
+            {% if ticket.assignee %}
+            <div class="ticket-meta">👤 {{ ticket.assignee }}</div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">No tickets ready</div>
+        {% endfor %}
+    </div>
+    
+    <div class="column">
+        <div class="column-header">
+            <span>Blocked</span>
+            <span class="column-count">{{ columns.blocked|length }}</span>
+        </div>
+        {% for ticket in columns.blocked %}
+        <div class="ticket-card" data-on:click="@get('/ticket/{{ ticket.id }}')">
+            <div class="ticket-header">
+                <span class="ticket-id">{{ ticket.id }}</span>
+                <span class="ticket-priority priority-p{{ ticket.priority }}">P{{ ticket.priority }}</span>
+            </div>
+            <div class="ticket-title">{{ ticket.title or '(no title)' }}</div>
+            {% if ticket.blocking_deps %}
+            <div class="ticket-meta">⛔ {{ ticket.blocking_deps|join(', ') }}</div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">No blocked tickets</div>
+        {% endfor %}
+    </div>
+    
+    <div class="column">
+        <div class="column-header">
+            <span>In Progress</span>
+            <span class="column-count">{{ columns.in_progress|length }}</span>
+        </div>
+        {% for ticket in columns.in_progress %}
+        <div class="ticket-card" data-on:click="@get('/ticket/{{ ticket.id }}')">
+            <div class="ticket-header">
+                <span class="ticket-id">{{ ticket.id }}</span>
+                <span class="ticket-priority priority-p{{ ticket.priority }}">P{{ ticket.priority }}</span>
+            </div>
+            <div class="ticket-title">{{ ticket.title or '(no title)' }}</div>
+            {% if ticket.assignee %}
+            <div class="ticket-meta">👤 {{ ticket.assignee }}</div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">No tickets in progress</div>
+        {% endfor %}
+    </div>
+    
+    <div class="column">
+        <div class="column-header">
+            <span>Closed</span>
+            <span class="column-count">{{ columns.closed|length }}</span>
+        </div>
+        {% for ticket in columns.closed %}
+        <div class="ticket-card" data-on:click="@get('/ticket/{{ ticket.id }}')">
+            <div class="ticket-header">
+                <span class="ticket-id">{{ ticket.id }}</span>
+                <span class="ticket-priority priority-p{{ ticket.priority }}">P{{ ticket.priority }}</span>
+            </div>
+            <div class="ticket-title">{{ ticket.title or '(no title)' }}</div>
+        </div>
+        {% else %}
+        <div class="empty-state">No closed tickets</div>
+        {% endfor %}
+    </div>
+</div>

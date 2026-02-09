@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ticket.id }} - {{ ticket.title or 'Untitled' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .ticket-detail {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #3498db;
+        text-decoration: none;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .back-link:hover {
+        text-decoration: underline;
+    }
+    
+    .ticket-header {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .ticket-header h1 {
+        font-size: 1.5rem;
+        color: #2c3e50;
+        margin-bottom: 0.75rem;
+    }
+    
+    .ticket-id-large {
+        font-family: monospace;
+        color: #7f8c8d;
+        font-size: 0.875rem;
+    }
+    
+    .ticket-meta-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .ticket-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .ticket-status.open { background: #d5f4e6; color: #27ae60; }
+    .ticket-status.closed { background: #ecf0f1; color: #7f8c8d; }
+    .ticket-status.blocked { background: #fadbd8; color: #e74c3c; }
+    
+    .ticket-priority-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .ticket-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .tag {
+        background: #ecf0f1;
+        color: #7f8c8d;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+    }
+    
+    .ticket-body {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .ticket-body h1,
+    .ticket-body h2,
+    .ticket-body h3 {
+        color: #2c3e50;
+        margin: 1.5rem 0 0.75rem;
+    }
+    
+    .ticket-body h1 { font-size: 1.25rem; }
+    .ticket-body h2 { font-size: 1.125rem; }
+    .ticket-body h3 { font-size: 1rem; }
+    
+    .ticket-body p {
+        margin-bottom: 1rem;
+    }
+    
+    .ticket-body ul,
+    .ticket-body ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .ticket-body code {
+        background: #f8f9fa;
+        padding: 0.125rem 0.375rem;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.875rem;
+    }
+    
+    .ticket-body pre {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+    }
+    
+    .ticket-body pre code {
+        background: none;
+        padding: 0;
+    }
+    
+    .ticket-links {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #ecf0f1;
+    }
+    
+    .ticket-links h3 {
+        font-size: 0.875rem;
+        color: #7f8c8d;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ticket-links ul {
+        list-style: none;
+        margin: 0;
+    }
+    
+    .ticket-links li {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .external-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        color: #3498db;
+        text-decoration: none;
+    }
+    
+    .external-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ticket-detail">
+    <button class="btn btn-secondary" data-on:click="@get('/')">
+        ← Back to Board
+    </button>
+    
+    <div class="ticket-header">
+        <h1>
+            <span class="ticket-id-large">{{ ticket.id }}</span>
+            {{ ticket.title or '(no title)' }}
+        </h1>
+        
+        <div class="ticket-meta-bar">
+            <span class="ticket-status {{ ticket.status }}">{{ ticket.status }}</span>
+            <span class="ticket-priority-badge priority-p{{ ticket.priority }}">P{{ ticket.priority }}</span>
+            {% if ticket.assignee %}
+            <span>👤 {{ ticket.assignee }}</span>
+            {% endif %}
+            {% if ticket.created %}
+            <span>📅 {{ ticket.created }}</span>
+            {% endif %}
+        </div>
+        
+        {% if ticket.tags %}
+        <div class="ticket-tags">
+            {% for tag in ticket.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="ticket-body markdown">
+        {% if ticket.body %}
+            {# Note: In production, render markdown to HTML server-side #}
+            <pre>{{ ticket.body }}</pre>
+        {% else %}
+            <p><em>No description provided.</em></p>
+        {% endif %}
+    </div>
+    
+    {% if ticket.deps %}
+    <div class="ticket-links">
+        <h3>Dependencies</h3>
+        <ul>
+            {% for dep in ticket.deps %}
+            <li><a href="#" data-on:click="@get('/ticket/{{ dep }}')">{{ dep }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if ticket.external_ref %}
+    <a class="external-link" href="https://tracker.example.com/{{ ticket.id }}" target="_blank">
+        Open in external tracker →
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
