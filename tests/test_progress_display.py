@@ -4,10 +4,12 @@ Tests cover:
 - Non-TTY progress behavior (no control characters)
 - TTY mode control character handling
 - Ticket start/complete/fail state updates
+- Timestamp prefix in HH:MM:SS format
 """
 
 from __future__ import annotations
 
+import re
 import sys
 from io import StringIO
 from unittest.mock import MagicMock, patch
@@ -15,6 +17,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from tf_cli.ralph import ProgressDisplay
+
+
+# Timestamp pattern: HH:MM:SS (24-hour format)
+TIMESTAMP_PATTERN = r"\d{2}:\d{2}:\d{2}"
 
 
 class TestProgressDisplayInit:
@@ -67,48 +73,54 @@ class TestProgressDisplayNonTTY:
         assert display.total == 5
 
     def test_complete_ticket_success_newline(self):
-        """Non-TTY: complete_ticket should produce plain text with newline."""
+        """Non-TTY: complete_ticket should produce plain text with newline and timestamp."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=False)
-        
+
         display.start_ticket("abc-123", 0, 5)
         display.complete_ticket("abc-123", "COMPLETE", 0)
-        
+
         result = output.getvalue()
         # Should have exactly one newline at the end
         assert result.endswith("\n")
         # Should NOT have carriage return or escape sequences
         assert "\r" not in result
         assert "\x1b" not in result  # ESC character
-        # Should contain the completion message
-        assert "✓ abc-123 complete" in result
-        assert "[1/5]" in result
+        # Should contain timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN, result)
+        # Should contain the completion message with timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN + r" \[1/5\] ✓ abc-123 complete", result)
 
     def test_complete_ticket_failure_newline(self):
-        """Non-TTY: failed ticket should produce plain text with newline."""
+        """Non-TTY: failed ticket should produce plain text with newline and timestamp."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=False)
-        
+
         display.start_ticket("abc-123", 2, 5)
         display.complete_ticket("abc-123", "FAILED", 2)
-        
+
         result = output.getvalue()
         assert result.endswith("\n")
         assert "\r" not in result
         assert "\x1b" not in result
-        assert "✗ abc-123 failed" in result
-        assert "[3/5]" in result
+        # Should contain timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN, result)
+        # Should contain the failure message with timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN + r" \[3/5\] ✗ abc-123 failed", result)
 
     def test_complete_unknown_status(self):
-        """Non-TTY: unknown status should still produce output."""
+        """Non-TTY: unknown status should still produce output with timestamp."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=False)
-        
+
         display.start_ticket("abc-123", 0, 5)
         display.complete_ticket("abc-123", "UNKNOWN", 0)
-        
+
         result = output.getvalue()
         assert result.endswith("\n")
+        # Should contain timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN, result)
+        # Should contain the unknown status message
         assert "? abc-123 unknown" in result.lower()
 
     def test_no_control_characters_in_non_tty(self):
@@ -159,17 +171,22 @@ class TestProgressDisplayTTY:
     """Test ProgressDisplay in TTY mode (uses control characters)."""
 
     def test_start_ticket_clears_line(self):
-        """TTY: start_ticket should use carriage return and clear."""
+        """TTY: start_ticket should use carriage return and clear with timestamp."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=True)
-        
+
         display.start_ticket("abc-123", 0, 5)
-        
+
         result = output.getvalue()
         # Should use escape sequence to clear line
         assert "\x1b[2K" in result  # Clear line
         assert "\r" in result  # Carriage return
+        # Should contain timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN, result)
+        # Should contain the processing message
         assert "Processing abc-123" in result
+        # Should have timestamp before the message
+        assert re.search(TIMESTAMP_PATTERN + r" \[1/5\] Processing abc-123", result)
 
     def test_complete_ticket_adds_newline(self):
         """TTY: complete_ticket should add newline for final output."""
@@ -227,55 +244,59 @@ class TestProgressDisplayCounters:
         assert display.current_ticket is None
 
     def test_iteration_number_in_output(self):
-        """Output should include correct iteration number (1-indexed)."""
+        """Output should include correct iteration number (1-indexed) with timestamp."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=False)
-        
+
         display.start_ticket("abc-123", 0, 5)
         display.complete_ticket("abc-123", "COMPLETE", 0)
-        
+
         result = output.getvalue()
-        # iteration 0 should display as [1/5] (1-indexed)
-        assert "[1/5]" in result
+        # iteration 0 should display as [1/5] (1-indexed) with timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN + r" \[1/5\]", result)
 
     def test_iteration_number_mid_sequence(self):
-        """Output should include correct iteration number mid-sequence."""
+        """Output should include correct iteration number mid-sequence with timestamp."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=False)
-        
+
         display.start_ticket("abc-123", 2, 5)
         display.complete_ticket("abc-123", "COMPLETE", 2)
-        
+
         result = output.getvalue()
-        # iteration 2 should display as [3/5] (1-indexed)
-        assert "[3/5]" in result
+        # iteration 2 should display as [3/5] (1-indexed) with timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN + r" \[3/5\]", result)
 
 
 class TestProgressDisplayIntegration:
     """Integration tests for ProgressDisplay behavior."""
 
     def test_full_ticket_sequence(self):
-        """Test a full sequence of ticket processing."""
+        """Test a full sequence of ticket processing with timestamps."""
         output = StringIO()
         display = ProgressDisplay(output=output, is_tty=False)
-        
+
         tickets = [
             ("ticket-1", "COMPLETE"),
             ("ticket-2", "FAILED"),
             ("ticket-3", "COMPLETE"),
         ]
-        
+
         for i, (ticket_id, status) in enumerate(tickets):
             display.start_ticket(ticket_id, i, len(tickets))
             display.complete_ticket(ticket_id, status, i)
-        
+
         result = output.getvalue()
         lines = result.strip().split("\n")
-        
+
         assert len(lines) == 3
-        assert "✓ ticket-1 complete" in lines[0]
-        assert "✗ ticket-2 failed" in lines[1]
-        assert "✓ ticket-3 complete" in lines[2]
+        # Each line should have a timestamp
+        for line in lines:
+            assert re.search(TIMESTAMP_PATTERN, line)
+        # Check completion messages with timestamp prefix
+        assert re.search(TIMESTAMP_PATTERN + r" \[1/3\] ✓ ticket-1 complete", result)
+        assert re.search(TIMESTAMP_PATTERN + r" \[2/3\] ✗ ticket-2 failed", result)
+        assert re.search(TIMESTAMP_PATTERN + r" \[3/3\] ✓ ticket-3 complete", result)
         assert display.completed == 2
         assert display.failed == 1
 

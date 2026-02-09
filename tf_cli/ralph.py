@@ -67,19 +67,23 @@ class ProgressDisplay:
         """Draw progress line. In TTY mode, uses carriage return for in-place updates.
         In non-TTY mode, always writes new lines (no control characters).
         """
+        # Prefix with timestamp in HH:MM:SS format (per pt-yx8a spec)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        full_text = f"{timestamp} {text}"
+
         if self.is_tty:
             # Clear line and carriage return for stable progress line
             # \x1b[2K clears the entire line
             # \r returns to start of line
             clear_seq = "\x1b[2K\r"
-            self.output.write(f"{clear_seq}{text}")
+            self.output.write(f"{clear_seq}{full_text}")
             if final:
                 self.output.write("\n")
             self.output.flush()
         else:
             # Non-TTY: plain text, no control characters
             if final:
-                self.output.write(f"{text}\n")
+                self.output.write(f"{full_text}\n")
                 self.output.flush()
             # In non-TTY mode, we don't show intermediate progress to avoid spam
 
