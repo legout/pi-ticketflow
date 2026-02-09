@@ -12,7 +12,7 @@ Verified existing hello-world utility implementation. The demo module provides a
 ## Key Decisions
 - Used existing implementation (already complete from previous workflow runs)
 - Function accepts name parameter with default "World"
-- Handles edge cases: empty strings and whitespace-only strings fall back to "World"
+- Handles edge cases: empty strings and whitespace-only strings return "Hello, World!"
 - CLI uses argparse per project convention
 - All functions include proper docstrings with Args/Returns sections
 

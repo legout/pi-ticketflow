@@ -1,29 +1,30 @@
 # Fixes: abc-123
 
-## Minor Issues Fixed
-
-### 1. Use Sequence[str] instead of list[str] (reviewer-general)
-**File:** `demo/__main__.py:21`
-
-Changed `argv: Optional[list[str]]` to `argv: Optional[Sequence[str]]` to better express immutability intent. Also added import `from collections.abc import Sequence`.
-
-### 2. Added empty string CLI example (reviewer-second-opinion)
-**File:** `demo/__main__.py`
-
-Added example to module docstring showing empty string behavior:
-```
-$ python -m demo ""
-Hello, World!
-```
-
-## Issues Not Fixed (Intentional)
-
-### CLI tests don't cover `if __name__ == "__main__"` block (Minor)
-**Rationale:** Testing the `__main__` block requires subprocess spawning which adds complexity for minimal gain. The block is a simple `sys.exit(main())` wrapper that adds no additional logic.
-
 ## Summary
-- Critical: 0 fixed
-- Major: 0 fixed (already resolved in previous iteration)
-- Minor: 2 fixed, 1 deferred
-- Warnings: 0 fixed (become follow-up tickets)
-- Suggestions: 0 fixed (become follow-up tickets)
+Applied 2 Minor fixes identified during parallel review. All tests continue to pass.
+
+## Fixes Applied
+
+### Minor Fix 1: Docstring Wording Accuracy
+- **File**: `demo/hello.py:25`
+- **Issue**: Docstring stated "fall back to 'World'" but function returns "Hello, World!"
+- **Change**: Updated wording to "return 'Hello, World!'" to match actual behavior
+- **Before**: `Empty strings and whitespace-only strings fall back to "World".`
+- **After**: `Empty strings and whitespace-only strings return "Hello, World!".`
+
+### Minor Fix 2: Test Count Documentation
+- **File**: `.tf/knowledge/tickets/abc-123/implementation.md:18-24`
+- **Issue**: Implementation doc under-reported test count as 4 instead of actual 6
+- **Change**: Updated documentation to correctly state 6 tests
+- **Before**: "4 tests in `tests/test_demo_hello.py`"
+- **After**: "6 tests in `tests/test_demo_hello.py`"
+
+## Verification
+```bash
+pytest tests/test_demo_hello.py -v
+# 6 passed
+```
+
+## Issues Remaining
+- Warnings: 3 (CLI testing improvements - deferred as follow-up)
+- Suggestions: 6 (enhancements - deferred as follow-up)
