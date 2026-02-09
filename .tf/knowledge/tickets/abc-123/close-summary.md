@@ -1,45 +1,34 @@
 # Close Summary: abc-123
 
 ## Status
-COMPLETED (Ticket already closed)
+CLOSED (workflow re-run completed)
 
-## Commit
-`b193681` - abc-123: Update review artifacts from workflow run
+## Changes Committed
+- Commit: `86de2cf`
+- Message: "abc-123: Add future annotations import for consistency"
 
-## Workflow Results
+## Files Modified
+- `demo/__init__.py` - Added `from __future__ import annotations`
+- `demo/hello.py` - Added `from __future__ import annotations`
 
-### Research
-- Status: Skipped (straightforward implementation)
-- Artifact: `.tf/knowledge/tickets/abc-123/research.md`
+## Review Results
+| Severity | Count | Status |
+|----------|-------|--------|
+| Critical | 0 | ✅ |
+| Major | 0 | ✅ |
+| Minor | 2 | Fixed |
+| Warnings | 0 | - |
+| Suggestions | 3 | Not addressed |
 
-### Implementation
-- Files Changed:
-  - `demo/__init__.py`
-  - `demo/hello.py`
-  - `tests/test_demo_hello.py`
-- Artifact: `.tf/knowledge/tickets/abc-123/implementation.md`
+## Quality Gate
+Passed (no blocking issues)
 
-### Reviews
-- reviewer-general: ✅ PASS (0 issues, 2 suggestions)
-- reviewer-spec-audit: ✅ PASS (0 issues, all acceptance criteria met)
-- reviewer-second-opinion: ✅ PASS (0 issues, 1 suggestion)
-- Artifact: `.tf/knowledge/tickets/abc-123/review.md`
+## Tests
+3/3 tests passing
 
-### Fixes
-- Status: No fixes required (0 Critical/Major/Minor issues)
-- Artifact: `.tf/knowledge/tickets/abc-123/fixes.md`
-
-### Quality Gate
-- Status: PASSED
-- Blockers: 0
-
-### Acceptance Criteria
-| Criteria | Status |
-|----------|--------|
-| Create hello-world utility in `demo/hello.py` | ✅ PASS |
-| Function accepts name parameter with default "World" | ✅ PASS |
-| Include basic docstring | ✅ PASS |
-| Add a simple test | ✅ PASS |
-
-## Summary
-Workflow completed successfully. All quality checks passed. Ticket remains closed.
+## Artifacts
+- research.md - Ticket research
+- implementation.md - Implementation details
+- review.md - Consolidated review
+- fixes.md - Fixes applied
+- files_changed.txt - Tracked changes

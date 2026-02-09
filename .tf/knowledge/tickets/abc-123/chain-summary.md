@@ -1,13 +1,17 @@
 # Chain Summary: abc-123
 
-## Artifacts
-- Research: `.tf/knowledge/tickets/abc-123/research.md`
-- Implementation: `.tf/knowledge/tickets/abc-123/implementation.md`
-- Review: `.tf/knowledge/tickets/abc-123/review.md`
-- Fixes: `.tf/knowledge/tickets/abc-123/fixes.md`
-- Close Summary: `.tf/knowledge/tickets/abc-123/close-summary.md`
+## Workflow Completed
+All steps executed successfully.
 
-## Results
-- Status: COMPLETE
-- Commit: b193681
-- Quality Gate: PASSED
+## Artifacts
+| Artifact | Path |
+|----------|------|
+| Research | [research.md](research.md) |
+| Implementation | [implementation.md](implementation.md) |
+| Review | [review.md](review.md) |
+| Fixes | [fixes.md](fixes.md) |
+| Close Summary | [close-summary.md](close-summary.md) |
+| Files Changed | [files_changed.txt](files_changed.txt) |
+
+## Commit
+`86de2cf` - abc-123: Add future annotations import for consistency
