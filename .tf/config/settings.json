@@ -31,7 +31,7 @@
       "description": "Capable model for general code review"
     },
     "review-spec": {
-      "model": "openai-codex/gpt-5.2-codex",
+      "model": "openai-codex/gpt-5.3-codex",
       "thinking": "medium",
       "description": "Strong model for specification compliance audit"
     },
@@ -56,8 +56,8 @@
     "tf-next": "general",
     "tf-plan": "planning",
     "tf-plan-consult": "worker",
-    "tf-plan-revise": "planning",
-    "tf-plan-review": "planning",
+    "tf-plan-revise": "general",
+    "tf-plan-review": "review-general",
     "tf-seed": "planning",
     "tf-backlog": "planning",
     "tf-backlog-ls": "fast",
