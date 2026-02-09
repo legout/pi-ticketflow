@@ -1,34 +1,29 @@
 # Fixes: abc-123
 
 ## Summary
-Fixed 1 Major issue and 2 Minor issues identified in code review.
+Fixed 1 Major issue identified during review. Minor issues intentionally skipped as low-impact.
 
-## Issues Fixed
+## Fixes Applied
 
-### Major (1)
-- `demo/hello.py` - **Type hint consistency**: Kept `name: str` type hint and removed unreachable None check. The type signature correctly indicates only string input is accepted, and the `.strip()` check handles empty/whitespace strings appropriately.
+### Major Fix
+- **`tests/test_demo_hello.py`** - Consolidated redundant whitespace tests
+  - Removed `test_hello_whitespace_various()` which was redundant with `test_hello_whitespace_only()`
+  - Updated `test_hello_whitespace_only()` to test multiple whitespace patterns (spaces, tabs, newlines, mixed)
+  - Test count: 7 → 6 (removed 1 redundant test)
+  - All tests passing
 
-### Minor (2)
-- `tests/test_demo_hello.py` - **Added missing CLI tests**: Added `test_cli_default` and `test_cli_with_name` to test the `demo/__main__.py` entry point directly.
-- `tests/test_demo_hello.py` - **Expanded whitespace coverage**: Added `test_hello_whitespace_various` to test tabs (`\t`) and newlines (`\n`) in addition to spaces.
+## Minor Issues Skipped (Intentional)
+- `Sequence[str]` vs `list[str]` in `__main__.py:21` - Low impact, current code is idiomatic
+- Missing empty string CLI docstring example - Edge case already documented in function docstring
+- Missing `if __name__ == "__main__"` test coverage - Entry point block is minimal and tested indirectly
 
-## Changes Made
-1. `demo/hello.py` - Simplified logic to return early for empty/whitespace strings
-2. `tests/test_demo_hello.py` - Added imports for `sys`, `patch`, and `main`; added 3 new test functions
-
-## Test Results
+## Tests
+```bash
+python -m pytest tests/test_demo_hello.py -v
 ```
-7 passed in 0.07s
-- test_hello_default
-- test_hello_custom_name
-- test_hello_empty_string
-- test_hello_whitespace_only
-- test_hello_whitespace_various (NEW)
-- test_cli_default (NEW)
-- test_cli_with_name (NEW)
-```
+Result: **6 passed** (was 7, reduced by 1 after removing redundant test)
 
-## Remaining Issues
-- Minor: `demo/__init__.py` - `__version__` not added (cosmetic, skipped)
-- Warning: CLI integration tests via subprocess (deferred)
-- Suggestions: Parametrized tests, docstring updates, type modernization (deferred)
+## Verification
+- All original test scenarios still covered
+- Whitespace handling verified for: spaces only, tabs/newlines/CR, and mixed whitespace
+- CLI tests unchanged and passing

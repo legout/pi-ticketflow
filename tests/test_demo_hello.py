@@ -36,15 +36,11 @@ def test_hello_empty_string() -> None:
 
 
 def test_hello_whitespace_only() -> None:
-    """Test hello with whitespace-only string falls back to World."""
-    result = hello("   ")
-    assert result == "Hello, World!"
-
-
-def test_hello_whitespace_various() -> None:
-    """Test hello with various whitespace characters (tabs, newlines)."""
-    result = hello("\t\n\r")
-    assert result == "Hello, World!"
+    """Test hello with whitespace-only strings fall back to World."""
+    # Various whitespace characters (spaces, tabs, newlines)
+    for whitespace in ["   ", "\t\n\r", "  \t\n  "]:
+        result = hello(whitespace)
+        assert result == "Hello, World!", f"Failed for whitespace: {repr(whitespace)}"
 
 
 def test_cli_default(capsys: pytest.CaptureFixture[str]) -> None:
