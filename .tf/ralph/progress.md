@@ -361,3 +361,7 @@
   - Summary: Update tests for command-based `zai-vision` MCP config
   - Issues: Critical(0)/Major(0)/Minor(0)
   - Status: COMPLETE
+- pt-cje7: COMPLETE (2026-02-09T14:05:45Z)
+  - Summary: Add release note / doc note about new `zai-vision` MCP server type
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
