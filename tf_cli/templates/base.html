@@ -12,12 +12,43 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
     
     <style>
+        /* Design Tokens - small consistent set for the UI */
+        :root {
+            /* Surface colors */
+            --surface: #ffffff;
+            --surface-2: #f6f7f9;
+            --surface-3: #ecf0f1;
+            
+            /* Brand colors */
+            --brand-primary: #2c3e50;
+            --brand-text: #ffffff;
+            
+            /* Border & shadow */
+            --border: #e6e8ee;
+            --border-strong: #bdc3c7;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 8px rgba(0,0,0,0.15);
+            
+            /* Radius */
+            --radius: 8px;
+            --radius-sm: 6px;
+            --radius-lg: 10px;
+            
+            /* Fluid spacing with clamp() - responsive without breakpoints */
+            --gap: clamp(0.75rem, 1.2vw, 1.25rem);
+            --gap-sm: clamp(0.5rem, 0.8vw, 0.75rem);
+            --gap-lg: clamp(1rem, 2vw, 2rem);
+            --pad: clamp(0.75rem, 1.5vw, 1.5rem);
+            --pad-sm: clamp(0.5rem, 1vw, 1rem);
+        }
+        
         /* App header - distinct from Pico's semantic header styling */
         .app-header {
-            background: #2c3e50;
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--brand-primary);
+            color: var(--brand-text);
+            padding: var(--pad-sm) var(--gap-lg);
+            box-shadow: var(--shadow-md);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -28,21 +59,21 @@
             font-size: 1.5rem;
             font-weight: 600;
             margin: 0;
-            color: white;
+            color: var(--brand-text);
         }
 
         .app-header a {
-            color: white;
+            color: var(--brand-text);
             text-decoration: none;
         }
 
         .app-nav {
             display: flex;
-            gap: 1.5rem;
+            gap: var(--gap);
         }
 
         .app-nav a {
-            color: white;
+            color: var(--brand-text);
             text-decoration: none;
             font-size: 0.875rem;
             padding: 0.5rem 0;
@@ -56,14 +87,14 @@
         }
 
         .app-nav a.active {
-            border-bottom-color: white;
+            border-bottom-color: var(--brand-text);
         }
         
         /* Main content area - wider than Pico's default container */
         .app-main {
             max-width: 1600px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: var(--gap-lg);
         }
         
         /* Priority badges */
