@@ -1,6 +1,6 @@
 ---
 id: pt-2xr4
-status: open
+status: closed
 deps: [pt-q2og]
 links: [pt-q2og]
 created: 2026-02-09T13:42:03Z
@@ -31,3 +31,19 @@ Modern dashboards often need dark mode. Pico supports `prefers-color-scheme` and
 - Pico theme docs: https://picocss.com
 
 
+
+## Notes
+
+**2026-02-09T14:35:53Z**
+
+Implemented dark mode support for web UI.
+
+Changes:
+- Added CSS custom properties for light/dark themes in web-ui.css
+- Three-state toggle (auto/dark/light) with localStorage persistence
+- Respects prefers-color-scheme in 'auto' mode
+- Board columns/cards remain readable with proper contrast
+
+Commit: 9471e69
+
+Artifacts: .tf/knowledge/tickets/pt-2xr4/

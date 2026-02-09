@@ -1,6 +1,6 @@
 ---
 id: pt-ls9y
-status: open
+status: closed
 deps: [pt-sf9w]
 links: [pt-sf9w, pt-uo1b]
 created: 2026-02-09T11:48:25Z
@@ -30,3 +30,26 @@ We want a safe-by-default, copy/paste workflow for local browser access, with cl
 ## References
 - Plan: plan-allow-to-serve-the-textual-app-as-a-web
 
+
+## Notes
+
+**2026-02-09T14:10:30Z**
+
+**Implementation Complete**
+
+Added comprehensive Web Mode documentation to README.md documenting how to run the Ticketflow TUI in a browser via textual serve.
+
+**Changes:**
+- Added 'Web Mode (Browser UI)' section to README.md with:
+  - Prerequisites (textual-dev package)
+  - Both command variants (installed CLI and dev fallback)
+  - Access instructions (default http://localhost:8000)
+  - Host/port customization via textual serve flags
+  - Prominent security warning for public binding
+  - Session lifecycle documentation
+
+**Review:**
+- Critical: 0, Major: 0, Minor: 0
+- All acceptance criteria met
+
+**Commit:** c62fe2edb2ba2536697c89be0f54ab2fc1b124d9

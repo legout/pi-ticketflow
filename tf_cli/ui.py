@@ -467,7 +467,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         from textual.reactive import reactive
         from textual.binding import Binding
     except ImportError:
-        print("Error: Textual is not installed. Run: pip install textual", file=sys.stderr)
+        print("Error: Textual is not installed.", file=sys.stderr)
+        print("Install with: uv pip install textual", file=sys.stderr)
+        print("Or run with uv: uv run tf ui", file=sys.stderr)
         return 1
 
     class DataListItem(ListItem):

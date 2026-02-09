@@ -1,6 +1,6 @@
 ---
 id: pt-pbpm
-status: open
+status: closed
 deps: [pt-6hpl]
 links: [pt-za25]
 created: 2026-02-09T13:26:39Z
@@ -30,3 +30,9 @@ Currently `/api/refresh` only refreshes `#board`. The counts shown in the header
 - Spike: spike-datastar-py-sanic-datastar-tf-web-ui
 
 
+
+## Notes
+
+**2026-02-09T14:22:47Z**
+
+Implementation complete. Added  to the board statistics div in . This enables independent Datastar patching of ticket counts without full page reload. Commit: b0d5e82

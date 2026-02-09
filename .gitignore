@@ -32,11 +32,9 @@ yarn-error.log*
 
 # TF Workflow - Runtime artifacts
 # See ticket pt-gzqg for cleanup details
-.tf/knowledge/tickets/
+.tf/knowledge/sessions
 .tf/ralph/sessions/
-.tf/ralph/logs/
-.tf/ralph/progress.md
-.pi/ralph/progress.md
+.tf/ralph/lock
 .pi/
 
 

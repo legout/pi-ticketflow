@@ -4,3 +4,74 @@
   - Issues: Critical(0)/Major(0)/Minor(0) - All resolved
   - Status: COMPLETE
   - Commit: 24383d7
+- pt-n2dw: COMPLETE (2026-02-09T14:21:18Z)
+  - Summary: Handle document viewing in web UI (replace $PAGER)
+  - Issues: Critical(2)/Major(3)/Minor(4)
+  - Status: COMPLETE
+
+## pt-pbpm: COMPLETE - 2026-02-09T14:21:00Z
+- Summary: Added id="board-stats" to board stats div for Datastar patching
+- Issues: Critical 0, Major 0, Minor 0
+- Status: RUNNING
+- Commit: b0d5e82
+- pt-pbpm: COMPLETE (2026-02-09T14:23:07Z)
+  - Summary: Add board stats DOM target for Datastar patching
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-4y31: COMPLETE (2026-02-09T14:26:25Z)
+  - Summary: Implement /api/refresh as DatastarResponse (multi-target SSE patch)
+  - Issues: Critical(0)/Major(0)/Minor(1)
+  - Status: COMPLETE
+- pt-m387: COMPLETE (2026-02-09T14:26:35Z)
+  - Summary: Add /api/stream SSE endpoint (Sanic) for live board updates
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Status: COMPLETE
+  - Commit: f3611f8
+- pt-m387: COMPLETE (2026-02-09T14:30:56Z)
+  - Summary: Add /api/stream SSE endpoint (Sanic) for live board updates
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Status: COMPLETE
+- pt-q2og: COMPLETE (2026-02-09T14:31:08Z)
+  - Summary: Accessibility pass for web UI styling (focus-visible, contrast, reduced motion)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+  - Commit: ca64cb4
+- pt-q2og: COMPLETE (2026-02-09T14:33:22Z)
+  - Summary: Accessibility pass for web UI styling (focus-visible, contrast, reduced motion)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-2xr4: COMPLETE (2026-02-09T14:34:00Z)
+  - Summary: Add dark mode toggle (or auto dark mode) for web UI
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+  - Commit: 9471e69
+- pt-2xr4: COMPLETE (2026-02-09T14:36:15Z)
+  - Summary: Add dark-mode toggle (or auto dark mode) for web UI
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-uo1b: COMPLETE (2026-02-09T14:39:00Z)
+  - Summary: Add CI smoke test for headless import of tf_cli.ui
+  - Issues: Critical(0)/Major(2)/Minor(3)
+  - Status: COMPLETE
+  - Commit: 571a404
+- pt-uo1b: COMPLETE (2026-02-09T14:40:30Z)
+  - Summary: Add CI smoke test: headless import of `tf_cli.ui`
+  - Issues: Critical(0)/Major(2)/Minor(3)
+  - Status: COMPLETE
+- pt-et1v: COMPLETE (2026-02-09T14:46:50Z)
+  - Summary: Then open http://localhost:8000
+  - Issues: Critical(0)/Major(0)/Minor(3)
+  - Status: COMPLETE
+- pt-fpz7: COMPLETE (2026-02-09T14:48:51Z)
+  - Summary: Optional: add `tf ui --web` helper (prints serve command)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-za25: COMPLETE (2026-02-09T14:56:00Z)
+  - Summary: Add server-side search/filter using Datastar signals (read_signals)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+  - Commit: 02b3329
+- pt-za25: COMPLETE (2026-02-09T14:58:13Z)
+  - Summary: Add server-side search/filter using Datastar signals (read_signals)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE

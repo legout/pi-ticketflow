@@ -1,6 +1,6 @@
 ---
 id: pt-q2og
-status: open
+status: closed
 deps: [pt-gnhr]
 links: [pt-2xr4]
 created: 2026-02-09T13:42:03Z
@@ -30,3 +30,15 @@ Dashboards are keyboard-heavy. Modern minimal CSS can inadvertently reduce contr
 - Spike: spike-modern-simple-css-dashboard-kanban
 
 
+
+## Notes
+
+**2026-02-09T14:33:00Z**
+
+Accessibility improvements implemented:
+
+- Added :focus-visible styles for all interactive elements (links, buttons, inputs, ticket cards)
+- Updated priority badge colors for WCAG AA compliance (4.5:1+ contrast)
+- Added prefers-reduced-motion media query support
+
+Commit: ca64cb4

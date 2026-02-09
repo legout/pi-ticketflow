@@ -1,6 +1,6 @@
 ---
 id: pt-za25
-status: open
+status: closed
 deps: [pt-m387]
 links: [pt-m387, pt-pbpm]
 created: 2026-02-09T13:26:39Z
@@ -30,3 +30,19 @@ datastar-py can parse the current signal state from requests. This enables imple
 - Spike: spike-datastar-py-sanic-datastar-tf-web-ui
 
 
+
+## Notes
+
+**2026-02-09T14:57:49Z**
+
+--message Implementation verified and complete.
+
+Server-side search/filter using Datastar signals is working:
+- Search input bound to $search signal via data-bind
+- /api/refresh reads signals using datastar_py.sanic.read_signals()
+- Case-insensitive title filtering applied
+- Ticket navigation preserved
+
+Commit: 02b3329
+
+Artifacts: .tf/knowledge/tickets/pt-za25/

@@ -1,6 +1,6 @@
 ---
 id: pt-fpz7
-status: open
+status: closed
 deps: [pt-et1v]
 links: [pt-et1v]
 created: 2026-02-09T11:48:25Z
@@ -29,3 +29,18 @@ This is a convenience feature; it should not re-implement serving.
 ## References
 - Plan: plan-allow-to-serve-the-textual-app-as-a-web
 
+
+## Notes
+
+**2026-02-09T14:48:37Z**
+
+Implemented tf ui --web helper
+
+Changes:
+- Modified --web flag to print textual serve command instead of launching Sanic server
+- Includes security warnings about localhost default and public binding risks
+- Supports --host and --port arguments for customization
+
+Commit: 832db75
+
+Review: 0 critical, 0 major, 0 minor issues

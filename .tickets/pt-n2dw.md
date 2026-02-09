@@ -1,6 +1,6 @@
 ---
 id: pt-n2dw
-status: open
+status: closed
 deps: [pt-c4lo]
 links: [pt-sd01]
 created: 2026-02-09T09:32:03Z
@@ -75,3 +75,9 @@ In the terminal TUI, documents are opened via $PAGER (less, vim). In web mode, w
 - Datastar docs: https://data-star.dev
 - Datastar preserve: https://data-star.dev/reference/attributes#data-preserve-attr
 - tf_cli/ui.py - _open_doc method, resolve_knowledge_dir function
+
+## Notes
+
+**2026-02-09T14:20:44Z**
+
+--note-file -
