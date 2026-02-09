@@ -36,11 +36,17 @@ class ProgressDisplay:
         self.total = 0
         self._last_line_len = 0
 
-    def start_ticket(self, ticket_id: str, iteration: int, total: int) -> None:
-        """Called when a ticket starts processing."""
+    def start_ticket(self, ticket_id: str, iteration: int, total_tickets: int) -> None:
+        """Called when a ticket starts processing.
+
+        Args:
+            ticket_id: The ID of the ticket being processed
+            iteration: Current loop iteration (0-indexed)
+            total_tickets: Total number of tickets to process (for UI display)
+        """
         self.current_ticket = ticket_id
-        self.total = total
-        self._draw(f"[{iteration + 1}/{total}] Processing {ticket_id}...")
+        self.total = total_tickets
+        self._draw(f"[{iteration + 1}/{total_tickets}] Processing {ticket_id}...")
 
     def complete_ticket(self, ticket_id: str, status: str, iteration: int) -> None:
         """Called when a ticket completes (success or failure)."""
@@ -1522,7 +1528,14 @@ def ralph_start(args: List[str]) -> int:
 
                 # Update progress display at ticket start
                 if progress_display:
-                    progress_display.start_ticket(ticket, iteration, max_iterations)
+                    # Get total tickets for accurate progress display (decoupled from max_iterations)
+                    # Use min with remaining iterations to show accurate progress when max_iterations limits execution
+                    ready_tickets = list_ready_tickets(ticket_list_query(ticket_query))
+                    remaining_iterations = max_iterations - iteration
+                    total_tickets = min(len(ready_tickets), remaining_iterations)
+                    # Ensure at least 1 to avoid [N/0] display edge case
+                    total_tickets = max(total_tickets, 1)
+                    progress_display.start_ticket(ticket, iteration, total_tickets)
 
                 # Fetch ticket title only in verbose mode (DEBUG or VERBOSE)
                 ticket_title: Optional[str] = None
