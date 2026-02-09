@@ -1,1 +1,1 @@
-tests/test_demo_hello.py
+demo/__main__.py

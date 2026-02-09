@@ -7,6 +7,8 @@ Examples:
     Hello, Alice!
     $ python -m demo "Alice Smith"
     Hello, Alice Smith!
+    $ python -m demo ""
+    Hello, World!
 """
 
 from __future__ import annotations
@@ -14,11 +16,12 @@ from __future__ import annotations
 import argparse
 import sys
 from typing import Optional
+from collections.abc import Sequence
 
 from demo.hello import hello
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: Optional[Sequence[str]] = None) -> int:
     """Run the hello CLI.
 
     Args:

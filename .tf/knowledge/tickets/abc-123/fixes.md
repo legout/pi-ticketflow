@@ -1,29 +1,29 @@
 # Fixes: abc-123
 
-## Summary
-Fixed 1 Major issue identified during review. Minor issues intentionally skipped as low-impact.
+## Minor Issues Fixed
 
-## Fixes Applied
+### 1. Use Sequence[str] instead of list[str] (reviewer-general)
+**File:** `demo/__main__.py:21`
 
-### Major Fix
-- **`tests/test_demo_hello.py`** - Consolidated redundant whitespace tests
-  - Removed `test_hello_whitespace_various()` which was redundant with `test_hello_whitespace_only()`
-  - Updated `test_hello_whitespace_only()` to test multiple whitespace patterns (spaces, tabs, newlines, mixed)
-  - Test count: 7 → 6 (removed 1 redundant test)
-  - All tests passing
+Changed `argv: Optional[list[str]]` to `argv: Optional[Sequence[str]]` to better express immutability intent. Also added import `from collections.abc import Sequence`.
 
-## Minor Issues Skipped (Intentional)
-- `Sequence[str]` vs `list[str]` in `__main__.py:21` - Low impact, current code is idiomatic
-- Missing empty string CLI docstring example - Edge case already documented in function docstring
-- Missing `if __name__ == "__main__"` test coverage - Entry point block is minimal and tested indirectly
+### 2. Added empty string CLI example (reviewer-second-opinion)
+**File:** `demo/__main__.py`
 
-## Tests
-```bash
-python -m pytest tests/test_demo_hello.py -v
+Added example to module docstring showing empty string behavior:
 ```
-Result: **6 passed** (was 7, reduced by 1 after removing redundant test)
+$ python -m demo ""
+Hello, World!
+```
 
-## Verification
-- All original test scenarios still covered
-- Whitespace handling verified for: spaces only, tabs/newlines/CR, and mixed whitespace
-- CLI tests unchanged and passing
+## Issues Not Fixed (Intentional)
+
+### CLI tests don't cover `if __name__ == "__main__"` block (Minor)
+**Rationale:** Testing the `__main__` block requires subprocess spawning which adds complexity for minimal gain. The block is a simple `sys.exit(main())` wrapper that adds no additional logic.
+
+## Summary
+- Critical: 0 fixed
+- Major: 0 fixed (already resolved in previous iteration)
+- Minor: 2 fixed, 1 deferred
+- Warnings: 0 fixed (become follow-up tickets)
+- Suggestions: 0 fixed (become follow-up tickets)
