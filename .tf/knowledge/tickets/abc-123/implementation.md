@@ -1,37 +1,42 @@
 # Implementation: abc-123
 
 ## Summary
-Applied Minor fix to hello-world utility test suite. Removed global sys.argv patching in CLI tests and now pass argv directly to main() function.
+Hello-world utility module complete with CLI support. The implementation provides a simple greeting function that accepts a name parameter with proper edge case handling.
 
 ## Files Changed
-- `tests/test_demo_hello.py` - Removed unittest.mock import and sys.argv patching. CLI tests now pass argv directly to main() function.
+- `demo/__init__.py` - Package initialization with exports
+- `demo/hello.py` - Core greeting function with docstrings and type hints
+- `demo/__main__.py` - CLI entry point using argparse
+- `tests/test_demo_hello.py` - 6 unit tests covering functionality and edge cases
 
 ## Key Decisions
-- Applied fix from reviewer-general feedback: CLI tests now pass argv directly to main([]) and main(["Alice"]) instead of patching sys.argv globally
-- This avoids global state mutation in tests and follows the function signature more directly
-- All 6 tests continue to pass
+- Used `argparse` for CLI parsing per project convention
+- Empty/whitespace strings fall back to "World" for robustness
+- Added comprehensive docstrings with examples
+- All functions have proper type annotations
+- Used `from __future__ import annotations` for forward compatibility
 
 ## Tests Run
-```bash
+```
 pytest tests/test_demo_hello.py -v
+============================= 6 passed in 0.01s ==============================
 ```
-Results: 6 passed (4 unit tests for hello() + 2 CLI tests)
-- test_hello_default
-- test_hello_custom_name
-- test_hello_empty_string
-- test_hello_whitespace_only
-- test_cli_default
-- test_cli_with_name
 
-## Quality Checks
-```bash
-ruff check tests/test_demo_hello.py --fix
-ruff format tests/test_demo_hello.py
-```
-Result: All checks passed
+Tests cover:
+- Default parameter behavior
+- Custom name input
+- Empty string handling
+- Whitespace-only string handling
+- CLI default invocation
+- CLI with name argument
 
 ## Verification
 ```bash
-python -m demo           # Hello, World!
-python -m demo Alice     # Hello, Alice!
+# Library usage
+python3 -c "from demo.hello import hello; print(hello('Test'))"
+# Output: Hello, Test!
+
+# CLI usage
+python3 -m demo Alice
+# Output: Hello, Alice!
 ```

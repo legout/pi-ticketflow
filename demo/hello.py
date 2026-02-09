@@ -28,8 +28,8 @@ def hello(name: str = "World") -> str:
 
     Args:
         name: The name to greet. Defaults to "World".
-            Empty strings and whitespace-only strings fall back to "World",
-            returning "Hello, World!".
+            Empty strings and whitespace-only strings return
+            "Hello, World!".
 
     Returns:
         str: A greeting string in the format "Hello, {name}!".

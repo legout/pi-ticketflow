@@ -1,29 +1,36 @@
-# Chain Summary: abc-123
+# Workflow Chain Summary: abc-123
 
-## Workflow Execution
-- Re-Anchor: ✅ Complete
-- Research: ✅ Skipped (already implemented)
-- Implement: ✅ Complete (Minor fix applied)
-- Reviews: ✅ Already complete (reviewed in previous runs)
-- Merge Reviews: ✅ Complete (review.md updated)
-- Fix Issues: ✅ Complete (1 Minor fix applied)
-- Close Ticket: ✅ Complete
+## Execution
+- **Ticket**: abc-123
+- **Flags**: --auto
+- **Started**: 2026-02-10T00:01:43+01:00
+- **Completed**: 2026-02-10T00:01:43+01:00
+
+## Chain Steps
+
+| Step | Status | Model | Artifacts |
+|------|--------|-------|-----------|
+| 1. Re-Anchor | ✅ | - | - |
+| 2. Research | ⏭️ | - | research.md (existing) |
+| 3. Implement (Verify) | ✅ | kimi-coding/k2p5 | implementation.md |
+| 4. Parallel Reviews | ✅ | 3 reviewers | review-{general,spec,second}.md |
+| 5. Merge Reviews | ✅ | zai/glm-4.7 | review.md |
+| 6. Fix Issues | ✅ | zai/glm-4.7 | fixes.md |
+| 7. Close Ticket | ⏭️ | - | close-summary.md |
 
 ## Artifacts
-| File | Description |
-|------|-------------|
-| `research.md` | Research skipped - ticket already implemented |
-| `implementation.md` | Implementation summary with test results |
-| `review.md` | Merged review from 3 reviewers |
-| `fixes.md` | Applied Minor fix documentation |
-| `close-summary.md` | This file - final closure summary |
-| `files_changed.txt` | List of files changed in this run |
+- `.tf/knowledge/tickets/abc-123/research.md` - Research (existing)
+- `.tf/knowledge/tickets/abc-123/implementation.md` - Implementation verification
+- `.tf/knowledge/tickets/abc-123/review.md` - Merged review (0 Critical, 0 Major, 3 Minor)
+- `.tf/knowledge/tickets/abc-123/fixes.md` - Fixes applied (2 Minor fixed)
+- `.tf/knowledge/tickets/abc-123/close-summary.md` - Final summary
+- `.tf/knowledge/tickets/abc-123/files_changed.txt` - Tracked files
+- `.tf/knowledge/tickets/abc-123/ticket_id.txt` - Ticket ID
 
-## Files Changed
-- `tests/test_demo_hello.py`
+## Results
+- **Commit**: 83ceccd
+- **Tests**: 6/6 passing
+- **Quality Gate**: ✅ Passed (0 Critical, 0 Major issues)
+- **Ticket Status**: Already closed (workflow replay)
 
-## Commit
-`6d87cd4` - abc-123: Fix CLI test pattern - pass argv directly to main() instead of patching sys.argv
-
-## Status
-CLOSED
+<promise>TICKET_abc-123_COMPLETE</promise>
