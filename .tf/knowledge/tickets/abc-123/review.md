@@ -1,62 +1,63 @@
 # Review: abc-123
 
+Merged review from reviewer-general, reviewer-spec-audit, and reviewer-second-opinion.
+
 ## Critical (must fix)
 No issues found.
 
 ## Major (should fix)
-- `tests/test_demo_hello.py:26-29` - Test naming inconsistency: `test_hello_whitespace_various` is redundant with `test_hello_whitespace_only`. Both test the same code path (whitespace-only strings fall back to "World"). Consider consolidating or removing the duplicate.
-  *Source: reviewer-second-opinion*
+No issues found.
 
 ## Minor (nice to fix)
-- `demo/__main__.py:21` - Consider using `Sequence[str]` instead of `list[str]` for the `argv` parameter type hint, since the function doesn't mutate the list. Better expresses immutability intent.
-  *Source: reviewer-general*
-- `demo/__main__.py:39` - Missing docstring example for empty string argument. The `hello()` function handles empty strings specially, but this CLI behavior isn't documented in module-level docstring.
-  *Source: reviewer-second-opinion*
-- `tests/test_demo_hello.py:33-43` - CLI tests patch `sys.argv` but don't test the actual `if __name__ == "__main__"` block. Minor coverage gap for entry point.
-  *Source: reviewer-second-opinion*
+- `tests/test_demo_hello.py` - **Documentation discrepancy**: Implementation.md states 4 tests, but file contains 6 tests (4 unit + 2 CLI). Update documentation to reflect actual test count.
+  - *Sources: reviewer-general, reviewer-second-opinion*
+
+- `demo/hello.py:22-23` - **Docstring wording**: Says "fall back to 'World'" but function returns "Hello, World!". Update to: "Empty strings and whitespace-only strings return 'Hello, World!'" to match actual behavior.
+  - *Source: reviewer-second-opinion*
+
+- `tests/test_demo_hello.py:47-56` - **Test pattern**: CLI tests patch `sys.argv` globally. Consider passing `argv` directly to `main(["Alice"])` to avoid global state mutation (already supported by signature).
+  - *Source: reviewer-general*
 
 ## Warnings (follow-up ticket)
-- `demo/hello.py:37` - Docstring says "Empty strings and whitespace-only strings fall back to 'World'" but this behavior is implicit. Consider explicitly mentioning in `Args` section.
-  *Source: reviewer-general*
-- `tests/test_demo_hello.py` - No tests for invalid input types (None, integers). Consider follow-up if function should be defensive.
-  *Source: reviewer-second-opinion*
-- `demo/__main__.py` - Consider adding `--version` flag for CLI completeness.
-  *Source: reviewer-second-opinion*
+- `tests/test_demo_hello.py` - CLI tests don't verify the `if __name__ == "__main__"` branch. Consider subprocess-based test running `python -m demo` for end-to-end verification.
+  - *Source: reviewer-second-opinion*
+
+- `tests/test_demo_hello.py` - No tests for CLI argument parsing edge cases (e.g., multiple names). The argparse uses `nargs="?"` but this behavior is not verified.
+  - *Source: reviewer-second-opinion*
 
 ## Suggestions (follow-up ticket)
-- `tests/test_demo_hello.py` - Add CLI test for multiple arguments (e.g., "Alice Smith") to verify argparse's nargs="?" behavior.
-  *Source: reviewer-general*
-- `tests/test_demo_hello.py` - Add test for CLI `--help` to verify help message formatting.
-  *Source: reviewer-general*
-- `demo/hello.py:31` - Consider making fallback string "World" a module-level constant for consistency.
-  *Source: reviewer-spec-audit*
-- `demo/__main__.py:35` - Could add support for multiple names (e.g., `--names Alice Bob`) for extended functionality.
-  *Source: reviewer-spec-audit*
-- `demo/hello.py:35` - Fallback behavior could be configurable via optional parameter (e.g., `fallback_name: str = "World"`).
-  *Source: reviewer-second-opinion*
-- `tests/test_demo_hello.py` - Add subprocess-based integration tests for full execution path including `sys.exit()` handling.
-  *Source: reviewer-second-opinion*
+- `tests/test_demo_hello.py` - Add test for CLI with multi-word names (e.g., `"Alice Smith"`) to match docstring example in `__main__.py`.
+  - *Source: reviewer-general*
 
-## Positive Notes (all reviewers)
-- Excellent docstrings following Google style with usage examples
-- Proper `from __future__ import annotations` for forward compatibility
-- Good edge case handling for empty/whitespace strings
-- Clean separation: library (`hello.py`) vs CLI (`__main__.py`)
-- `__init__.py` properly exports public API via `__all__`
-- Tests cover unit and integration levels
-- Proper pytest fixtures and `unittest.mock.patch` usage
+- `demo/hello.py` - Consider making the fallback string "World" a module-level constant for consistency.
+  - *Source: reviewer-spec-audit*
+
+- `demo/__main__.py` - Could add support for multiple names (e.g., `--names Alice Bob`) for extended functionality.
+  - *Source: reviewer-spec-audit*
+
+- `demo/hello.py` - Consider adding type validation for `None` (would raise `AttributeError` on `.strip()` rather than clear `TypeError`).
+  - *Source: reviewer-second-opinion*
+
+- `tests/test_demo_hello.py` - Use `@pytest.mark.parametrize` for whitespace-only test case to improve readability.
+  - *Source: reviewer-second-opinion*
+
+- `demo/__main__.py` - Consider adding `--version` flag for CLI completeness.
+  - *Source: reviewer-second-opinion*
+
+## Positive Notes (All Reviewers)
+- Excellent type hint usage throughout (`from __future__ import annotations`, `Optional`, return types)
+- Comprehensive docstrings with module-level examples and CLI usage documentation
+- Proper edge case handling for empty/whitespace strings in `hello()` function
+- Good separation of concerns: library function (`hello.py`) separate from CLI (`__main__.py`)
+- Tests cover both library API and CLI entry point
+- Clean package structure with proper `__all__` exports in `__init__.py`
+- CLI returns proper exit codes (int) following Unix conventions
+- Uses `argparse` appropriately for CLI argument handling
 - All acceptance criteria met and exceeded
-- Type hints throughout
-- CLI returns proper exit codes (0 for success)
 
 ## Summary Statistics
 - Critical: 0
-- Major: 1
+- Major: 0
 - Minor: 3
-- Warnings: 3
+- Warnings: 2
 - Suggestions: 6
-
-## Reviewer Coverage
-- reviewer-general: 0 Critical, 0 Major, 1 Minor, 1 Warning, 2 Suggestions
-- reviewer-spec-audit: 0 Critical, 0 Major, 0 Minor, 0 Warnings, 2 Suggestions
-- reviewer-second-opinion: 0 Critical, 1 Major, 2 Minor, 2 Warnings, 2 Suggestions
