@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Hello-world utility for demo purposes."""
 
 
