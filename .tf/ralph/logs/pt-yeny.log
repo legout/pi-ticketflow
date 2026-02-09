@@ -1,0 +1,40 @@
+## Workflow Complete: pt-yeny
+
+**Ticket:** Implement ticket loader (frontmatter + lazy body)
+
+### Summary
+Successfully implemented a ticket loader module that reads `.tickets/*.md` files with YAML frontmatter parsing and lazy body loading for UI performance.
+
+### Files Created/Modified
+- `tf_cli/ticket_loader.py` - New ticket loader implementation (370 lines)
+- `tests/test_ticket_loader.py` - Comprehensive test suite (48 tests)
+
+### Implementation Highlights
+- **Ticket dataclass** with lazy body loading via `@property`
+- **TicketLoader class** with filtering, search, and status counting
+- **Dual parser approach** - PyYAML primary, basic fallback
+- **Windows line ending support** (CRLF and LF)
+- **Graceful error handling** - malformed tickets skipped with warnings
+
+### Review & Fixes
+| Severity | Count | Fixed |
+|----------|-------|-------|
+| Critical | 1 | 1 (Windows line endings) |
+| Major | 3 | 3 (numeric parsing, YAML fallback, body loading) |
+| Minor | 6 | 0 (documented for follow-up) |
+| Warnings | 4 | 0 (follow-up tickets) |
+| Suggestions | 5 | 0 (follow-up tickets) |
+
+### Commit
+```
+96f02e5 pt-yeny: Implement ticket loader (frontmatter + lazy body)
+```
+
+### Artifacts
+- `.tf/knowledge/tickets/pt-yeny/research.md`
+- `.tf/knowledge/tickets/pt-yeny/implementation.md`
+- `.tf/knowledge/tickets/pt-yeny/review.md`
+- `.tf/knowledge/tickets/pt-yeny/fixes.md`
+- `.tf/knowledge/tickets/pt-yeny/close-summary.md`
+
+<promise>TICKET_pt-yeny_CLOSED</promise>

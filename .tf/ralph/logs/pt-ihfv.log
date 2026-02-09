@@ -1,0 +1,27 @@
+## Summary
+
+Ticket **pt-ihfv** has been successfully completed:
+
+### Changes Made
+- **File**: `tf_cli/ralph.py` - Removed `--session` forwarding from all `pi` command invocations
+- **Net change**: 69 lines removed, 4 lines added
+
+### Key Modifications
+1. **`run_ticket()`**: Removed `session_path` parameter and `--session` arg construction
+2. **`ralph_run()`**: Removed session_dir resolution and session_path passing
+3. **`ralph_start()`**: Removed session handling from both serial and parallel modes
+4. **Dry-run logging**: Updated to not include session info
+
+### Verification
+- All 82 Ralph-related tests pass
+- 3 regression tests specifically for this change pass:
+  - `test_ralph_run_pi_invocation_no_session_with_session_dir`
+  - `test_ralph_start_pi_invocation_no_session_with_session_dir`
+  - `test_pi_command_starts_with_pi_dash_p`
+
+### Commit
+```
+2e75c36 pt-ihfv: Remove pi --session forwarding from ralph start/run
+```
+
+The `--session` parameter is no longer forwarded to `pi` commands in either `tf ralph start` or `tf ralph run`. Session isolation is preserved through git worktrees (parallel mode) and knowledge directories.

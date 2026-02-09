@@ -1,0 +1,31 @@
+## Summary
+
+Ticket **pt-d68t** has been successfully completed and closed:
+
+### Changes Made
+1. **`tf_cli/ralph.py`** - Modified `ProgressDisplay._draw()` to prefix timestamps in `HH:MM:SS` format
+2. **`tests/test_progress_display.py`** - Updated all 22 tests to expect timestamp prefix using regex pattern matching
+
+### Acceptance Criteria Met
+- ✅ Progress lines prefixed with `HH:MM:SS` timestamp (local time)
+- ✅ Works in TTY mode (carriage return updates still correct)
+- ✅ Works in non-TTY mode (no control characters; readable logs)
+- ✅ No output change when `--progress` is not used
+
+### Artifacts Created
+- `.tf/knowledge/tickets/pt-d68t/research.md`
+- `.tf/knowledge/tickets/pt-d68t/implementation.md`
+- `.tf/knowledge/tickets/pt-d68t/review.md`
+- `.tf/knowledge/tickets/pt-d68t/fixes.md`
+- `.tf/knowledge/tickets/pt-d68t/close-summary.md`
+
+### Output Example
+```
+14:32:05 [1/5] Processing pt-abc123...
+14:32:05 [1/5] ✓ pt-abc123 complete
+```
+
+### Commit
+`75161ab48e3484642747693b0af8701e24d71ebb` - pt-d68t: Add timestamp prefix to ProgressDisplay for Ralph --progress
+
+<promise>TICKET_pt-d68t_COMPLETE</promise>

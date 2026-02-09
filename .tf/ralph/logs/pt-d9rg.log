@@ -1,0 +1,33 @@
+## Workflow Complete: pt-d9rg
+
+**Ticket Status:** CLOSED
+
+### Summary
+Successfully implemented terminal suspend functionality when opening documents in the TUI. The `os.system()` call in `_open_doc()` is now wrapped with `self.app.suspend()` context manager, ensuring external pagers and editors receive a properly configured terminal.
+
+### Artifacts Created
+| File | Description |
+|------|-------------|
+| `.tf/knowledge/tickets/pt-d9rg/research.md` | Research on Textual's suspend() API |
+| `.tf/knowledge/tickets/pt-d9rg/implementation.md` | Implementation details |
+| `.tf/knowledge/tickets/pt-d9rg/review-general.md` | General code review |
+| `.tf/knowledge/tickets/pt-d9rg/review-spec.md` | Spec compliance audit |
+| `.tf/knowledge/tickets/pt-d9rg/review-second.md` | Second opinion review |
+| `.tf/knowledge/tickets/pt-d9rg/review.md` | **Merged consolidated review** |
+| `.tf/knowledge/tickets/pt-d9rg/fixes.md` | Fixes documentation (no fixes needed) |
+| `.tf/knowledge/tickets/pt-d9rg/close-summary.md` | Closure summary |
+
+### Review Summary
+- **Critical:** 0
+- **Major:** 1 (docstring suggestion for unrelated function)
+- **Minor:** 4 (code quality suggestions)
+- **Warnings:** 1 (potentially unused function)
+- **Suggestions:** 3
+
+### Commit
+`5f1b2ef` - pt-d9rg: Add terminal suspend when opening documents in TUI
+
+### Ralph Progress
+Updated `.tf/ralph/progress.md` with completion entry.
+
+<promise>TICKET_pt-d9rg_COMPLETE</promise>

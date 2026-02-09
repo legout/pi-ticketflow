@@ -1,0 +1,31 @@
+## Workflow Complete: pt-cc9t
+
+Successfully implemented the `tf ui` command with Textual app skeleton.
+
+### Changes Made
+| File | Description |
+|------|-------------|
+| `tf_cli/ui.py` | New Textual TUI module with TTY detection, graceful import handling, minimal placeholder app |
+| `tf_cli/cli.py` | Added `ui` command to help text and routing |
+
+### Acceptance Criteria
+- [x] `tf ui` routed from `tf_cli/cli.py` to `tf_cli/ui.py`
+- [x] Running in TTY opens minimal Textual app (placeholder screen)
+- [x] Running without TTY exits with clear message
+
+### Quality Summary
+- **Reviews**: 3/3 passed (general, spec-audit, second-opinion)
+- **Issues Fixed**: 1 Major (type annotation consistency)
+- **Status**: All Critical/Major resolved
+
+### Commit
+```
+8855af9 pt-cc9t: Add tf ui command + Textual app skeleton
+```
+
+### Artifacts
+Written to `.tf/knowledge/tickets/pt-cc9t/`:
+- `implementation.md` - Implementation details
+- `review.md` - Consolidated review
+- `fixes.md` - Fixes applied
+- `close-summary.md` - Final summary

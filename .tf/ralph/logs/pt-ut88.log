@@ -1,0 +1,35 @@
+## Workflow Complete: pt-ut88
+
+**Status:** CLOSED
+
+### Summary
+Ticket `pt-ut88` was already implemented and committed. This workflow run:
+1. ✅ Verified the implementation (21 unit tests in `tests/test_ralph_session_dir.py`)
+2. ✅ Ran all tests - all 21 passed
+3. ✅ Closed the ticket in tracker with summary note
+4. ✅ Updated Ralph progress log
+
+### Test Coverage
+| Category | Tests |
+|----------|-------|
+| Default path selection | 3 |
+| Config override semantics | 6 |
+| Legacy warning behavior | 5 |
+| Force legacy env variable | 4 |
+| Edge cases | 3 |
+| **Total** | **21** |
+
+### Commit
+```
+f4d06fa8b8a6ace70cfae62b81967e643ef8a8b2
+pt-ut88: Add tests for tf ralph sessionDir resolution + legacy warning
+```
+
+### Artifacts
+- `.tf/knowledge/tickets/pt-ut88/implementation.md`
+- `.tf/knowledge/tickets/pt-ut88/close-summary.md`
+- `.tf/knowledge/tickets/pt-ut88/review.md`
+- `.tf/knowledge/tickets/pt-ut88/files_changed.txt`
+- `.tf/ralph/progress.md` (updated)
+
+<promise>TICKET_pt-ut88_CLOSED</promise>

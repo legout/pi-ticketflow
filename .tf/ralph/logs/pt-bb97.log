@@ -1,0 +1,42 @@
+## ✅ Ticket pt-bb97 Complete
+
+### Summary
+
+Successfully implemented the **Ready/Blocked board classification logic** and comprehensive unit tests for the Ticketflow Kanban TUI.
+
+### What Was Implemented
+
+**`tf_cli/board_classifier.py`** - Core classification module with:
+- `BoardColumn` enum (ready, blocked, in_progress, closed)
+- `ClassifiedTicket` wrapper with blocking dependency tracking
+- `BoardClassifier` with dependency graph resolution
+- `BoardView` immutable snapshot with filtering/search
+- `classify_tickets()` convenience function
+
+**`tests/test_board_classifier.py`** - 31 comprehensive tests covering:
+- Classification rules for all 4 columns
+- Dependency graph scenarios (linear, diamond, complex)
+- BoardView operations (filter, search, counts)
+- Edge cases (circular deps, missing deps, self-referential)
+- Case-insensitive status handling
+
+### Classification Rules (from plan)
+
+| Column | Rule |
+|--------|------|
+| **Closed** | `status == "closed"` (regardless of dependencies) |
+| **In Progress** | `status == "in_progress"` AND all deps closed |
+| **Blocked** | `status in {open, in_progress}` AND any dep not closed |
+| **Ready** | `status == "open"` AND all deps closed |
+
+### Review & Fixes
+
+- **3 reviewers** found: 0 Critical, 0 Major, 5 Minor issues
+- All minor issues fixed (docstring, defensive coding, dead code removal, optimization)
+- **31 tests pass** (new) + **889 tests pass** (full suite)
+
+### Commit
+`43144d5` pt-bb97: Implement Ready/Blocked board classification + tests
+
+### Status
+Ticket **closed** with implementation note. Ready for integration into the TUI board view.

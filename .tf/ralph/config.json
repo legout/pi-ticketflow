@@ -1,0 +1,4 @@
+{
+  "attemptTimeoutMs": 450000,
+  "maxRestarts": 1
+}

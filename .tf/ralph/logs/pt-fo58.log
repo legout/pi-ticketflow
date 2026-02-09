@@ -1,0 +1,3 @@
+Failed to load extension "/home/volker/coding/pi-ticketflow/.pi/agents": Failed to load extension: Cannot find module '/home/volker/coding/pi-ticketflow/.pi/agents'
+Require stack:
+- /home/volker/.npm-global/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/extensions/loader.js

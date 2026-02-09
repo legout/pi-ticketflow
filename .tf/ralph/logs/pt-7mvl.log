@@ -1,0 +1,40 @@
+## Summary: Ticket pt-7mvl Complete ✅
+
+I've executed the full TF workflow for ticket `pt-7mvl` - **Define Ralph session behavior without forwarding pi --session**.
+
+### Key Deliverables
+
+**1. Research** (`research.md`)
+- Identified where `--session` is constructed: `run_ticket()` (line ~417) and parallel mode loop (line ~1758)
+- Documented what it affects: session artifacts, resume behavior, isolation between tickets
+- Analyzed dependencies: blocks pt-buwk, pt-ihfv, pt-oebr
+
+**2. Implementation/Decision** (`implementation.md`)
+- **Decision**: Remove `--session` forwarding entirely (not optional)
+- **Source of truth**: Pi's internal session management becomes the authority
+- **Implementation guidance**: Step-by-step instructions for pt-ihfv implementers
+- **Backward compatibility**: Config options become no-ops; no CLI changes
+
+**3. Reviews** (3 parallel reviewers)
+- review-general.md, review-spec.md, review-second.md
+- Consolidated in review.md
+
+**4. Fixes Applied**
+- Added clear "Decision" section addressing the critical/major review issues
+- Clarified recommendation to explicitly choose removal over optional approach
+- Fixed line number reference (1150 → 1290)
+
+**5. Ticket Closed**
+- Commit: `7e99250`
+- Note added with summary
+- Ticket status: **closed**
+
+### Decision for Dependent Tickets
+
+| Ticket | Guidance |
+|--------|----------|
+| **pt-buwk** | Test that `pi` is invoked without `--session` argument |
+| **pt-ihfv** | Remove `args += ["--session", str(session_path)]` from lines ~417 and ~1758 |
+| **pt-oebr** | Remove session-related documentation from `docs/ralph.md` |
+
+All artifacts are in `.tf/knowledge/tickets/pt-7mvl/`.

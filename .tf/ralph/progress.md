@@ -365,3 +365,15 @@
   - Summary: Add release note / doc note about new `zai-vision` MCP server type
   - Issues: Critical(0)/Major(0)/Minor(0)
   - Status: COMPLETE
+- pt-gnhr: COMPLETE (2026-02-09T14:08:38Z)
+  - Summary: Improve Kanban board layout CSS (grid minmax/auto-fit, better responsiveness)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-ls9y: COMPLETE (2026-02-09T14:08:48Z)
+  - Summary: Document web mode - textual serve for tf ui
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-ls9y: COMPLETE (2026-02-09T14:10:55Z)
+  - Summary: Document web mode: `textual serve` for `tf ui`
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE

@@ -1,0 +1,26 @@
+## Workflow Complete: pt-qu8a
+
+**Ticket Status:** CLOSED
+
+### Summary
+Successfully implemented the fix for `tf ralph start --progress` to display the correct total based on ready tickets count instead of `max_iterations` (default 50).
+
+### Changes Made
+- **`tf_cli/ralph.py`** (21 insertions, 12 deletions):
+  - Compute `ready_tickets_count` once at loop start using `list_ready_tickets()`
+  - Show "?" placeholder when ticket listing fails (avoids showing misleading "50")
+  - Updated `ProgressDisplay` to accept `Union[int, str]` for the total parameter
+
+### Artifacts Created
+- `.tf/knowledge/tickets/pt-qu8a/implementation.md`
+- `.tf/knowledge/tickets/pt-qu8a/review.md`
+- `.tf/knowledge/tickets/pt-qu8a/fixes.md`
+- `.tf/knowledge/tickets/pt-qu8a/close-summary.md`
+
+### Testing
+- 22 progress display tests: **PASSED**
+- 82 ralph-related tests: **PASSED**
+- Total: **104 tests passed**
+
+### Commit
+`7c5cd14` - pt-qu8a: Compute correct progress total for tf ralph --progress

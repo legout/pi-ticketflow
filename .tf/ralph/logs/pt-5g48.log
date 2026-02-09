@@ -1,0 +1,33 @@
+## Summary
+
+Ticket **pt-5g48** completed successfully through the TF workflow.
+
+### Changes Made
+- **File**: `tf_cli/ui.py` (+107 lines, -2 lines)
+- Added key bindings (`o`, `1-4`) to open topic documents in external pager/editor
+- Uses `$PAGER` → `$EDITOR` → `less/more/cat` fallback chain
+- Graceful handling of missing documents with user notifications
+
+### Workflow Results
+| Step | Status |
+|------|--------|
+| Re-Anchor | ✅ |
+| Research | ✅ |
+| Implement | ✅ |
+| Review | ✅ (0 Critical, 0 Major, 0 Minor) |
+| Fix | ✅ (none needed) |
+| Close | ✅ |
+| Ralph Progress | ✅ |
+
+### Commit
+`a0934f1` - pt-5g48: Add topic browser + open docs via $PAGER/$EDITOR
+
+### Artifacts Created
+- `.tf/knowledge/tickets/pt-5g48/implementation.md`
+- `.tf/knowledge/tickets/pt-5g48/research.md`
+- `.tf/knowledge/tickets/pt-5g48/review.md`
+- `.tf/knowledge/tickets/pt-5g48/fixes.md`
+- `.tf/knowledge/tickets/pt-5g48/close-summary.md`
+- `.tf/knowledge/tickets/pt-5g48/chain-summary.md`
+
+<promise>TICKET_pt-5g48_COMPLETE</promise>

@@ -1,0 +1,31 @@
+Workflow complete for ticket **pt-buwk**.
+
+```
+<promise>TICKET_pt-buwk_COMPLETE</promise>
+```
+
+## Summary
+
+**Ticket:** pt-buwk - Add regression test/smoke coverage for ralph pi invocation args
+
+**Status:** CLOSED
+
+**Commit:** `e05c07e pt-buwk: Add regression test for ralph pi invocation args`
+
+### Implementation
+Created `tests/test_ralph_pi_invocation.py` with 3 test cases:
+
+1. **`test_ralph_run_pi_invocation_no_session_with_session_dir`** - Verifies `tf ralph run` does not include `--session` even when session_dir is configured
+2. **`test_ralph_start_pi_invocation_no_session_with_session_dir`** - Verifies `tf ralph start` does not include `--session`
+3. **`test_pi_command_starts_with_pi_dash_p`** - Verifies basic command structure
+
+### Key Points
+- Tests use mocking to avoid requiring actual Pi execution (stable, no flakiness)
+- The first test **currently FAILS** as expected - this is intentional since pt-ihfv (which removes `--session` forwarding) hasn't been implemented yet
+- Once pt-ihfv is complete, the tests will pass, serving as regression protection
+- All existing tests continue to pass
+
+### Acceptance Criteria Met
+- [x] Test fails if `--session` appears in the constructed `pi` argv for start/run
+- [x] Test is stable and does not require actually running Pi (mock subprocess/command builder)
+- [x] `pytest` passes locally (except for expected failure until pt-ihfv)

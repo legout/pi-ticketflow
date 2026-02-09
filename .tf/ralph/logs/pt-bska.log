@@ -1,0 +1,35 @@
+## ✅ Workflow Complete: pt-bska
+
+**Ticket Status:** Closed  
+**Commit:** `69bacb4`
+
+### Summary
+Successfully refactored the progress display API to decouple the displayed total from `max_iterations`. Key changes:
+
+1. **`ProgressDisplay.start_ticket()`** - Renamed parameter `total` → `total_tickets` with comprehensive docstring
+
+2. **Caller logic** - Now computes `total_tickets` from actual ready ticket count, capped by remaining iterations:
+   ```python
+   remaining_iterations = max_iterations - iteration
+   total_tickets = min(len(ready_tickets), remaining_iterations)
+   total_tickets = max(total_tickets, 1)  # Guard against zero
+   ```
+
+### Review Outcome
+- **Critical:** 0
+- **Major:** 0 (addressed 2 in fixes)
+- **Minor:** 0 (addressed key UX issue)
+
+### Tests
+- 33 tests passed (22 progress display + 11 ralph state)
+
+### Artifacts Created
+```
+.tf/knowledge/tickets/pt-bska/
+├── implementation.md
+├── review.md
+├── fixes.md
+├── close-summary.md
+├── chain-summary.md
+└── files_changed.txt
+```

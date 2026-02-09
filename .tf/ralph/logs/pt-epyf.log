@@ -1,0 +1,34 @@
+## Workflow Complete
+
+Ticket **pt-epyf** has been successfully implemented and closed.
+
+### Summary
+Updated the help text in `tf_cli/ralph.py` to document the timestamped progress output format (HH:MM:SS prefix) that was implemented in pt-d68t.
+
+### Changes Made
+**File:** `tf_cli/ralph.py` - Progress Options section
+
+```diff
+  --progress, --progressbar
+                    Enable progress indicator (serial mode only).
++                   Output includes a timestamp prefix (HH:MM:SS format):
++                     14:32:05 [1/5] Processing pt-abc123...
++                     14:32:15 [1/5] ✓ pt-abc123 complete
+                    When used in a TTY, pi output is redirected to a log file
+                    to prevent progress bar corruption.
+```
+
+### Verification
+- ✅ All 22 progress display tests pass
+- ✅ Acceptance criteria met: help text documents timestamp prefix
+- ✅ Commit: `ea59234`
+
+### Artifacts Created
+- `.tf/knowledge/tickets/pt-epyf/research.md`
+- `.tf/knowledge/tickets/pt-epyf/implementation.md`
+- `.tf/knowledge/tickets/pt-epyf/review.md`
+- `.tf/knowledge/tickets/pt-epyf/fixes.md`
+- `.tf/knowledge/tickets/pt-epyf/close-summary.md`
+- `.tf/knowledge/tickets/pt-epyf/chain-summary.md`
+
+<promise>TICKET_pt-epyf_COMPLETE</promise>
