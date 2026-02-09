@@ -3,8 +3,9 @@
 This is the canonical tf package. The tf_cli package is maintained for backward compatibility
 through version 0.4.x and will be removed in 0.5.0.
 
-During the migration period, some exports remain in tf_cli and are accessed
-directly from there. Full migration will be completed in pt-tupn.
+Migration progress (pt-tupn):
+- CLI dispatch code now lives under tf/
+- Core modules: new_cli, setup, login moved to tf/
 """
 from __future__ import annotations
 
@@ -95,11 +96,14 @@ def get_version() -> str:
     return __version__
 
 
-# Note: ticket_factory exports are temporarily accessed directly from tf_cli
-# during migration. They will be moved to tf/ in ticket pt-tupn.
-# For now, use: from tf_cli.ticket_factory import TicketDef
+# Re-export ticket_factory for convenient access
+from tf.ticket_factory import TicketDef, CreatedTicket, create_tickets, score_tickets
 
 __all__ = [
     "__version__",
     "get_version",
+    "TicketDef",
+    "CreatedTicket",
+    "create_tickets",
+    "score_tickets",
 ]

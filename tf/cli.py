@@ -54,7 +54,7 @@ def resolve_repo_root(repo_arg: Optional[str] = None) -> Optional[Path]:
             return path
 
     for parent in [cwd, *cwd.parents]:
-        if (parent / "pyproject.toml").is_file() and (parent / "tf_cli").is_dir():
+        if (parent / "pyproject.toml").is_file() and (parent / "tf").is_dir():
             return parent
 
     return None
@@ -383,85 +383,85 @@ Run 'tf <command> --help' for more information on a command.
     if command == "install":
         return install_main(rest)
 
-    # Back-compat namespace
+    # Back-compat namespace (now using tf.* imports)
     if command == "new":
-        from tf_cli import new_cli
+        from tf import new_cli
         return new_cli.main(rest)
 
     if command == "setup":
-        from tf_cli import setup
+        from tf import setup
         return setup.main(rest)
 
     if command == "login":
-        from tf_cli import login
+        from tf import login
         return login.main(rest)
 
     if command == "init":
-        from tf_cli import init
+        from tf import init
         return init.main(rest)
 
     if command == "sync":
-        from tf_cli import sync
+        from tf import sync
         return sync.main(rest)
 
     if command == "update":
-        from tf_cli import update
+        from tf import update
         return update.main(rest)
 
     if command == "doctor":
-        from tf_cli import doctor
+        from tf import doctor
         return doctor.main(rest)
 
     if command == "next":
-        from tf_cli import next
+        from tf import next
         return next.main(rest)
 
     if command == "backlog-ls":
-        from tf_cli import backlog_ls
+        from tf import backlog_ls
         return backlog_ls.main(rest)
 
     if command == "track":
-        from tf_cli import track
+        from tf import track
         return track.main(rest)
 
     if command == "priority-reclassify":
-        from tf_cli import priority_reclassify
+        from tf import priority_reclassify
         return priority_reclassify.main(rest)
 
     if command == "ralph":
-        from tf_cli import ralph
+        from tf import ralph
         return ralph.main(rest)
 
     if command == "agentsmd":
-        from tf_cli import agentsmd
+        from tf import agentsmd
         return agentsmd.main(rest)
 
     if command == "tags-suggest":
-        from tf_cli import tags_suggest
+        from tf import tags_suggest
         return tags_suggest.suggest_main(rest)
 
     if command == "tags-classify":
-        from tf_cli import tags_suggest
+        from tf import tags_suggest
         return tags_suggest.classify_main(rest)
 
     if command == "tags-keywords":
-        from tf_cli import tags_suggest
+        from tf import tags_suggest
         return tags_suggest.keywords_main(rest)
 
     if command == "seed":
-        from tf_cli import seed_cli
+        from tf import seed_cli
         return seed_cli.main(rest)
 
     if command == "kb":
-        from tf_cli import kb_cli
+        from tf import kb_cli
         return kb_cli.main(rest)
 
     if command == "ui":
-        from tf_cli import ui
+        from tf import ui
         return ui.main(rest)
 
     if command == "hello":
-        from tf_cli import hello
+        from tf import hello
         return hello.main(rest)
 
     print(f"Unknown command: {command}", file=sys.stderr)
