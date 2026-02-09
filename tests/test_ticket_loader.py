@@ -1,9 +1,9 @@
-"""Tests for the ticket loader in tf_cli/ticket_loader.py."""
+"""Tests for the ticket loader in tf/ticket_loader.py."""
 
 import pytest
 from pathlib import Path
 
-from tf_cli.ticket_loader import (
+from tf.ticket_loader import (
     Ticket,
     TicketLoader,
     TicketLoadError,

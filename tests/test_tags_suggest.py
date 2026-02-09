@@ -1,4 +1,4 @@
-"""Tests for tf_cli.tags_suggest module."""
+"""Tests for tf.tags_suggest module."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tf_cli import tags_suggest as tags_module
-from tf_cli.component_classifier import ClassificationResult
+from tf import tags_suggest as tags_module
+from tf.component_classifier import ClassificationResult
 
 
 class TestRunSuggest:

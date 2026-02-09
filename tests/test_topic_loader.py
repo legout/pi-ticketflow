@@ -1,4 +1,4 @@
-"""Tests for the topic index loader in tf_cli/ui.py."""
+"""Tests for the topic index loader in tf/ui.py."""
 
 import json
 import os
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tf_cli.ui import (
+from tf.ui import (
     Topic,
     TopicDoc,
     TopicIndexLoader,

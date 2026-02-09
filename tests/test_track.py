@@ -1,4 +1,4 @@
-"""Tests for tf_cli.track module."""
+"""Tests for tf.track module."""
 from __future__ import annotations
 
 import os
@@ -9,7 +9,7 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-from tf_cli import track
+from tf import track
 
 
 class TestResolveFilesChanged:
@@ -35,13 +35,13 @@ class TestResolveFilesChanged:
 
     def test_default_path(self, tmp_path: Path) -> None:
         """Should default to cwd/files_changed.txt."""
-        with mock.patch("tf_cli.track.Path.cwd", return_value=tmp_path):
+        with mock.patch("tf.track.Path.cwd", return_value=tmp_path):
             result = track.resolve_files_changed(None)
             assert result == tmp_path / "files_changed.txt"
 
     def test_relative_path_becomes_absolute(self, tmp_path: Path) -> None:
         """Should convert relative path to absolute."""
-        with mock.patch("tf_cli.track.Path.cwd", return_value=tmp_path):
+        with mock.patch("tf.track.Path.cwd", return_value=tmp_path):
             result = track.resolve_files_changed("relative/path.txt")
             assert result == tmp_path / "relative" / "path.txt"
 
@@ -54,7 +54,7 @@ class TestMain:
         files_changed = tmp_path / "files_changed.txt"
         file_to_track = tmp_path / "src" / "test.py"
 
-        with mock.patch("tf_cli.track.resolve_files_changed", return_value=files_changed):
+        with mock.patch("tf.track.resolve_files_changed", return_value=files_changed):
             result = track.main([str(file_to_track)])
 
         assert result == 0
@@ -68,7 +68,7 @@ class TestMain:
         file_to_track = tmp_path / "test.py"
         files_changed.write_text(f"{file_to_track}\n")
 
-        with mock.patch("tf_cli.track.resolve_files_changed", return_value=files_changed):
+        with mock.patch("tf.track.resolve_files_changed", return_value=files_changed):
             result = track.main([str(file_to_track)])
 
         assert result == 0
@@ -81,7 +81,7 @@ class TestMain:
         file1 = tmp_path / "file1.py"
         file2 = tmp_path / "file2.py"
 
-        with mock.patch("tf_cli.track.resolve_files_changed", return_value=files_changed):
+        with mock.patch("tf.track.resolve_files_changed", return_value=files_changed):
             track.main([str(file1)])
             track.main([str(file2)])
 
@@ -93,8 +93,8 @@ class TestMain:
         """Should convert relative path to absolute."""
         files_changed = tmp_path / "files_changed.txt"
 
-        with mock.patch("tf_cli.track.Path.cwd", return_value=tmp_path):
-            with mock.patch("tf_cli.track.resolve_files_changed", return_value=files_changed):
+        with mock.patch("tf.track.Path.cwd", return_value=tmp_path):
+            with mock.patch("tf.track.resolve_files_changed", return_value=files_changed):
                 result = track.main(["src/test.py"])
 
         assert result == 0
@@ -106,7 +106,7 @@ class TestMain:
         files_changed = tmp_path / "nested" / "deep" / "files_changed.txt"
         file_to_track = tmp_path / "test.py"
 
-        with mock.patch("tf_cli.track.resolve_files_changed", return_value=files_changed):
+        with mock.patch("tf.track.resolve_files_changed", return_value=files_changed):
             result = track.main([str(file_to_track)])
 
         assert result == 0

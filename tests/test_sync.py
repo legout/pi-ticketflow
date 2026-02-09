@@ -1,4 +1,4 @@
-"""Tests for tf_cli.sync module (project-local sync after refactor)."""
+"""Tests for tf.sync module (project-local sync after refactor)."""
 from __future__ import annotations
 
 import json
@@ -7,7 +7,7 @@ from unittest import mock
 
 import pytest
 
-from tf_cli import sync
+from tf import sync
 
 pytestmark = pytest.mark.unit
 
@@ -132,7 +132,7 @@ class TestRunSync:
 
         args = mock.Mock(project=str(project), global_install=False)
 
-        with mock.patch("tf_cli.project_bundle.install_bundle") as mock_install:
+        with mock.patch("tf.project_bundle.install_bundle") as mock_install:
             result = sync.run_sync(args)
             assert result == 0
             mock_install.assert_called_once()
@@ -141,7 +141,7 @@ class TestRunSync:
         project = tmp_path / "project"
         args = mock.Mock(project=str(project), global_install=False)
 
-        with mock.patch("tf_cli.project_bundle.install_bundle"):
+        with mock.patch("tf.project_bundle.install_bundle"):
             # No config file
             result = sync.run_sync(args)
             assert result == 1
