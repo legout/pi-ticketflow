@@ -1,0 +1,4 @@
+.tf/knowledge/tickets/pt-7mvl/research.md
+.tf/knowledge/tickets/pt-7mvl/implementation.md
+.tf/knowledge/tickets/pt-7mvl/review.md
+.tf/knowledge/tickets/pt-7mvl/fixes.md
