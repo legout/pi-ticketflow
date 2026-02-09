@@ -1,6 +1,12 @@
 """Sanic + Datastar Web Application for Ticketflow.
 
 Provides a web-native kanban board using Sanic (backend) and Datastar (frontend hypermedia).
+
+Dependencies:
+    - datastar-py>=0.7.0,<0.8.0: Python SDK for Datastar SSE responses. Pinned to match the
+      Datastar JS bundle version (v1.0.0-RC.7) loaded from CDN in templates/base.html.
+      Version 0.7.0 is used because 0.8.0 requires Python >=3.10 while this project
+      supports Python >=3.9. Both 0.7.0 and 0.8.0 are compatible with Datastar JS v1.0.0-RC.7.
 """
 
 from __future__ import annotations
