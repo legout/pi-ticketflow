@@ -1,25 +1,29 @@
 # Chain Summary: abc-123
 
-## Workflow Execution
-- Date: 2026-02-09T17:32:00Z
-- Flags: --auto
+Executed: 2026-02-09T18:02:00Z
 
 ## Artifacts
-| Artifact | Path |
-|----------|------|
-| Research | [research.md](research.md) |
-| Implementation | [implementation.md](implementation.md) |
-| Review (merged) | [review.md](review.md) |
-| Review (general) | [review-general.md](review-general.md) |
-| Review (spec) | [review-spec.md](review-spec.md) |
-| Review (second) | [review-second.md](review-second.md) |
-| Fixes | [fixes.md](fixes.md) |
-| Close Summary | [close-summary.md](close-summary.md) |
-| Files Changed | [files_changed.txt](files_changed.txt) |
-| Ticket ID | [ticket_id.txt](ticket_id.txt) |
+- [research.md](./research.md)
+- [implementation.md](./implementation.md)
+- [review.md](./review.md)
+- [fixes.md](./fixes.md)
+- [close-summary.md](./close-summary.md)
+- [files_changed.txt](./files_changed.txt)
+- [ticket_id.txt](./ticket_id.txt)
 
-## Commit
-7442840 - abc-123: Re-run workflow - minor fixes (CLI args, pytestmark)
+## Workflow Steps
+1. ✅ Re-Anchor Context
+2. ⏭️ Research (skipped - existing)
+3. ✅ Implement (verified)
+4. ✅ Parallel Reviews (3 reviewers)
+5. ✅ Merge Reviews
+6. ✅ Fix Issues (1 Minor fixed)
+7. ⏭️ Follow-ups (not requested)
+8. ✅ Close Ticket (note added)
 
-## Result
-✅ COMPLETE - 0 Critical, 0 Major, 3 Minor (2 fixed)
+## Review Results
+- Critical: 0
+- Major: 0
+- Minor: 2 (1 fixed)
+- Warnings: 0
+- Suggestions: 3

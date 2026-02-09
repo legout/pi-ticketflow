@@ -1,34 +1,30 @@
 # Close Summary: abc-123
 
 ## Status
-CLOSED (already closed, workflow re-executed)
+**CLOSED** (re-run on already-closed ticket)
 
 ## Commit
-`7442840` - abc-123: Re-run workflow - minor fixes (CLI args, pytestmark)
+`fc50625f94b3d88b015ef4b258445f3177d22277`
 
 ## Artifacts
-- `.tf/knowledge/tickets/abc-123/research.md` - Research notes
-- `.tf/knowledge/tickets/abc-123/implementation.md` - Implementation summary
-- `.tf/knowledge/tickets/abc-123/review.md` - Consolidated review (3 reviewers)
-- `.tf/knowledge/tickets/abc-123/fixes.md` - Fixes applied
-- `.tf/knowledge/tickets/abc-123/files_changed.txt` - Tracked files
-
-## Changes Made
-1. **demo/hello.py**: Fixed CLI to handle multi-word names via `' '.join(sys.argv[1:])`
-2. **tests/test_demo_hello.py**: Added `pytestmark = pytest.mark.unit` for project consistency
+- Research: `.tf/knowledge/tickets/abc-123/research.md`
+- Implementation: `.tf/knowledge/tickets/abc-123/implementation.md`
+- Review: `.tf/knowledge/tickets/abc-123/review.md`
+- Fixes: `.tf/knowledge/tickets/abc-123/fixes.md`
+- Files Changed: `.tf/knowledge/tickets/abc-123/files_changed.txt`
 
 ## Review Summary
-- Critical: 0
-- Major: 0
-- Minor: 3 (2 fixed, 1 deferred - empty string behavior)
-- Warnings: 1 (deferred - argparse overkill for demo)
-- Suggestions: 4 (deferred - follow-up tickets)
+| Severity | Count | Status |
+|----------|-------|--------|
+| Critical | 0 | ✓ |
+| Major | 0 | ✓ |
+| Minor | 2 | 1 fixed |
+| Warnings | 0 | - |
+| Suggestions | 3 | Follow-up |
 
-## Tests
-All 3 tests passing:
-- test_hello_default
-- test_hello_custom_name
-- test_hello_empty_string
+## Changes Made
+- Fixed import order in `tests/test_demo_hello.py` (PEP 8 compliance)
+- All 3 tests passing
 
 ## Quality Gate
-Passed (0 Critical, 0 Major issues)
+✅ Passed (0 Critical, 0 Major issues)

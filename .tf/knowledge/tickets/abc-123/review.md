@@ -4,28 +4,37 @@
 No issues found.
 
 ## Major (should fix)
-No issues found.
+- `demo/hello.py:46` - RuntimeWarning when running as CLI: "'demo.hello' found in sys.modules after import of package 'demo'". Occurs because `python -m demo.hello` imports the module twice. Consider adding `demo/__main__.py` as a proper entry point. *(from reviewer-second-opinion)*
 
 ## Minor (nice to fix)
-- `tests/test_demo_hello.py:13` - Import order violation: `from demo.hello import hello` should come BEFORE the `pytestmark = pytest.mark.unit` line. Violates PEP 8 where imports should appear after module docstring but before other module-level code. *(from reviewer-second-opinion)*
-- `demo/hello.py:35` - CLI argument handling uses `" ".join()` which passes a single string to `hello()`. Consider whether multi-word names should be explicitly documented in the function signature. *(from reviewer-general)*
+- `tests/test_demo_hello.py:25` - Empty string test passes but produces "Hello, !" output which may be unintended UX. Consider input validation or explicit documentation. *(from reviewer-second-opinion)*
+- `demo/hello.py:43-46` - CLI argument handling could be more Pythonic: `name = " ".join(sys.argv[1:]) or "World"` instead of if/else expression. *(from reviewer-second-opinion)*
 
 ## Warnings (follow-up ticket)
 No warnings.
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py:28` - Consider adding runtime type checking or documenting behavior for non-string inputs (e.g., `hello(None)` would raise TypeError). *(from reviewer-general)*
-- `tests/test_demo_hello.py` - Add parameterized tests for additional edge cases (special characters, unicode, very long strings). *(from reviewer-general)*
-- `tests/test_demo_hello.py` - Consider adding a subprocess test for CLI invocation to verify `if __name__ == "__main__"` block. *(from reviewer-second-opinion)*
+- `demo/hello.py` - Add proper `__main__.py` entry point to eliminate RuntimeWarning and follow Python package CLI conventions. *(from reviewer-second-opinion)*
+
+## Positive Notes (All Reviewers)
+- ✅ Excellent module docstring with usage examples and CLI documentation
+- ✅ Proper type hints throughout (`name: str = "World") -> str`)
+- ✅ Thorough function docstring with Args and Returns sections
+- ✅ CLI correctly handles multiple arguments with `" ".join()` pattern
+- ✅ Explicit `pytest.mark.unit` marker for test categorization
+- ✅ Good edge case coverage with empty string test
+- ✅ All acceptance criteria met: correct file location, default parameter, docstrings, tests
+- ✅ `from __future__ import annotations` for project consistency
+- ✅ Clean separation of concerns: pure function + CLI wrapper
 
 ## Summary Statistics
 - Critical: 0
-- Major: 0
+- Major: 1
 - Minor: 2
 - Warnings: 0
-- Suggestions: 3
+- Suggestions: 1
 
-## Reviewers
-- reviewer-general: 0 Critical, 0 Major, 2 Minor, 0 Warnings, 3 Suggestions
-- reviewer-spec-audit: 0 Critical, 0 Major, 0 Minor, 0 Warnings, 0 Suggestions
-- reviewer-second-opinion: 0 Critical, 0 Major, 1 Minor, 0 Warnings, 1 Suggestions
+## Reviewer Sources
+- reviewer-general: 0 issues, full compliance noted
+- reviewer-spec-audit: 0 issues, all acceptance criteria verified ✅
+- reviewer-second-opinion: 1 Major, 2 Minor, 1 Suggestion (quality/style focus)

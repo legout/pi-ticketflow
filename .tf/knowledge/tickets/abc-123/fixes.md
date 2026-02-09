@@ -2,19 +2,26 @@
 
 ## Issues Fixed
 
-### Minor Issues (2)
+### Major (1 fixed)
+1. **RuntimeWarning on CLI execution** (`demo/hello.py`)
+   - Created `demo/__main__.py` as proper CLI entry point
+   - Eliminates "found in sys.modules after import" warning
+   - New usage: `python -m demo [name]` instead of `python -m demo.hello [name]`
 
-1. **Import order violation** (`tests/test_demo_hello.py:13`)
-   - **Problem**: `from demo.hello import hello` appeared after `pytestmark = pytest.mark.unit`
-   - **Fix**: Moved import to correct position (after `import pytest`, before `pytestmark`)
-   - **Rationale**: Follows PEP 8 convention where imports come after module docstring but before other module-level code
+### Minor (1 fixed)
+1. **Pythonic CLI handling** (`demo/hello.py:43`)
+   - Changed `name = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "World"`
+   - To: `name = " ".join(sys.argv[1:]) or "World"`
+   - Uses Python's short-circuit evaluation for cleaner code
 
-2. **CLI docstring clarity** (`demo/hello.py:35`)
-   - **Problem**: Multi-word name handling in CLI not explicitly documented
-   - **Fix**: No code change required - existing behavior is correct. The docstring examples show direct function calls which is appropriate.
-   - **Rationale**: The docstring focuses on API usage; CLI behavior is documented in the module-level docstring under "CLI Usage"
+### Minor (1 deferred - not fixed)
+- Empty string test behavior - intentionally not fixed as it's valid edge case behavior; function contract allows empty strings
+
+## Files Changed
+- `demo/hello.py` - Simplified CLI argument handling
+- `demo/__main__.py` - Created new CLI entry point
 
 ## Verification
-- All tests pass (3/3)
-- No Critical or Major issues remain
-- 1 Minor issue intentionally not fixed (CLI docstring is acceptable as-is)
+- All 3 tests pass: `python -m pytest tests/test_demo_hello.py -v`
+- CLI works without warning: `python -m demo TestUser` → "Hello, TestUser!"
+- Backward compatibility: `python -m demo.hello Test` still works (with expected warning)
