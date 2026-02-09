@@ -420,7 +420,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument(
         "--web",
         action="store_true",
-        help="Launch web UI with Sanic server"
+        help="Print the textual serve command for running the UI in a browser"
     )
     parser.add_argument(
         "--host",
@@ -433,18 +433,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         default=8000,
         help="Port for web server (default: 8000)"
     )
-    
+
     # Parse only known args to allow backward compatibility
     args, _ = parser.parse_known_args(argv or sys.argv[1:])
-    
-    # If --web flag is set, launch web server
+
+    # If --web flag is set, print the textual serve command
     if args.web:
-        try:
-            from tf_cli.web_ui import run_web_server
-            return run_web_server(host=args.host, port=args.port)
-        except ImportError:
-            print("Error: Sanic is not installed. Run: pip install sanic", file=sys.stderr)
-            return 1
+        print("\n🌐 To serve the Ticketflow UI in a web browser, run:")
+        print("")
+        print(f"   textual serve \"tf ui\" --host {args.host} --port {args.port}")
+        print("")
+        print("⚠️  WARNING: Security considerations for web serving:")
+        print("   • The default host (127.0.0.1) only allows local access")
+        print("   • Use --host 0.0.0.0 to bind to all interfaces (allows external access)")
+        print("   • Binding to 0.0.0.0 exposes the UI on your network - ensure proper firewall rules")
+        print("   • No authentication is provided - anyone with access can view tickets")
+        print("")
+        return 0
     
     # Check if we're running in a TTY
     # For web serving via textual serve, stdin/stdout are not TTYs
