@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ticket.id }} - {{ ticket.title }}{% endblock %}
+
+{% block content %}
+<a href="/" class="btn btn-secondary back-link">← Back to Board</a>
+
+<div class="ticket-detail">
+    <h1>{{ ticket.title }}</h1>
+    
+    <div class="meta-grid">
+        <div class="meta-item">
+            <div class="meta-label">ID</div>
+            <div>{{ ticket.id }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Status</div>
+            <div>{{ ticket.status }}</div>
+        </div>
+        {% if ticket.priority %}
+        <div class="meta-item">
+            <div class="meta-label">Priority</div>
+            <div>P{{ ticket.priority }}</div>
+        </div>
+        {% endif %}
+        {% if ticket.assignee %}
+        <div class="meta-item">
+            <div class="meta-label">Assignee</div>
+            <div>@{{ ticket.assignee }}</div>
+        </div>
+        {% endif %}
+        {% if ticket.external_ref %}
+        <div class="meta-item">
+            <div class="meta-label">External Ref</div>
+            <div>{{ ticket.external_ref }}</div>
+        </div>
+        {% endif %}
+        {% if ticket.created %}
+        <div class="meta-item">
+            <div class="meta-label">Created</div>
+            <div>{{ ticket.created }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if ticket.tags %}
+    <div style="margin-bottom: 1.5rem;">
+        <div class="meta-label" style="margin-bottom: 0.5rem;">Tags</div>
+        <div>
+            {% for tag in ticket.tags %}
+            <span class="badge badge-tag" style="margin-right: 0.5rem;">{{ tag }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if ticket.deps %}
+    <div style="margin-bottom: 1.5rem;">
+        <div class="meta-label" style="margin-bottom: 0.5rem;">Dependencies</div>
+        <ul>
+            {% for dep in ticket.deps %}
+            <li><a href="/ticket/{{ dep }}">{{ dep }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if ticket.links %}
+    <div style="margin-bottom: 1.5rem;">
+        <div class="meta-label" style="margin-bottom: 0.5rem;">Linked Tickets</div>
+        <ul>
+            {% for link in ticket.links %}
+            <li><a href="/ticket/{{ link }}">{{ link }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e0e0e0;">
+
+    <div class="body">
+        {% for paragraph in ticket.body.split('\n\n') %}
+        {% if paragraph.strip() %}
+        <p>{{ paragraph.replace('\n', ' ') }}</p>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

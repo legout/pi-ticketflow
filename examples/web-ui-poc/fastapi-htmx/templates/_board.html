@@ -1,0 +1,95 @@
+<div class="board">
+    <!-- Ready Column -->
+    <div class="column ready">
+        <div class="column-header">Ready ({{ columns.ready|length }})</div>
+        <div class="ticket-list">
+            {% for ticket in columns.ready %}
+            <a href="/ticket/{{ ticket.id }}" class="ticket-card">
+                <div class="ticket-id">{{ ticket.id }}</div>
+                <div class="ticket-title">{{ ticket.title }}</div>
+                <div class="ticket-meta">
+                    {% if ticket.priority %}
+                    <span class="badge badge-priority">P{{ ticket.priority }}</span>
+                    {% endif %}
+                    {% if ticket.assignee %}
+                    <span class="badge badge-assignee">@{{ ticket.assignee }}</span>
+                    {% endif %}
+                    {% for tag in ticket.tags[:2] %}
+                    <span class="badge badge-tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            </a>
+            {% else %}
+            <div class="empty-state">No tickets</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Blocked Column -->
+    <div class="column blocked">
+        <div class="column-header">Blocked ({{ columns.blocked|length }})</div>
+        <div class="ticket-list">
+            {% for ticket in columns.blocked %}
+            <a href="/ticket/{{ ticket.id }}" class="ticket-card">
+                <div class="ticket-id">{{ ticket.id }}</div>
+                <div class="ticket-title">{{ ticket.title }}</div>
+                <div class="ticket-meta">
+                    {% if ticket.priority %}
+                    <span class="badge badge-priority">P{{ ticket.priority }}</span>
+                    {% endif %}
+                    {% if ticket.blocking_deps %}
+                    <span class="badge badge-blocked" title="Blocking: {{ ticket.blocking_deps|join(', ') }}">
+                        ⛔ {{ ticket.blocking_deps|length }} deps
+                    </span>
+                    {% endif %}
+                </div>
+            </a>
+            {% else %}
+            <div class="empty-state">No tickets</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- In Progress Column -->
+    <div class="column in_progress">
+        <div class="column-header">In Progress ({{ columns.in_progress|length }})</div>
+        <div class="ticket-list">
+            {% for ticket in columns.in_progress %}
+            <a href="/ticket/{{ ticket.id }}" class="ticket-card">
+                <div class="ticket-id">{{ ticket.id }}</div>
+                <div class="ticket-title">{{ ticket.title }}</div>
+                <div class="ticket-meta">
+                    {% if ticket.priority %}
+                    <span class="badge badge-priority">P{{ ticket.priority }}</span>
+                    {% endif %}
+                    {% if ticket.assignee %}
+                    <span class="badge badge-assignee">@{{ ticket.assignee }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% else %}
+            <div class="empty-state">No tickets</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Closed Column -->
+    <div class="column closed">
+        <div class="column-header">Closed ({{ columns.closed|length }})</div>
+        <div class="ticket-list">
+            {% for ticket in columns.closed %}
+            <a href="/ticket/{{ ticket.id }}" class="ticket-card">
+                <div class="ticket-id">{{ ticket.id }}</div>
+                <div class="ticket-title">{{ ticket.title }}</div>
+                <div class="ticket-meta">
+                    {% if ticket.assignee %}
+                    <span class="badge badge-assignee">@{{ ticket.assignee }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% else %}
+            <div class="empty-state">No tickets</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

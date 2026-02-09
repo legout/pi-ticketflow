@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Ticketflow Kanban Board{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <button class="btn" hx-get="/api/refresh" hx-target="#board" hx-indicator="#loading">
+        🔄 Refresh
+    </button>
+    <span id="loading" style="display:none;">Loading...</span>
+    
+    <div class="stats">
+        <span class="stat ready">✓ Ready: {{ counts.ready }}</span>
+        <span class="stat blocked">✗ Blocked: {{ counts.blocked }}</span>
+        <span class="stat in_progress">⟳ In Progress: {{ counts.in_progress }}</span>
+        <span class="stat closed">✓ Closed: {{ counts.closed }}</span>
+    </div>
+</div>
+
+<div id="board">
+    {% include "_board.html" %}
+</div>
+{% endblock %}

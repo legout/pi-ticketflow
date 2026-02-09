@@ -1,0 +1,7 @@
+# Textual-web configuration for tf UI POC
+# This serves the existing Ticketflow TUI in a browser
+
+[app.Ticketflow]
+command = "python -m tf_cli.ui"
+slug = "tf"
+description = "Ticketflow Kanban TUI"

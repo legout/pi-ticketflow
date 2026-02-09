@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ticketflow Web{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        header a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .toolbar {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stat.ready { color: #27ae60; }
+        .stat.blocked { color: #e74c3c; }
+        .stat.in_progress { color: #f39c12; }
+        .stat.closed { color: #7f8c8d; }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .column {
+            background: #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 400px;
+        }
+        
+        .column-header {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+        }
+        
+        .column.ready .column-header {
+            color: #27ae60;
+            border-color: #27ae60;
+        }
+        
+        .column.blocked .column-header {
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+        
+        .column.in_progress .column-header {
+            color: #f39c12;
+            border-color: #f39c12;
+        }
+        
+        .column.closed .column-header {
+            color: #7f8c8d;
+            border-color: #7f8c8d;
+        }
+        
+        .ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .ticket-card {
+            background: white;
+            border-radius: 6px;
+            padding: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+        
+        .ticket-id {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            font-family: monospace;
+            margin-bottom: 0.25rem;
+        }
+        
+        .ticket-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        
+        .ticket-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        
+        .badge-priority {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .badge-assignee {
+            background: #3498db;
+            color: white;
+        }
+        
+        .badge-tag {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+        
+        .badge-blocked {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #95a5a6;
+            padding: 2rem;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        
+        /* Ticket detail page */
+        .ticket-detail {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .ticket-detail h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .ticket-detail .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .ticket-detail .meta-item {
+            font-size: 0.9rem;
+        }
+        
+        .ticket-detail .meta-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .ticket-detail .body {
+            line-height: 1.8;
+        }
+        
+        .ticket-detail .body h1,
+        .ticket-detail .body h2,
+        .ticket-detail .body h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .ticket-detail .body ul,
+        .ticket-detail .body ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .back-link {
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        
+        @media (max-width: 768px) {
+            .board {
+                grid-template-columns: 1fr;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .stats {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/">Ticketflow Web POC</a></h1>
+        </div>
+    </header>
+    
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
