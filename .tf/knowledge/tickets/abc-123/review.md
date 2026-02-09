@@ -1,40 +1,48 @@
 # Review: abc-123
 
 ## Critical (must fix)
-No issues found.
+- `demo/hello.py:1-2` - Module docstring placement violates project convention. Docstring appears after `from __future__ import annotations`. Per project convention, module docstring must be the first statement. *(from reviewer-second-opinion)*
+- `demo/__main__.py:1-2` - Same docstring ordering issue. Docstring should precede imports. *(from reviewer-second-opinion)*
+- `demo/__init__.py:1-3` - Same docstring ordering issue. Docstring is after imports. *(from reviewer-second-opinion, reviewer-general)*
+- `tests/test_demo_hello.py:1-2` - Same docstring ordering issue. *(from reviewer-second-opinion)*
 
 ## Major (should fix)
-- `demo/hello.py:46` - RuntimeWarning when running as CLI: "'demo.hello' found in sys.modules after import of package 'demo'". Occurs because `python -m demo.hello` imports the module twice. Consider adding `demo/__main__.py` as a proper entry point. *(from reviewer-second-opinion)*
+- `demo/hello.py:41-46` - Duplicate CLI entry point. The `if __name__ == "__main__":` block duplicates logic in `demo/__main__.py`. Creates maintenance overhead and confusing behavior differences. Recommend removing `__main__` block and updating docstring to reference `python -m demo`. *(from reviewer-second-opinion)*
+- `demo/hello.py:30-32` - Docstring CLI example shows `python -m demo.hello` but intended entry point is `python -m demo`. Documentation inconsistency. *(from reviewer-second-opinion)*
 
 ## Minor (nice to fix)
-- `tests/test_demo_hello.py:25` - Empty string test passes but produces "Hello, !" output which may be unintended UX. Consider input validation or explicit documentation. *(from reviewer-second-opinion)*
-- `demo/hello.py:43-46` - CLI argument handling could be more Pythonic: `name = " ".join(sys.argv[1:]) or "World"` instead of if/else expression. *(from reviewer-second-opinion)*
+- `demo/__main__.py:4` - Unused import `sys`. Consider removing. *(from reviewer-second-opinion)*
+- `tests/test_demo_hello.py:18` - Test naming: `test_hello_empty_string` tests behavior that may not be intentional. Result `"Hello, !"` looks odd - should empty string fall back to "World"? *(from reviewer-second-opinion)*
+- `tests/test_demo_hello.py` - Missing test for CLI entry point. `__main__.py` module is not tested. *(from reviewer-second-opinion)*
 
 ## Warnings (follow-up ticket)
-No warnings.
+- `demo/hello.py` - No input sanitization. Names with special characters passed through unescaped. *(from reviewer-second-opinion)*
+- `tests/test_demo_hello.py` - Missing coverage configuration. `demo` package not included in coverage config. *(from reviewer-second-opinion)*
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py` - Add proper `__main__.py` entry point to eliminate RuntimeWarning and follow Python package CLI conventions. *(from reviewer-second-opinion)*
+- `demo/hello.py` - Consider adding input validation for `None` or non-string inputs. *(from reviewer-general)*
+- `demo/` - Consider adding `argparse` CLI for better UX. *(from reviewer-second-opinion)*
+- `demo/hello.py` - Add `__version__` attribute. *(from reviewer-second-opinion)*
+- `tests/test_demo_hello.py` - Add parametrized tests for edge cases. *(from reviewer-second-opinion)*
 
 ## Positive Notes (All Reviewers)
-- ✅ Excellent module docstring with usage examples and CLI documentation
-- ✅ Proper type hints throughout (`name: str = "World") -> str`)
-- ✅ Thorough function docstring with Args and Returns sections
-- ✅ CLI correctly handles multiple arguments with `" ".join()` pattern
-- ✅ Explicit `pytest.mark.unit` marker for test categorization
-- ✅ Good edge case coverage with empty string test
-- ✅ All acceptance criteria met: correct file location, default parameter, docstrings, tests
+- ✅ Excellent use of type hints throughout
+- ✅ Comprehensive docstrings with usage examples
+- ✅ Proper package structure with `__main__.py` entry point
+- ✅ Good test coverage with pytest markers (`@pytest.mark.unit`)
+- ✅ Clean CLI handling multi-word names
 - ✅ `from __future__ import annotations` for project consistency
-- ✅ Clean separation of concerns: pure function + CLI wrapper
+- ✅ `__all__` correctly defined in `__init__.py`
+- ✅ All acceptance criteria met
 
 ## Summary Statistics
-- Critical: 0
-- Major: 1
-- Minor: 2
-- Warnings: 0
-- Suggestions: 1
+- Critical: 4
+- Major: 2
+- Minor: 3
+- Warnings: 2
+- Suggestions: 4
 
 ## Reviewer Sources
-- reviewer-general: 0 issues, full compliance noted
-- reviewer-spec-audit: 0 issues, all acceptance criteria verified ✅
-- reviewer-second-opinion: 1 Major, 2 Minor, 1 Suggestion (quality/style focus)
+- reviewer-general: 0 Critical, 0 Major, 1 Minor, 0 Warnings, 1 Suggestion
+- reviewer-spec-audit: 0 issues (full compliance)
+- reviewer-second-opinion: 4 Critical, 2 Major, 3 Minor, 2 Warnings, 3 Suggestions

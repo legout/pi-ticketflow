@@ -48,6 +48,11 @@
 - pt-2xr4: COMPLETE (2026-02-09T14:36:15Z)
   - Summary: Add dark-mode toggle (or auto dark mode) for web UI
   - Issues: Critical(0)/Major(0)/Minor(0)
+- abc-123: COMPLETE (2026-02-09T18:06:06Z)
+  - Summary: Workflow re-run - Fixed docstring placement and removed duplicate CLI entry point
+  - Issues: Critical(0)/Major(0)/Minor(3)
+  - Status: COMPLETE
+  - Commit: c0fe841
   - Status: COMPLETE
 - pt-uo1b: COMPLETE (2026-02-09T14:39:00Z)
   - Summary: Add CI smoke test for headless import of tf_cli.ui
@@ -131,3 +136,48 @@
   - Issues: Critical(0)/Major(0)/Minor(0) - 1 fixed
   - Status: COMPLETE
   - Commit: d04be01
+- abc-123: COMPLETE (2026-02-09T17:18:52Z)
+  - Summary: Workflow re-run - verified implementation, updated review artifacts
+  - Issues: Critical(0)/Major(0)/Minor(3)
+  - Status: COMPLETE
+  - Commit: e5c8e02
+- abc-123: COMPLETE (2026-02-09T17:21:00Z)
+  - Summary: Workflow executed - minor fixes applied (CLI args, docstrings)
+  - Issues: Critical(0)/Major(0)/Minor(0) - all fixed
+  - Status: COMPLETE
+  - Commit: befe32c
+
+- abc-123: COMPLETE (2026-02-09T17:28:00Z)
+  - Summary: Workflow re-executed - verified existing hello-world implementation
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Status: COMPLETE (already closed)
+
+- abc-123: RE-RUN (2026-02-09T17:32:00Z)
+  - Summary: Workflow re-executed with --auto flag on closed ticket
+  - Issues: Critical(0)/Major(0)/Minor(3 - 2 fixed)
+  - Status: COMPLETE
+  - Commit: 7442840
+
+- pt-tupn: COMPLETE (2026-02-09T17:08:00Z)
+  - Summary: Moved CLI dispatcher + 32 core modules from tf_cli to tf namespace
+  - Issues: Critical(2)/Major(2)/Minor(2) - all fixed
+  - Status: COMPLETE
+- pt-7li0: COMPLETE (2026-02-09T17:56:00Z)
+  - Summary: Updated docs for tf namespace migration (README, CHANGELOG)
+  - Issues: Critical(0)/Major(0)/Minor(1)
+  - Status: COMPLETE
+- pt-7li0: COMPLETE (2026-02-09T17:58:01Z)
+  - Summary: Update docs: canonical namespace is tf (migration notes + deprecation timeline)
+  - Issues: Critical(0)/Major(0)/Minor(1)
+  - Status: COMPLETE
+
+- abc-123: COMPLETE (2026-02-09T18:02:00Z)
+  - Summary: Workflow re-run on closed demo ticket
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Status: COMPLETE
+  - Commit: fc50625
+- abc-123: COMPLETE $(date -Iseconds)
+  - Summary: Fixed CLI RuntimeWarning by adding demo/__main__.py entry point
+  - Issues: Critical(0)/Major(0 to 1 fixed)/Minor(2 to 1 fixed)
+  - Status: COMPLETE
+  - Commit: 2522237

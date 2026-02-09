@@ -3,6 +3,7 @@
 Test suite for the hello-world utility demonstrating IRF workflow.
 Covers default parameter, custom names, and edge cases.
 """
+
 from __future__ import annotations
 
 import pytest

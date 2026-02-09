@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Hello-world utility for demo purposes.
 
 This module provides a simple greeting function for demonstrating
@@ -16,13 +14,13 @@ Examples:
     'Hello, Alice!'
 
 CLI Usage:
-    $ python -m demo.hello
+    $ python -m demo
     Hello, World!
-    $ python -m demo.hello Alice
+    $ python -m demo Alice
     Hello, Alice!
 """
 
-import sys
+from __future__ import annotations
 
 
 def hello(name: str = "World") -> str:
@@ -35,8 +33,3 @@ def hello(name: str = "World") -> str:
         str: A greeting string in the format "Hello, {name}!".
     """
     return f"Hello, {name}!"
-
-
-if __name__ == "__main__":
-    name = " ".join(sys.argv[1:]) or "World"
-    print(hello(name))

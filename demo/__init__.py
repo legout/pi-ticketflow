@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Demo package for workflow testing."""
+
+from __future__ import annotations
 
 from .hello import hello
 

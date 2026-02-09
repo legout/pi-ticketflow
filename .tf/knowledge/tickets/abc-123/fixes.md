@@ -1,27 +1,34 @@
 # Fixes: abc-123
 
-## Issues Fixed
+## Summary
+Fixed all 4 Critical and 2 Major issues identified in review.
 
-### Major (1 fixed)
-1. **RuntimeWarning on CLI execution** (`demo/hello.py`)
-   - Created `demo/__main__.py` as proper CLI entry point
-   - Eliminates "found in sys.modules after import" warning
-   - New usage: `python -m demo [name]` instead of `python -m demo.hello [name]`
+## Critical Fixes (Docstring Placement)
 
-### Minor (1 fixed)
-1. **Pythonic CLI handling** (`demo/hello.py:43`)
-   - Changed `name = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "World"`
-   - To: `name = " ".join(sys.argv[1:]) or "World"`
-   - Uses Python's short-circuit evaluation for cleaner code
+### `demo/__init__.py`
+- Moved module docstring to line 1 (before imports)
 
-### Minor (1 deferred - not fixed)
-- Empty string test behavior - intentionally not fixed as it's valid edge case behavior; function contract allows empty strings
+### `demo/__main__.py`
+- Added blank line after module docstring for proper formatting
 
-## Files Changed
-- `demo/hello.py` - Simplified CLI argument handling
-- `demo/__main__.py` - Created new CLI entry point
+### `demo/hello.py`
+- Moved module docstring to line 1 (before imports)
+- Removed `import sys` (no longer needed without CLI block)
+
+### `tests/test_demo_hello.py`
+- Moved module docstring to line 1 (before imports)
+
+## Major Fixes
+
+### `demo/hello.py`
+- **Removed duplicate CLI entry point**: Deleted `if __name__ == "__main__":` block
+- **Updated CLI documentation**: Changed examples from `python -m demo.hello` to `python -m demo`
 
 ## Verification
-- All 3 tests pass: `python -m pytest tests/test_demo_hello.py -v`
-- CLI works without warning: `python -m demo TestUser` → "Hello, TestUser!"
-- Backward compatibility: `python -m demo.hello Test` still works (with expected warning)
+- All 3 tests passing
+- `python -m demo Alice` → "Hello, Alice!"
+- `python -c "from demo.hello import hello; print(hello('Test'))"` → "Hello, Test!"
+
+## Remaining Issues (Not Fixed)
+- Minor: Unused `sys` import in `__main__.py` - actually needed for `sys.argv`
+- Minor/Warnings/Suggestions - deferred as low priority or follow-up tickets
