@@ -1,6 +1,6 @@
 ---
 id: pt-cje7
-status: open
+status: closed
 deps: [pt-cvj1]
 links: [pt-cvj1]
 created: 2026-02-09T12:46:53Z
@@ -29,3 +29,15 @@ Users may need Node.js available for `npx` to work; otherwise vision MCP tooling
 ## References
 - Plan: plan-update-zai-vision-mcp
 
+
+## Notes
+
+**2026-02-09T14:05:33Z**
+
+Documentation updated and committed (825d9f4).
+
+Changes:
+- docs/configuration.md: Added note clarifying zai-vision runs locally via npx -y @z_ai/mcp-server, requires Node.js/npx, while web-search/web-reader remain remote URL-based
+- CHANGELOG.md: Added entry under [Unreleased]
+
+All acceptance criteria satisfied. Zero issues found in parallel review.
