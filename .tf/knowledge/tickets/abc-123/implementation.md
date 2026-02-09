@@ -17,9 +17,9 @@ Re-verified hello-world utility implementation for demo purposes. The implementa
 ```bash
 python -m pytest tests/test_demo_hello.py -v
 ```
-Results: 3 passed in 0.02s
+Results: 3 passed in 0.03s
 
 ## Verification
 - All acceptance criteria met
 - Code follows project patterns (from __future__ import annotations)
-- Quality checks pass (ruff, pytest)
+- Quality checks: ruff not available (skipped), pytest passed
