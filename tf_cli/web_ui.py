@@ -24,13 +24,14 @@ from jinja2 import Environment, FileSystemLoader
 
 # datastar-py imports for SSE streaming support
 try:
-    from datastar_py.sanic import datastar_respond
+    from datastar_py.sanic import datastar_respond, read_signals
     from datastar_py import ServerSentEventGenerator
     DATASTAR_AVAILABLE = True
 except ImportError:
     DATASTAR_AVAILABLE = False
     datastar_respond = None
     ServerSentEventGenerator = None
+    read_signals = None
 
 from tf_cli.board_classifier import BoardClassifier, BoardColumn
 from tf_cli.ticket_loader import TicketLoader
@@ -106,12 +107,13 @@ def get_board_data():
         return None
 
 
-def _build_columns_data(board_view):
+def _build_columns_data(board_view, search_query: str = ""):
     """Build columns data dictionary from BoardView.
-    
+
     Args:
         board_view: The BoardView containing classified tickets
-        
+        search_query: Optional search query to filter tickets by title
+
     Returns:
         dict: Columns data with ready, blocked, in_progress, closed lists
     """
@@ -121,12 +123,17 @@ def _build_columns_data(board_view):
         "in_progress": [],
         "closed": []
     }
-    
+
     for column in BoardColumn:
         tickets = board_view.get_by_column(column)
         for ct in tickets:
+            # Apply search filter if provided (case-insensitive contains match)
+            if search_query:
+                title = (ct.title or "").lower()
+                if search_query not in title:
+                    continue
             columns[column.value].append(_ticket_to_dict(ct))
-    
+
     return columns
 
 
@@ -261,19 +268,28 @@ async def ticket_detail(request, ticket_id: str):
 @app.get("/api/refresh")
 async def refresh_board(request):
     """Datastar endpoint to refresh the kanban board.
-    
+
     Returns HTML fragment that Datastar will morph into the DOM.
     Includes both the board header (with counts) and the board grid
     to keep stats synchronized.
+
+    Reads the `$search` signal from Datastar to filter tickets by title.
     """
     board_view = get_board_data()
-    
+
     # Check for None explicitly - empty BoardView is valid
     if board_view is None:
         return response.html("<p class='error'>Error loading tickets</p>")
-    
-    columns = _build_columns_data(board_view)
-    
+
+    # Read signals from Datastar request for filtering
+    search_query = ""
+    if DATASTAR_AVAILABLE and read_signals is not None:
+        signals = await read_signals(request)
+        if signals:
+            search_query = signals.get("$search", "").strip().lower()
+
+    columns = _build_columns_data(board_view, search_query=search_query)
+
     template = env.get_template("_board.html")
     rendered = template.render(
         columns=columns,

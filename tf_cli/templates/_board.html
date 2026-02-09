@@ -2,6 +2,15 @@
 <div id="board">
     <div class="board-header">
         <h2>Kanban Board</h2>
+        <div class="board-search">
+            <input
+                type="search"
+                data-bind="$search"
+                data-on:input="@get('/api/refresh')"
+                placeholder="Search tickets..."
+                class="search-input"
+            />
+        </div>
         <div id="board-stats" class="board-stats">
             <span>Ready: {{ counts.ready }}</span>
             <span>Blocked: {{ counts.blocked }}</span>

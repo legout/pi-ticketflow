@@ -248,6 +248,34 @@ textarea:focus-visible,
     gap: var(--gap-sm);
 }
 
+/* Board search input - styled to fit in header */
+.board-search {
+    flex: 1;
+    max-width: 300px;
+    min-width: 150px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: var(--focus-ring);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
 .board-header h2 {
     font-size: 1.25rem;
     color: var(--text-primary);
