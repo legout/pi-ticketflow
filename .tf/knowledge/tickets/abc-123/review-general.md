@@ -1,7 +1,7 @@
 # Review: abc-123
 
 ## Overall Assessment
-Clean, well-documented hello-world implementation with proper type hints, comprehensive docstrings, and good test coverage. The code follows Python best practices and project conventions. No critical or major issues found.
+Solid implementation of a hello-world utility with excellent test coverage, clear documentation, and proper CLI structure. The code follows project conventions and handles edge cases (whitespace/empty strings) gracefully. Well-structured for a demo/warmup ticket.
 
 ## Critical (must fix)
 No issues found.
@@ -10,25 +10,31 @@ No issues found.
 No issues found.
 
 ## Minor (nice to fix)
-- `tests/test_demo_hello.py:85-95` - The CLI tests don't explicitly cover the empty string argument case (`main([""])`). While the `hello()` function handles this correctly (and is tested), verifying the CLI argument parsing for empty strings would ensure complete coverage of the documented CLI behavior in `__main__.py` docstring (line 10: `$ python -m demo ""`).
+- `demo/__main__.py:9-10` - Import style inconsistency: uses `Optional` from `typing` but `Sequence` from `collections.abc`. For Python 3.10+, prefer `collections.abc` for both, or use `| None` syntax instead of `Optional` for consistency with modern Python practices.
+
+- `demo/hello.py:36` - Docstring wording could be clearer: "return the full greeting 'Hello, World!'" is slightly ambiguous. Consider: "uses the default name 'World'" to clarify the behavior matches the fallback logic.
 
 ## Warnings (follow-up ticket)
-No warnings.
+- `demo/__main__.py:47` - Docstring example shows `$ python -m demo ""` → `Hello, World!`, but passing empty string via CLI may behave differently than the module-level function due to argparse string parsing. Verify this works as documented (the test uses `main([])` not `main([""])`).
 
 ## Suggestions (follow-up ticket)
-No suggestions.
+- `tests/test_demo_hello.py` - Add test case for `main([""])` to verify CLI behavior with explicit empty string argument matches docstring example.
+
+- `tests/test_demo_hello.py` - Add test for multiple CLI arguments or names with spaces (e.g., `"Alice Smith"`) to match docstring examples.
 
 ## Positive Notes
-- **Excellent documentation**: `demo/hello.py:14-32` - Comprehensive module and function docstrings with doctests-style examples
-- **Type safety**: All files use `from __future__ import annotations` and modern typing (e.g., `collections.abc.Sequence` in `__main__.py:12`)
-- **Edge case handling**: `demo/hello.py:38-39` - Proper handling of empty/whitespace-only strings with `.strip()` check
-- **CLI design**: `demo/__main__.py:25-42` - Clean argparse setup following project conventions, returns proper exit codes
-- **Test quality**: `tests/test_demo_hello.py:1-95` - Well-structured tests with pytest markers, covers both function and CLI, includes parameterized whitespace testing
-- **Package structure**: Clean `__init__.py` with explicit `__all__` export
+- Excellent test coverage (6 tests) covering default, custom names, whitespace handling, and CLI entry points
+- Good use of type hints throughout (`str`, `int`, `Optional[Sequence[str]]`)
+- Proper package structure with `__init__.py` exporting public API via `__all__`
+- Follows project convention of using `argparse` for CLI
+- Handles edge cases: empty strings and whitespace-only inputs gracefully fall back to "World"
+- Docstrings include runnable examples in proper format
+- Uses `from __future__ import annotations` for forward compatibility
+- CLI returns proper exit codes (0 for success) with `sys.exit(main())` pattern
 
 ## Summary Statistics
 - Critical: 0
 - Major: 0
-- Minor: 1
-- Warnings: 0
-- Suggestions: 0
+- Minor: 2
+- Warnings: 1
+- Suggestions: 2
