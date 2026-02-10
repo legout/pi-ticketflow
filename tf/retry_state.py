@@ -637,7 +637,11 @@ def load_escalation_config(settings_path: Path | str) -> dict[str, Any]:
     except json.JSONDecodeError:
         # Invalid JSON - return defaults
         return dict(DEFAULT_ESCALATION_CONFIG)
+    except PermissionError as e:
+        # Permission denied - this is a configuration issue user should know about
+        logger.error(f"Permission denied reading settings file {path}: {e}. Check file permissions.")
+        return dict(DEFAULT_ESCALATION_CONFIG)
     except IOError as e:
-        # File exists but can't be read (permissions, etc.) - log warning and return defaults
+        # Other IO errors (locked file, etc.) - log warning and return defaults
         logger.warning(f"Cannot read settings file {path}: {e}. Using default escalation config.")
         return dict(DEFAULT_ESCALATION_CONFIG)
