@@ -1,21 +1,20 @@
 # Fixes: abc-123
 
-## Issues Fixed
+## Summary
+Applied 1 Minor fix from review feedback.
 
-### Minor
-- `tests/test_demo_hello.py:3` - Corrected module docstring from "(6 tests total)" to "(8 tests total)" to match actual test count.
+## Fixes Applied
 
-## Issues Not Fixed (Intentional)
-
-### Minor
-- `pyproject.toml` demo package inclusion - This is a project-level decision about whether demo packages belong in distribution. Not a code issue.
-
-### Warnings (Follow-up tickets)
-- Tooling (ruff) missing - Requires environment setup, not code change.
-- Type checking not performed - Requires CI/pipeline changes, not code change.
-
-### Suggestions (Follow-up tickets)
-- Runtime type validation, py.typed marker, Hypothesis tests, Unicode tests, CLI --version flag, README examples - All are enhancements for future tickets, not required fixes.
+### Minor Fix
+- `demo/__main__.py:16,20` - Modernized type hint
+  - Changed: `from typing import Optional` → removed import
+  - Changed: `Optional[Sequence[str]]` → `Sequence[str] | None`
+  - Reason: `Optional` is deprecated since Python 3.10, union syntax is preferred
+  - File already had `from __future__ import annotations` enabling modern syntax
 
 ## Verification
-Tests re-run after fix: **8 passed** ✅
+- All 8 tests passing after fix
+- CLI functionality verified: `python -m demo` works correctly
+
+## Files Modified
+- `demo/__main__.py`

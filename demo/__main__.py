@@ -15,13 +15,12 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Optional
 from collections.abc import Sequence
 
 from demo.hello import hello
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Run the hello CLI.
 
     Args:

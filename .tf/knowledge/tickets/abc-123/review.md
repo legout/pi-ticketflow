@@ -7,32 +7,33 @@ None.
 None.
 
 ## Minor (nice to fix)
-- `tests/test_demo_hello.py:3` - Module docstring incorrectly states "(6 tests total)" but there are actually 8 test functions. Update docstring to reflect correct count. (found by: reviewer-general, reviewer-second-opinion)
-- `pyproject.toml` - The `demo` package is included in distribution. Consider if this ticket-specific demo package should be isolated or removed from `packages` list if temporary. (found by: reviewer-general)
+- `demo/__main__.py:16,20` - Modernize type hint from `Optional[Sequence[str]]` to `Sequence[str] | None`. Since the file already imports `from __future__ import annotations`, the `Optional` import from `typing` is unnecessary and deprecated since Python 3.10. (found by: reviewer-general, reviewer-second-opinion)
 
 ## Warnings (follow-up ticket)
-- Tooling: Lint (ruff) and format steps were skipped due to missing tool. Consider integrating ruff for consistent style enforcement. (found by: reviewer-second-opinion)
-- Type checking was not performed. Adding mypy/pyright to CI would catch type errors early. (found by: reviewer-second-opinion)
+- `demo/__main__.py:1` - Module-level docstring examples are not executable doctests. Consider adding a doctest runner or converting to actual doctests if these are meant to be tested documentation. (found by: reviewer-general)
+- `tests/test_demo_hello.py` - Missing test for non-string input types. While the type hint specifies `str`, a runtime test verifying behavior with unexpected types (None, int, etc.) would strengthen the test suite. (found by: reviewer-second-opinion)
+- `demo/hello.py:44` - The `name` parameter lacks runtime type validation. While type hints help static analysis, consider adding runtime validation for production code that might receive untrusted input. (found by: reviewer-second-opinion)
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py` - Consider adding runtime type validation for clearer error messages (optional due to type hints). (found by: reviewer-general)
-- `demo/hello.py` - Add `py.typed` marker if publishing type hints officially. (found by: reviewer-general)
-- Tests: Add property-based tests using Hypothesis for fuzzing. (found by: reviewer-second-opinion)
-- Tests: Add explicit Unicode handling tests (e.g., "José", "北京", "Москва"). (found by: reviewer-second-opinion)
-- CLI: Could add `--version` flag for package identification. (found by: reviewer-second-opinion)
-- Documentation: Add README example showing library and CLI usage. (found by: reviewer-second-opinion)
+- `tests/test_demo_hello.py` - Consider adding hypothesis-based property tests for the `hello()` function to verify invariants (e.g., output always starts with "Hello," and ends with "!"). (found by: reviewer-general)
+- `demo/hello.py:35` - The fallback behavior for empty/whitespace strings could be configurable via an optional parameter if different behavior is desired in the future. (found by: reviewer-general)
+- `demo/__main__.py` - Consider adding `--version` and `--help` output tests to the CLI test suite to verify argparse configuration. (found by: reviewer-second-opinion)
+- `demo/hello.py` - Consider internationalization (i18n) support if this pattern will be used in production code. The greeting format "Hello, {name}!" is English-specific. (found by: reviewer-second-opinion)
+- `tests/test_demo_hello.py` - Add parameterized tests using `@pytest.mark.parametrize` for the whitespace test cases to reduce code duplication. (found by: reviewer-second-opinion)
 
 ## Positive Notes
-- Excellent Google-style docstrings with usage examples.
-- Comprehensive test coverage (8/8 tests passing).
-- Clean architecture: separation of core logic, CLI entry, and package init.
-- Proper input sanitization via `strip()` with fallback to "World".
-- Follows project conventions: `__future__ import annotations`, type hints, `argparse` usage.
-- Spec compliance: All acceptance criteria met and exceeded with CLI support.
+- ✅ All acceptance criteria satisfied (reviewer-spec-audit)
+- Excellent module-level docstring in `demo/hello.py` with usage examples and CLI instructions
+- Proper use of `from __future__ import annotations` for forward-compatible type hints
+- Comprehensive edge case testing including various whitespace characters
+- Good separation of concerns: `hello()` function for library use, `main()` for CLI
+- Clean package structure with `__all__` properly defined in `__init__.py`
+- Tests use pytest fixtures (`capsys`) appropriately for CLI output capture
+- 8/8 tests passing
 
 ## Summary Statistics
 - Critical: 0
 - Major: 0
-- Minor: 2
-- Warnings: 2
-- Suggestions: 7
+- Minor: 1
+- Warnings: 3
+- Suggestions: 5

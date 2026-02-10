@@ -3,6 +3,12 @@
 ## Summary
 Hello-world utility module for demonstrating the IRF workflow. The implementation includes a greeting function with CLI support, comprehensive test coverage, and proper Python packaging.
 
+**Re-verification run** - Ticket was previously closed, this is a workflow re-execution with --auto flag.
+
+## Retry Context
+- Attempt: 1 (fresh re-verification)
+- Escalated Models: fixer=base, reviewer-second=base, worker=base
+
 ## Files Changed
 - `demo/hello.py` - Core greeting function with docstring and type hints
 - `demo/__main__.py` - CLI entry point using argparse
