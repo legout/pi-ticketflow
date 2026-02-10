@@ -1,37 +1,38 @@
 # Review: abc-123
 
 ## Critical (must fix)
-No issues found.
+None.
 
 ## Major (should fix)
-- `demo/hello.py:39` - The `hello` function returns `f"Hello, {name}!"` using the raw name without stripping leading/trailing whitespace. This results in unexpected formatting when the name contains extra spaces (e.g., `hello("  Alice  ")` returns `"Hello,   Alice  !"`). The function should strip the name before formatting to produce a clean greeting, or the behavior should be explicitly documented. This is a functional inconsistency with typical greeting utility expectations. (from reviewer-second-opinion)
-- `tests/test_demo_hello.py:41` - Missing test coverage for names with leading/trailing whitespace. Adding a parameterized test for `hello("  Alice  ")` would catch the above issue and should be included in this ticket. (from reviewer-second-opinion)
-- `tests/test_demo_hello.py:49` - Missing test for CLI with empty string argument (`main([""])`). Although `hello("")` is tested, the CLI path with an empty string is not. This test should be added to ensure consistent CLI behavior. (from reviewer-second-opinion)
+None.
 
 ## Minor (nice to fix)
-No issues found.
+- `tests/test_demo_hello.py:3` - Module docstring incorrectly states "(6 tests total)" but there are actually 8 test functions. Update docstring to reflect correct count. (found by: reviewer-general, reviewer-second-opinion)
+- `pyproject.toml` - The `demo` package is included in distribution. Consider if this ticket-specific demo package should be isolated or removed from `packages` list if temporary. (found by: reviewer-general)
 
 ## Warnings (follow-up ticket)
-No issues found.
+- Tooling: Lint (ruff) and format steps were skipped due to missing tool. Consider integrating ruff for consistent style enforcement. (found by: reviewer-second-opinion)
+- Type checking was not performed. Adding mypy/pyright to CI would catch type errors early. (found by: reviewer-second-opinion)
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py:16` - Consider adding `if __name__ == "__main__":` demo code at bottom of module for direct execution (as an alternative to `python -m demo`). (from reviewer-general)
-- `tests/test_demo_hello.py:52` - Could add a test for names with leading/trailing whitespace that should be preserved (e.g., `hello("  Alice  ")`) to document this behavior explicitly. (from reviewer-general)
+- `demo/hello.py` - Consider adding runtime type validation for clearer error messages (optional due to type hints). (found by: reviewer-general)
+- `demo/hello.py` - Add `py.typed` marker if publishing type hints officially. (found by: reviewer-general)
+- Tests: Add property-based tests using Hypothesis for fuzzing. (found by: reviewer-second-opinion)
+- Tests: Add explicit Unicode handling tests (e.g., "José", "北京", "Москва"). (found by: reviewer-second-opinion)
+- CLI: Could add `--version` flag for package identification. (found by: reviewer-second-opinion)
+- Documentation: Add README example showing library and CLI usage. (found by: reviewer-second-opinion)
 
 ## Positive Notes
-- **reviewer-general**: Clean, focused implementation consistent with ticket scope. No correctness, security, or maintainability problems found. Excellent documentation, comprehensive test coverage, proper CLI structure.
-- **reviewer-spec-audit**: Implementation fully compliant with acceptance criteria. All requirements satisfied: hello utility exists at required path, function signature has default parameter, docstring present, tests included and passing. Exceeds minimum requirements with CLI support and robust edge-case handling.
-- **reviewer-second-opinion**: Clean, small, functionally correct implementation. Excellent use of type hints and docstrings. Good test organization with `pytestmark`. Proper package structure with `__init__.py` and `__main__.py`.
+- Excellent Google-style docstrings with usage examples.
+- Comprehensive test coverage (8/8 tests passing).
+- Clean architecture: separation of core logic, CLI entry, and package init.
+- Proper input sanitization via `strip()` with fallback to "World".
+- Follows project conventions: `__future__ import annotations`, type hints, `argparse` usage.
+- Spec compliance: All acceptance criteria met and exceeded with CLI support.
 
 ## Summary Statistics
 - Critical: 0
-- Major: 3
-- Minor: 0
-- Warnings: 0
-- Suggestions: 4
-
-## Deduplication Notes
-- All reviewers agree: zero Critical and Minor issues
-- reviewer-second-opinion identified 3 Major issues related to whitespace handling consistency
-- reviewer-general provided 2 suggestions for additional test coverage
-- All reviewers concur implementation is clean and follows best practices
+- Major: 0
+- Minor: 2
+- Warnings: 2
+- Suggestions: 7

@@ -1,7 +1,7 @@
 """Tests for demo hello module.
 
 Test suite for the hello-world utility demonstrating IRF workflow.
-Covers default parameter, custom names, and edge cases (6 tests total).
+Covers default parameter, custom names, and edge cases (8 tests total).
 """
 
 from __future__ import annotations
