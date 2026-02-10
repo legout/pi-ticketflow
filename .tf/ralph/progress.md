@@ -258,3 +258,26 @@
   - Issues: Critical(0)/Major(0)/Minor(2)
   - Commit: 5d98fae
   - Status: COMPLETE
+- pt-m54d: COMPLETE (2026-02-10T12:26:02Z)
+  - Summary: Define Ralph ready/blocked semantics + output contract
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-oa8n: COMPLETE (2026-02-10T12:28:00Z)
+  - Summary: Implement queue-state snapshot helper (ready/blocked/running/done)
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Status: COMPLETE
+  - Commit: b1dfde8
+- pt-oa8n: COMPLETE (2026-02-10T12:30:36Z)
+  - Summary: Implement queue-state snapshot helper (ready/blocked/running/done)
+  - Issues: Critical(1)/Major(1)/Minor(2)
+  - Status: COMPLETE
+- abc-123: COMPLETE (2025-02-10T12:35:00Z)
+  - Summary: Hello-world utility demo - workflow verification re-run
+  - Issues: Critical(0)/Major(0)/Minor(3)
+  - Status: COMPLETE
+  - Commit: 8b96ef3
+- abc-123: COMPLETE (2026-02-10T12:37:59Z)
+  - Summary: Workflow re-execution - updated review artifacts
+  - Issues: Critical(0)/Major(0)/Minor(5)
+  - Status: COMPLETE
+  - Commit: 8ee96eb
