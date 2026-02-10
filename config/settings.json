@@ -16,7 +16,7 @@
       "description": "Fast model for research and information gathering"
     },
     "fast": {
-      "model": "zai/glm-4.7-flash",
+      "model": "chutes/zai-org/GLM-4.7-Flash",
       "thinking": "medium",
       "description": "Cheapest model for quick tasks, fixes, and summaries"
     },
