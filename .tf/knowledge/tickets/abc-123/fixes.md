@@ -1,7 +1,7 @@
 # Fixes: abc-123
 
 ## Summary
-No fixes required. Implementation already compliant with review feedback.
+Minor fixes applied to docstring documentation. TypeError message was already correct.
 
 ## Fixes by Severity
 
@@ -9,26 +9,25 @@ No fixes required. Implementation already compliant with review feedback.
 - [x] No Critical issues found
 
 ### Major (should fix)
-- [x] No Major issues found
+- [x] `demo/hello.py` - TypeError message format verified as already correct ("got NoneType" format matches pattern)
+- [ ] `demo/hello.py` - Unicode whitespace handling - Deferred. Current ASCII-only stripping is acceptable for demo utility.
+- [ ] `tests/test_demo_hello.py` - __all__ tests - Deferred. `test_module_exports()` already exists and passes.
 
 ### Minor (nice to fix)
-- [x] Test count docstring already correct (11 tests) - verified
+- [x] `tests/test_demo_hello.py:4` - Fixed docstring: removed hardcoded "(11 tests total)" to prevent documentation drift
+- [ ] `demo/hello.py` - String subclass handling - Deferred. Rare edge case not critical for demo.
+- [ ] `demo/__main__.py` - CLI name length validation - Deferred. Not critical for demo utility.
 
 ### Warnings (follow-up)
-- [ ] Unicode whitespace handling - deferred (documented behavior)
-- [ ] Stdout write failure handling - deferred (demo utility)
+- [ ] No fixes applied (deferred to follow-up)
 
 ### Suggestions (follow-up)
-- [ ] Argparse default redundancy - deferred (minor optimization)
-- [ ] Document type validation trade-off - deferred
-- [ ] Property-based tests - future enhancement
-- [ ] Logging/debug mode - future enhancement
-- [ ] Class-based Greeting - future enhancement
+- [ ] No fixes applied (deferred to follow-up)
 
 ## Summary Statistics
 - **Critical**: 0
 - **Major**: 0
-- **Minor**: 0
+- **Minor**: 1
 - **Warnings**: 0
 - **Suggestions**: 0
 

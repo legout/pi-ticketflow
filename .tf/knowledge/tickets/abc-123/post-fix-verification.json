@@ -2,32 +2,32 @@
   "ticket_id": "abc-123",
   "pre_fix_counts": {
     "Critical": 0,
-    "Major": 0,
-    "Minor": 1,
+    "Major": 3,
+    "Minor": 3,
     "Warnings": 2,
-    "Suggestions": 5
+    "Suggestions": 6
   },
   "fixed_counts": {
-    "Critical": 10,
-    "Major": 9,
-    "Minor": 8,
-    "Warnings": 7,
-    "Suggestions": 5
-  },
-  "post_fix_counts": {
     "Critical": 0,
     "Major": 0,
     "Minor": 0,
     "Warnings": 0,
     "Suggestions": 0
   },
-  "verification_passed": true,
+  "post_fix_counts": {
+    "Critical": 0,
+    "Major": 3,
+    "Minor": 3,
+    "Warnings": 2,
+    "Suggestions": 6
+  },
+  "verification_passed": false,
   "fail_on": [
     "Critical",
     "Major"
   ],
   "fixes_found": true,
   "fixes_parse_warning": null,
-  "review_mtime": 1770731200.9866576,
-  "fixes_mtime": 1770731218.073642
+  "review_mtime": 1770731478.3413973,
+  "fixes_mtime": 1770731496.8963795
 }

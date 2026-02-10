@@ -1,21 +1,21 @@
 # Chain Summary: abc-123
 
-## Artifacts
-- [research.md](research.md) - Research (skipped - internal task)
-- [implementation.md](implementation.md) - Implementation verification
-- [review.md](review.md) - Consolidated review
-- [fixes.md](fixes.md) - Fixes applied (none required)
-- [post-fix-verification.md](post-fix-verification.md) - Quality gate verification
-- [close-summary.md](close-summary.md) - Final summary
+## Workflow Execution
 
-## Files Changed
-- `demo/hello.py`
-- `demo/__main__.py`
-- `demo/__init__.py`
-- `tests/test_demo_hello.py`
+| Step | Status | Artifact |
+|------|--------|----------|
+| Research | ✅ Skipped (existing) | [research.md](research.md) |
+| Implement | ✅ Complete | [implementation.md](implementation.md) |
+| Parallel Reviews | ✅ Complete | [review.md](review.md) |
+| Fix Issues | ⚠️ Partial | [fixes.md](fixes.md) |
+| Post-Fix Verification | ❌ BLOCKED | [post-fix-verification.md](post-fix-verification.md) |
+| Close Ticket | ❌ BLOCKED | [close-summary.md](close-summary.md) |
 
-## Status
-CLOSED - Quality gate passed
+## Quality Gate
+- **Blocks on**: Critical, Major
+- **Pre-fix**: 0 Critical, 3 Major, 3 Minor
+- **Post-fix**: 0 Critical, 3 Major, 3 Minor
+- **Result**: BLOCKED
 
-## Commit
-f21c9c9
+## Artifacts Location
+`.tf/knowledge/tickets/abc-123/`

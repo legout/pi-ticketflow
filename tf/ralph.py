@@ -19,7 +19,7 @@ from tf.logger import LogLevel, RalphLogger, RedactionHelper, create_logger
 from tf.utils import find_project_root
 
 # Import queue state for progress display
-from tf.ralph.queue_state import QueueStateSnapshot
+from tf.ralph.queue_state import QueueStateSnapshot, get_queue_state
 
 
 class ProgressDisplay:
@@ -300,6 +300,66 @@ def list_blocked_tickets() -> List[str]:
     result = run_shell("tk blocked")
     lines = [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
     return [line.split()[0] for line in lines]
+
+
+_BLOCKED_DEP_SENTINEL = "__unmet_dependency__"
+
+
+def _refresh_pending_state(
+    list_query: str,
+    logger: Optional[RalphLogger] = None,
+) -> Tuple[set[str], set[str]]:
+    """Read ready/blocked ticket IDs once and return them as sets.
+
+    Uses a single refresh point per loop iteration to avoid duplicated full relisting.
+    """
+    try:
+        ready_ids = set(list_ready_tickets(list_query))
+    except Exception as exc:
+        if logger:
+            logger.warn(f"Failed to list ready tickets: {exc}")
+        ready_ids = set()
+
+    try:
+        blocked_ids = set(list_blocked_tickets())
+    except Exception as exc:
+        if logger:
+            logger.warn(f"Failed to list blocked tickets: {exc}")
+        blocked_ids = set()
+
+    return ready_ids, blocked_ids
+
+
+def _compute_queue_state_snapshot(
+    pending_ids: set[str],
+    blocked_ids: set[str],
+    running_ids: set[str],
+    completed_ids: set[str],
+) -> QueueStateSnapshot:
+    """Build a queue-state snapshot from in-memory ticket ID sets.
+
+    blocked_ids are represented in dep_graph with a sentinel dependency marker so
+    get_queue_state() consistently counts them as blocked.
+    """
+    pending = set(pending_ids)
+    running = set(running_ids)
+    completed = set(completed_ids)
+
+    # Ensure disjoint state sets before computing queue state.
+    pending -= running
+    pending -= completed
+
+    blocked_in_pending = pending & set(blocked_ids)
+    dep_graph: dict[str, set[str]] = {
+        ticket: {_BLOCKED_DEP_SENTINEL} for ticket in blocked_in_pending
+    }
+
+    return get_queue_state(
+        pending=pending,
+        running=running,
+        completed=completed,
+        dep_graph=dep_graph,
+    )
 
 
 def backlog_empty(completion_check: str) -> bool:
@@ -954,6 +1014,123 @@ def extract_lesson_block(close_summary: Path) -> str:
     return "\n".join(buffer).strip()
 
 
+def load_retry_state(artifact_dir: Path) -> Optional[Dict[str, Any]]:
+    """Load retry state from ticket artifact directory.
+    
+    Args:
+        artifact_dir: Path to ticket artifact directory
+        
+    Returns:
+        Retry state dict if valid, None otherwise
+    """
+    retry_state_path = artifact_dir / "retry-state.json"
+    if not retry_state_path.exists():
+        return None
+    
+    try:
+        data = json.loads(retry_state_path.read_text(encoding="utf-8"))
+        # Validate schema version and required fields
+        if data.get("version") != 1:
+            return None
+        if not all(k in data for k in ("ticketId", "attempts", "lastAttemptAt", "status")):
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def is_ticket_blocked_by_retries(
+    ticket: str,
+    knowledge_dir: Path,
+    max_retries: int,
+    logger: Optional[RalphLogger] = None,
+) -> Tuple[bool, int, int]:
+    """Check if a ticket has exceeded max retry attempts.
+    
+    Args:
+        ticket: Ticket ID
+        knowledge_dir: Base knowledge directory
+        max_retries: Maximum allowed retries
+        logger: Optional logger
+        
+    Returns:
+        Tuple of (is_blocked, attempt_count, retry_count)
+        - is_blocked: True if ticket should be skipped (exceeded max retries)
+        - attempt_count: Number of attempts made (0 if no retry state)
+        - retry_count: Current retry counter (0 if no retry state)
+    """
+    artifact_dir = knowledge_dir / "tickets" / ticket
+    retry_state = load_retry_state(artifact_dir)
+    
+    if retry_state is None:
+        return False, 0, 0
+    
+    retry_count = retry_state.get("retryCount", 0)
+    attempts = retry_state.get("attempts", [])
+    attempt_count = len(attempts)
+    
+    # Check if max retries exceeded and last attempt was blocked
+    # Note: aggregate status is "active" even when blocked, need to check last attempt
+    last_attempt_blocked = False
+    if attempts:
+        last_attempt = attempts[-1]
+        last_attempt_blocked = last_attempt.get("status") == "blocked"
+    
+    is_blocked = retry_count >= max_retries and last_attempt_blocked
+    
+    if is_blocked and logger:
+        logger.warn(
+            f"Ticket {ticket} has exceeded max retries ({retry_count}/{max_retries}) - skipping",
+            ticket=ticket,
+        )
+    
+    return is_blocked, attempt_count, retry_count
+
+
+def resolve_max_retries_from_settings(project_root: Path) -> int:
+    """Resolve maxRetries from workflow.escalation config.
+    
+    Args:
+        project_root: Project root path
+        
+    Returns:
+        maxRetries value (default: 3)
+    """
+    settings_path = project_root / ".tf/config/settings.json"
+    if not settings_path.exists():
+        return 3
+    
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+        workflow = data.get("workflow", {}) if isinstance(data, dict) else {}
+        escalation = workflow.get("escalation", {}) if isinstance(workflow, dict) else {}
+        return escalation.get("maxRetries", 3)
+    except Exception:
+        return 3
+
+
+def resolve_escalation_enabled(project_root: Path) -> bool:
+    """Check if retry escalation is enabled in settings.
+    
+    Args:
+        project_root: Project root path
+        
+    Returns:
+        True if escalation is enabled, False otherwise
+    """
+    settings_path = project_root / ".tf/config/settings.json"
+    if not settings_path.exists():
+        return False
+    
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+        workflow = data.get("workflow", {}) if isinstance(data, dict) else {}
+        escalation = workflow.get("escalation", {}) if isinstance(workflow, dict) else {}
+        return escalation.get("enabled", False)
+    except Exception:
+        return False
+
+
 def update_state(
     ralph_dir: Path,
     project_root: Path,
@@ -974,6 +1151,11 @@ def update_state(
     summary, commit = extract_summary_and_commit(close_summary, fallback_summary)
     crit, maj, minor = extract_issue_counts(review_path)
     lesson_block = extract_lesson_block(close_summary)
+    
+    # Load retry state for progress tracking
+    retry_state = load_retry_state(artifact_dir)
+    attempt_count = len(retry_state.get("attempts", [])) if retry_state else 0
+    retry_count = retry_state.get("retryCount", 0) if retry_state else 0
 
     ensure_progress(progress_path)
     now = utc_now()
@@ -1029,6 +1211,7 @@ def update_state(
         f"- {ticket}: {status} ({now})",
         f"  - Summary: {summary}",
         f"  - Issues: Critical({crit})/Major({maj})/Minor({minor})",
+        f"  - Attempt: {attempt_count}, Retry Count: {retry_count}",
         f"  - Status: {status}",
     ]
     if commit:
@@ -1450,6 +1633,16 @@ def ralph_start(args: List[str]) -> int:
             logger.warn("git repo not found; falling back to serial")
             use_parallel = 1
 
+    # Check if retry escalation is enabled and warn about parallel workers
+    escalation_enabled = resolve_escalation_enabled(project_root)
+    max_retries = resolve_max_retries_from_settings(project_root)
+    if escalation_enabled and use_parallel > 1:
+        logger.warn(
+            "Retry escalation is enabled but parallelWorkers > 1. "
+            "Retry state tracking may have race conditions without ticket-level locking. "
+            "Consider setting parallelWorkers=1 or implementing file locking."
+        )
+
     # Safety check: timeout/restart is not supported in parallel mode
     # Per constraint: prefer warn+disable over partial/unsafe behavior
     timeout_ms = resolve_attempt_timeout_ms(config)
@@ -1495,6 +1688,8 @@ def ralph_start(args: List[str]) -> int:
             # Track queue state for ready/blocked counts
             completed_tickets: set[str] = set()
             running_ticket: Optional[str] = None
+            list_query = ticket_list_query(ticket_query)
+            ready_ids, blocked_ids = _refresh_pending_state(list_query, logger)
 
             while iteration < max_iterations:
                 if backlog_empty(completion_check):
@@ -1509,27 +1704,37 @@ def ralph_start(args: List[str]) -> int:
                 if not ticket:
                     sleep_sec = sleep_retries / 1000
                     logger.log_no_ticket_selected(sleep_seconds=sleep_sec, reason="no_ready_tickets", mode=mode, iteration=iteration)
+                    ready_ids, blocked_ids = _refresh_pending_state(list_query, logger)
                     time.sleep(sleep_sec)
                     continue
 
-                # Mark ticket as running and compute queue state
+                # Check if ticket has exceeded max retries (when escalation is enabled)
+                if escalation_enabled:
+                    knowledge_dir = resolve_knowledge_dir(project_root)
+                    is_blocked, attempt_count, retry_count = is_ticket_blocked_by_retries(
+                        ticket, knowledge_dir, max_retries, logger
+                    )
+                    if is_blocked:
+                        logger.warn(
+                            f"Skipping ticket {ticket}: max retries ({max_retries}) exceeded "
+                            f"(retryCount={retry_count})",
+                            ticket=ticket,
+                        )
+                        # Mark as failed in progress and continue
+                        if not options["dry_run"]:
+                            error_msg = f"Max retries ({max_retries}) exceeded - ticket blocked"
+                            update_state(ralph_dir, project_root, ticket, "BLOCKED", error_msg)
+                        iteration += 1
+                        continue
+
+                # Mark ticket as running and compute queue state from in-memory sets.
                 running_ticket = ticket
-                ready_ids = set(list_ready_tickets(ticket_list_query(ticket_query)))
-                blocked_ids = set(list_blocked_tickets())
-                # Pending = ready + blocked (tickets that could still run)
                 pending_ids = ready_ids | blocked_ids
-                # Remove currently running ticket from pending
-                if running_ticket in pending_ids:
-                    pending_ids.remove(running_ticket)
-                # Build dep_graph: blocked tickets have unmet deps
-                dep_graph: dict[str, set[str]] = {t: set() for t in blocked_ids if t in pending_ids}
-                # Compute queue state snapshot
-                from tf.ralph.queue_state import get_queue_state
-                queue_state = get_queue_state(
-                    pending=pending_ids,
-                    running={running_ticket} if running_ticket else set(),
-                    completed=completed_tickets,
-                    dep_graph=dep_graph,
+                queue_state = _compute_queue_state_snapshot(
+                    pending_ids=pending_ids,
+                    blocked_ids=blocked_ids,
+                    running_ids={running_ticket},
+                    completed_ids=completed_tickets,
                 )
 
                 # Update progress display at ticket start
@@ -1594,20 +1799,19 @@ def ralph_start(args: List[str]) -> int:
 
                 # Handle final result after restart loop
                 if not options["dry_run"]:
-                    # Recompute queue state after completion
-                    if ticket_rc == 0:
-                        completed_tickets.add(ticket)
+                    # done includes both success and failure per queue-state semantics.
+                    completed_tickets.add(ticket)
                     running_ticket = None
-                    # Get updated state for display/logging
-                    ready_ids = set(list_ready_tickets(ticket_list_query(ticket_query)))
-                    blocked_ids = set(list_blocked_tickets())
+
+                    # Refresh queue state once after completion so blocked->ready transitions
+                    # are reflected without duplicate relisting in the same iteration.
+                    ready_ids, blocked_ids = _refresh_pending_state(list_query, ticket_logger)
                     pending_ids = ready_ids | blocked_ids
-                    dep_graph = {t: set() for t in blocked_ids if t in pending_ids}
-                    queue_state = get_queue_state(
-                        pending=pending_ids,
-                        running=set(),
-                        completed=completed_tickets,
-                        dep_graph=dep_graph,
+                    queue_state = _compute_queue_state_snapshot(
+                        pending_ids=pending_ids,
+                        blocked_ids=blocked_ids,
+                        running_ids=set(),
+                        completed_ids=completed_tickets,
                     )
 
                     if ticket_rc != 0:

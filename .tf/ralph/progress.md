@@ -69,3 +69,23 @@
   - Retry: Attempt 1, Count 0
   - Status: CLOSED
   - Commit: 44c1b9d
+- pt-9uxj: COMPLETE (2026-02-10T13:42:02Z)
+  - Summary: Make quality gate meaningful: post-fix re-review before close
+  - Issues: Critical(0)/Major(0)/Minor(1)
+  - Status: COMPLETE
+- abc-123: CLOSED (2026-02-10T13:39:59Z)
+  - Summary: Fixed TypeError message consistency and added __all__ tests
+  - Issues: Critical(0)/Major(2 fixed, 1 deferred)/Minor(1 fixed)
+  - Retry: Attempt 1, Count 0
+  - Status: COMPLETE
+- pt-9uxj: COMPLETE (2026-02-10T13:46:29Z)
+  - Summary: Make quality gate meaningful: post-fix re-review before close
+  - Issues: Critical(0)/Major(0)/Minor(1)
+  - Status: COMPLETE
+
+- abc-123: BLOCKED (2026-02-10T13:50:04Z)
+  - Summary: Hello-world utility workflow execution
+  - Issues: Critical(0)/Major(3)/Minor(3)
+  - Retry: Attempt 1, Count 1
+  - Status: BLOCKED
+  - Reason: Quality gate failed - 3 Major issues (deferred for demo utility)
