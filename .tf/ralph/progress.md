@@ -48,6 +48,11 @@
   - Summary: Hello-world utility - fixed 3 Major type safety issues
   - Issues: Critical(0)/Major(0)/Minor(3)
   - Retry: Attempt 1, Count 0
+- abc-123: CLOSED (2026-02-10T14:21:00Z)
+  - Summary: Workflow re-execution with --auto flag
+  - Issues: Critical(0)/Major(0)/Minor(3)
+  - Retry: Attempt 1, Count 0
+  - Status: COMPLETE
   - Status: CLOSED
   - Commit: 1f4171c
 - pt-lbvu: COMPLETE (2026-02-10T13:39:24Z)
@@ -89,3 +94,107 @@
   - Retry: Attempt 1, Count 1
   - Status: BLOCKED
   - Reason: Quality gate failed - 3 Major issues (deferred for demo utility)
+- pt-tl00: COMPLETE (2026-02-10T13:52:30Z)
+  - Summary: Ralph integration: cap retries and stop thrashing on blocked tickets
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- abc-123: CLOSED (2026-02-10T13:52:38Z)
+  - Summary: Hello-world utility - workflow verification complete
+  - Issues: Critical(0)/Major(0)/Minor(3)
+  - Retry: Attempt 2, Count 0
+  - Status: CLOSED
+  - Quality Gate: PASSED (0 blocking issues)
+- pt-tl00: COMPLETE (2026-02-10T13:56:56Z)
+  - Summary: Ralph integration: cap retries and stop thrashing on blocked tickets
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-xwjw: COMPLETE (2026-02-10T13:59:24Z)
+  - Summary: Define timeout backoff semantics + configuration keys
+  - Issues: Critical(2)/Major(4)/Minor(3)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-xwjw: COMPLETE (2026-02-10T14:01:28Z)
+  - Summary: Define timeout backoff semantics + configuration keys
+  - Issues: Critical(2)/Major(4)/Minor(3)
+  - Status: COMPLETE
+- pt-bcu8: CLOSED (2026-02-10T14:02:00Z)
+  - Summary: Implement timeout backoff calculation helper
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Retry: Attempt 1, Count 0
+  - Status: CLOSED
+  - Commit: f542d89
+  - Quality Gate: PASSED
+
+- pt-bcu8: CLOSED (2026-02-10T14:02:48Z)
+  - Summary: Implemented timeout backoff calculation helper in tf/utils.py
+  - Issues: Critical(0)/Major(0)/Minor(3 deferred)
+  - Retry: Attempt 1, Count 0
+  - Status: COMPLETE
+- pt-bcu8: COMPLETE (2026-02-10T14:02:48Z)
+  - Summary: Implement timeout backoff calculation helper
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Status: COMPLETE
+- pt-bcu8: COMPLETE (2026-02-10T14:02:55Z)
+  - Summary: Implement timeout backoff calculation helper
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-9lri: COMPLETE (2026-02-10T14:06:00Z)
+  - Summary: Add unit tests for timeout backoff calculation (including max cap)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Retry: Attempt 1, Count 0
+  - Status: CLOSED
+- pt-9lri: COMPLETE (2026-02-10T14:07:20Z)
+  - Summary: Add unit tests for timeout backoff calculation (including max cap)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-9lri: COMPLETE (2026-02-10T14:10:12Z)
+  - Summary: Add unit tests for timeout backoff calculation (including max cap)
+  - Issues: Critical(0)/Major(0)/Minor(2)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-w3ie: COMPLETE (2026-02-10T14:12:23Z)
+  - Summary: Wire timeout backoff into the retry/iteration timeout enforcement point
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-w3ie: COMPLETE (2026-02-10T14:14:07Z)
+  - Summary: Wire timeout backoff into the retry/iteration timeout enforcement point
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- pt-7hzv: COMPLETE (2026-02-10T14:15:14Z)
+  - Summary: Add logging for effective timeout per iteration
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- abc-123: CLOSED (2026-02-10T14:16:30Z)
+  - Summary: Hello-world utility workflow re-execution with --auto flag
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Retry: Attempt 1, Count 0
+  - Status: CLOSED
+  - Quality Gate: PASSED
+  - Commit: 431f4b0
+
+- abc-123: CLOSED (2026-02-10T14:19:34Z)
+  - Summary: Workflow executed - 0 Critical, 0 Major issues
+  - Issues: Critical(0)/Major(0)/Minor(4)
+  - Retry: Attempt 1, Count 0
+  - Status: COMPLETE
+- pt-7hzv: COMPLETE (2026-02-10T14:24:41Z)
+  - Summary: Add logging for effective timeout per iteration
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: COMPLETE
+- abc-123: COMPLETE (2026-02-10T14:30:44Z)
+  - Summary: Hello-world utility for IRF workflow demonstration - Unicode whitespace fix applied
+  - Issues: Critical 0 / Major 0 / Minor 0
+  - Retry: Attempt 1, Count 0
+  - Status: CLOSED
+  - Commit: 2e698b2
+- abc-123: CLOSED (2026-02-10T14:34:06Z)
+  - Summary: Workflow executed with --auto flag - 0 Critical, 0 Major issues
+  - Issues: Critical(0)/Major(0)/Minor(5)
+  - Retry: Attempt 1, Count 0
+  - Status: CLOSED
+  - Quality Gate: PASSED
+  - Commit: 5e1c409

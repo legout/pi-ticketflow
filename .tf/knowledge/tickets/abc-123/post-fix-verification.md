@@ -3,29 +3,28 @@
 ## Summary
 - **Status**: PASS
 - **Quality Gate**: blocks on Critical, Major
-- **Note**: Source files differ by 58.2s (possible race condition)
 
 ## Pre-Fix Counts (from review.md)
 - **Critical**: 0
-- **Major**: 1
+- **Major**: 0
 - **Minor**: 5
 - **Warnings**: 2
-- **Suggestions**: 7
+- **Suggestions**: 6
 
 ## Fixes Applied (from fixes.md)
-- **Critical**: 10
-- **Major**: 9
-- **Minor**: 8
-- **Warnings**: 3
-- **Suggestions**: 1
-
-## Post-Fix Counts (calculated)
 - **Critical**: 0
 - **Major**: 0
 - **Minor**: 0
 - **Warnings**: 0
+- **Suggestions**: 0
+
+## Post-Fix Counts (calculated)
+- **Critical**: 0
+- **Major**: 0
+- **Minor**: 5
+- **Warnings**: 2
 - **Suggestions**: 6
 
 ## Quality Gate Decision
-- **Based on**: Post-fix counts
+- **Based on**: Post-fix counts (only Critical/Major block)
 - **Result**: PASSED - no blocking severities remain
