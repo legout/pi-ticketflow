@@ -39,7 +39,7 @@
       "model": "minimax/MiniMax-M2.1",
       "thinking": "high",
       "description": "Fast model for second-opinion review"
-    }
+    } 
   },
   "agents": {
     "reviewer-general": "review-general",
