@@ -58,3 +58,14 @@
   - Summary: Workflow re-verification - all checks passed
   - Issues: Critical(0)/Major(0)/Minor(2)
   - Status: COMPLETE
+- pt-9uxj: FAILED (2026-02-10T13:40:38Z)
+  - Summary: Make quality gate meaningful: post-fix re-review before close
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Status: FAILED
+  - Error: pi -p failed (exit -6)
+- pt-9uxj: COMPLETE (2026-02-10T13:41:00Z)
+  - Summary: Make quality gate meaningful: post-fix re-review before close
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Retry: Attempt 1, Count 0
+  - Status: CLOSED
+  - Commit: 44c1b9d
