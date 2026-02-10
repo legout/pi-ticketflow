@@ -1927,13 +1927,27 @@ def ralph_start(args: List[str]) -> int:
                     attempt += 1
 
                     # Calculate effective timeout with optional backoff
-                    effective_timeout_ms = calculate_effective_timeout(
+                    effective_timeout_ms, timeout_debug = calculate_effective_timeout(
                         base_timeout_ms=base_timeout_ms,
                         attempt_index=attempt - 1,  # 0-indexed for first attempt
                         backoff_enabled=backoff_enabled,
                         increment_ms=backoff_increment_ms,
                         max_ms=backoff_max_ms,
                     )
+
+                    # Build detailed timeout log message
+                    if backoff_enabled and base_timeout_ms > 0:
+                        base_info = f"base={timeout_debug['base_ms']}ms"
+                        increment_info = f"increment={timeout_debug['increment_ms']}ms"
+                        iteration_info = f"iteration={timeout_debug['attempt_index']}"
+                        effective_info = f"effective={effective_timeout_ms}ms"
+                        cap_info = ""
+                        if timeout_debug.get("max_ms"):
+                            cap_status = "capped" if timeout_debug.get("capped") else "uncapped"
+                            cap_info = f" max={timeout_debug['max_ms']}ms ({cap_status})"
+                        timeout_log = f"Timeout[{iteration_info}]: {base_info} + {increment_info} -> {effective_info}{cap_info}"
+                    else:
+                        timeout_log = f"Timeout: {effective_timeout_ms}ms (backoff disabled)"
 
                     if attempt > 1:
                         if backoff_enabled:
@@ -1943,8 +1957,14 @@ def ralph_start(args: List[str]) -> int:
                             )
                         else:
                             ticket_logger.info(f"Restart attempt {attempt - 1}/{max_restarts} for ticket", ticket=ticket)
+                        # Log detailed timeout info on restart
+                        ticket_logger.info(timeout_log, ticket=ticket)
                     elif backoff_enabled and effective_timeout_ms != base_timeout_ms:
                         ticket_logger.info(f"Initial timeout: {effective_timeout_ms}ms (backoff enabled)", ticket=ticket)
+                        ticket_logger.info(timeout_log, ticket=ticket)
+                    elif backoff_enabled:
+                        # First attempt with backoff enabled but no effective change yet
+                        ticket_logger.info(timeout_log, ticket=ticket)
 
                     cmd = build_cmd(workflow, ticket, workflow_flags)
                     ticket_rc = run_ticket(
