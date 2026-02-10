@@ -1,39 +1,41 @@
 # Review (Second Opinion): abc-123
 
 ## Overall Assessment
-The implementation is clean, well-documented, and follows Python best practices. The code includes proper type hints, docstrings with examples, comprehensive edge case handling for whitespace inputs, and good test coverage. The structure matches project conventions (pytest markers, test naming, imports).
+Clean, well-tested implementation that follows project conventions. Found one inconsistency in whitespace handling logic and one CLI edge case that could surprise users. These are not critical issues but worth addressing for API consistency.
 
 ## Critical (must fix)
 No issues found.
 
 ## Major (should fix)
-No major issues.
+No issues found.
 
 ## Minor (nice to fix)
-- `demo/__main__.py:22-26` - Import style: Uses legacy `Optional` and `Sequence` from `typing` module instead of modern Python 3.9+ syntax. Could use `argv: Sequence[str] | None = None` and remove imports. This is a style preference but modern syntax is cleaner.
-- `demo/__main__.py:22-26` - Import ordering: `collections.abc` import should come before `typing` per PEP 8 (alphabetical within groups). Current order is typing, sys, collections.abc - should be collections.abc, sys, typing.
-- `tests/test_demo_hello.py:42-45` - Test structure: The `test_hello_whitespace_only` uses a for-loop with multiple assertions. While functional, pytest's parametrize decorator would give better failure messages per test case. Current implementation aggregates all whitespace failures into one assertion message.
+- `demo/hello.py:36` - Inconsistent whitespace handling: empty/whitespace-only strings fall back to "World", but strings with content preserve all whitespace including leading/trailing (e.g., `hello("  Bob  ")` returns `"Hello,   Bob  !"`). Consider stripping the name for consistency: `name = name.strip()` before the check, or document that only completely empty/whitespace strings trigger the fallback.
+
+- `demo/__main__.py:29-32` - CLI doesn't handle names starting with `-` (e.g., `-h`). Running `python -m demo -h` shows help instead of greeting. This is standard argparse behavior but may surprise users with names like "-bob". Consider adding documentation or using `argparse.REMAINDER` or explicit `--` handling.
 
 ## Warnings (follow-up ticket)
-- `tests/test_demo_hello.py:55-62` - Missing CLI edge case tests: The CLI tests don't cover empty string or whitespace-only arguments, though the underlying `hello()` function handles them. A follow-up could add CLI tests for: `main([""])` and `main(["   "])` to ensure the full stack handles these inputs.
+- `tests/test_demo_hello.py:48-51` - Whitespace test uses a manual loop instead of pytest's `@pytest.mark.parametrize`. While functional, parameterized tests provide better failure reporting (individual test cases show as separate failures).
+
+- `tests/test_demo_hello.py` - No test for CLI with names containing spaces (e.g., `"Alice Smith"`) despite docstring examples. The docstring in `__main__.py` shows this as a valid use case but it's not tested.
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py` - Consider adding support for multiple names: `hello("Alice", "Bob")` → "Hello, Alice and Bob!" for extensibility demo purposes.
-- `tests/test_demo_hello.py` - Consider adding a test that verifies the docstring examples work via `doctest` module integration, ensuring examples stay synchronized with code.
+- `tests/test_demo_hello.py` - Add test case for `hello("  Bob  ")` to document/verify the whitespace preservation behavior (current behavior: preserves spaces).
+
+- `demo/__main__.py` - Add `metavar="NAME"` to the argument definition for cleaner help output (currently shows `[name]` but could be more explicit).
 
 ## Positive Notes
-- Excellent docstring quality with runnable examples in both module and function docstrings
-- Proper use of `from __future__ import annotations` for forward compatibility
-- Good edge case handling: empty strings and whitespace-only inputs gracefully fall back to "World"
-- Correct CLI implementation using argparse with proper exit codes (0 for success)
-- Tests use `pytest.mark.unit` marker consistently with project conventions
-- Type hints throughout including function return types
-- `__all__` properly defined in `__init__.py` for clean public API
-- The ticket reference in the module docstring (`Ticket: abc-123`) is helpful for traceability
+- Excellent test coverage with 6 tests covering default, custom names, empty strings, and CLI entry points
+- Good use of modern Python features: `from __future__ import annotations`, type hints throughout
+- CLI correctly handles empty string argument (`python -m demo ""` → `Hello, World!`) as documented
+- Proper package structure with `__all__` definition in `__init__.py`
+- Follows project convention of using `argparse` for CLI
+- Docstrings include runnable examples that match actual behavior
+- Consistent with project import patterns (`from typing import Optional`)
 
 ## Summary Statistics
 - Critical: 0
 - Major: 0
-- Minor: 3
-- Warnings: 1
+- Minor: 2
+- Warnings: 2
 - Suggestions: 2
