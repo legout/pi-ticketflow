@@ -1,47 +1,45 @@
 # Chain Summary: abc-123
 
-## Workflow Execution
-- **Ticket**: abc-123
-- **Flags**: --auto
-- **Executed**: 2026-02-10T14:34:06Z
+## Ticket
+- **ID**: abc-123
+- **Title**: Demo: Create hello-world utility for workflow testing
+
+## Execution
+- **Mode**: --auto (headless)
 - **Status**: COMPLETE
-
-## Steps Executed
-1. ✅ **Re-Anchor Context** - Loaded AGENTS.md, config, ticket details
-2. ✅ **Research** - Skipped (existing research.md sufficient)
-3. ✅ **Implement** - Verified current implementation (no changes needed)
-4. ✅ **Parallel Reviews** - 3 reviewers executed
-   - reviewer-general: 0 Critical, 0 Major, 2 Minor
-   - reviewer-spec-audit: 0 Critical, 0 Major, 0 Minor
-   - reviewer-second-opinion: 0 Critical, 0 Major, 3 Minor
-5. ✅ **Merge Reviews** - Consolidated to review.md
-6. ✅ **Fix Issues** - No fixes required (quality gate passed)
-7. ✅ **Post-Fix Verification** - Quality gate PASSED
-8. ⏭️ **Follow-ups** - Skipped (--create-followups not set)
-9. ✅ **Close Ticket** - Note added, artifacts committed
-10. ⏭️ **Final Review Loop** - Skipped (--final-review-loop not set)
-11. ⏭️ **Simplify Tickets** - Skipped (--simplify-tickets not set)
-12. ✅ **Ralph Integration** - Progress updated
-
-## Quality Gate Results
-| Severity | Pre-Fix | Fixed | Post-Fix |
-|----------|---------|-------|----------|
-| Critical | 0 | 0 | 0 |
-| Major | 0 | 0 | 0 |
-| Minor | 5 | 0 | 5 |
-| Warnings | 2 | 0 | 2 |
-| Suggestions | 6 | 0 | 6 |
-
-**Result**: PASSED (0 blocking issues)
+- **Commit**: 984dcde
 
 ## Artifacts
-- [implementation.md](implementation.md) - Implementation summary
-- [review.md](review.md) - Merged review findings
-- [fixes.md](fixes.md) - Fixes applied (none required)
-- [post-fix-verification.md](post-fix-verification.md) - Quality gate verification
-- [close-summary.md](close-summary.md) - Close summary
-- [files_changed.txt](files_changed.txt) - Tracked files
-- [ticket_id.txt](ticket_id.txt) - Ticket ID
 
-## Commit
-5e1c409: abc-123: Workflow re-execution - 0 Critical, 0 Major issues
+### Input
+- Ticket: `tk show abc-123`
+- Config: `.tf/config/settings.json`
+
+### Output
+| Artifact | Path |
+|----------|------|
+| Research | [research.md](research.md) |
+| Implementation | [implementation.md](implementation.md) |
+| Review (merged) | [review.md](review.md) |
+| Review (general) | [review-general.md](review-general.md) |
+| Review (spec) | [review-spec.md](review-spec.md) |
+| Review (second) | [review-second.md](review-second.md) |
+| Fixes | [fixes.md](fixes.md) |
+| Post-Fix Verification | [post-fix-verification.md](post-fix-verification.md) |
+| Close Summary | [close-summary.md](close-summary.md) |
+| Files Changed | [files_changed.txt](files_changed.txt) |
+
+## Quality Metrics
+- **Tests**: 12 passed
+- **Review Issues**: 0 Critical, 0 Major, 3 Minor (deferred)
+- **Quality Gate**: PASSED
+
+## Workflow Steps
+- [x] Re-Anchor Context
+- [x] Research (existing)
+- [x] Implement (verified)
+- [x] Parallel Reviews (3 reviewers)
+- [x] Merge Reviews
+- [x] Fix Issues (none required)
+- [x] Post-Fix Verification
+- [x] Close Ticket
