@@ -23,8 +23,8 @@ No issues found
 - `demo/__main__.py` - Consider adding version flag (`-V/--version`) for CLI completeness *(reviewer-general, reviewer-second-opinion)*
 - `demo/__main__.py` - Consider adding `--help` output tests *(reviewer-second-opinion)*
 - `demo/hello.py` - Consider making the greeting format configurable for i18n flexibility *(reviewer-general, reviewer-second-opinion)*
-- `tests/test_demo_hello.py` - Consider using `@pytest.mark.parametrize` for whitespace test cases *(reviewer-spec-audit, reviewer-second-opinion)*
-- `demo/hello.py` - Consider documenting whitespace-fallback behavior more prominently *(reviewer-spec-audit)*
+- `tests/test_demo_hello.py` - Consider using `@pytest.mark.parametrize` for whitespace test cases *(reviewer-second-opinion)*
+- `tests/test_demo_hello.py` - Consider adding test for KeyboardInterrupt handling if signal handling is added *(reviewer-general)*
 
 ## Positive Notes (All Reviewers)
 - ✅ All acceptance criteria met and exceeded (8 tests vs "simple test" requirement)
