@@ -1,45 +1,39 @@
-# Chain Summary: abc-123
+# Workflow Chain Summary: abc-123
 
 ## Ticket
 - **ID**: abc-123
 - **Title**: Demo: Create hello-world utility for workflow testing
 
 ## Execution
-- **Mode**: --auto (headless)
+- **Date**: 2026-02-10
+- **Flags**: --auto
 - **Status**: COMPLETE
-- **Commit**: 984dcde
 
 ## Artifacts
 
-### Input
-- Ticket: `tk show abc-123`
-- Config: `.tf/config/settings.json`
-
-### Output
 | Artifact | Path |
 |----------|------|
-| Research | [research.md](research.md) |
-| Implementation | [implementation.md](implementation.md) |
-| Review (merged) | [review.md](review.md) |
-| Review (general) | [review-general.md](review-general.md) |
-| Review (spec) | [review-spec.md](review-spec.md) |
-| Review (second) | [review-second.md](review-second.md) |
-| Fixes | [fixes.md](fixes.md) |
-| Post-Fix Verification | [post-fix-verification.md](post-fix-verification.md) |
-| Close Summary | [close-summary.md](close-summary.md) |
-| Files Changed | [files_changed.txt](files_changed.txt) |
+| Research | `.tf/knowledge/tickets/abc-123/research.md` |
+| Implementation | `.tf/knowledge/tickets/abc-123/implementation.md` |
+| Review (Merged) | `.tf/knowledge/tickets/abc-123/review.md` |
+| Review (General) | `.tf/knowledge/tickets/abc-123/review-general.md` |
+| Review (Spec) | `.tf/knowledge/tickets/abc-123/review-spec.md` |
+| Review (Second) | `.tf/knowledge/tickets/abc-123/review-second.md` |
+| Fixes | `.tf/knowledge/tickets/abc-123/fixes.md` |
+| Post-Fix Verification | `.tf/knowledge/tickets/abc-123/post-fix-verification.md` |
+| Close Summary | `.tf/knowledge/tickets/abc-123/close-summary.md` |
 
-## Quality Metrics
-- **Tests**: 12 passed
-- **Review Issues**: 0 Critical, 0 Major, 3 Minor (deferred)
-- **Quality Gate**: PASSED
+## Quality Gate
+- **Status**: PASSED
+- **Fail On**: Critical, Major
+- **Post-Fix Counts**: 0 Critical, 0 Major, 0 Minor
 
-## Workflow Steps
-- [x] Re-Anchor Context
-- [x] Research (existing)
-- [x] Implement (verified)
-- [x] Parallel Reviews (3 reviewers)
-- [x] Merge Reviews
-- [x] Fix Issues (none required)
-- [x] Post-Fix Verification
-- [x] Close Ticket
+## Files Changed
+- `demo/hello.py`
+- `demo/__main__.py`
+- `demo/__init__.py`
+- `tests/test_demo_hello.py`
+
+## Verification
+- All 12 tests passing
+- No blocking issues
