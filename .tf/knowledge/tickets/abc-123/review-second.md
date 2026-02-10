@@ -1,43 +1,44 @@
 # Review: abc-123
 
 ## Overall Assessment
-The implementation is solid and well-tested. The code demonstrates good defensive programming with type validation, proper CLI argument handling, and comprehensive test coverage. No critical issues found. Minor edge cases around I/O handling and Unicode whitespace could be improved, but these are unlikely to cause problems in practice.
+The implementation is robust and well-tested for standard use cases. However, a significant edge case exists with non-printing Unicode whitespace characters that are not stripped by Python's `str.strip()`, potentially producing visually confusing output ("Hello, !" with invisible characters). Type validation is only reachable from direct API calls, not CLI. No critical issues for typical usage patterns.
 
 ## Critical (must fix)
 No issues found.
 
 ## Major (should fix)
-No issues found.
+- `demo/hello.py:46` - **Zero-width whitespace not handled**: Python's `str.strip()` removes ASCII whitespace but does NOT remove all Unicode whitespace characters. Specifically, zero-width space (U+200B), zero-width non-joiner (U+200C), and other non-printing characters pass through unchanged. Example: `hello("\u200B\u200B")` returns `'Hello, \u200b\u200b!'` which renders as `"Hello, !"` - appearing as a bug to users. Consider normalizing whitespace using `unicodedata.normalize('NFKC', name).strip()` or explicitly filtering Unicode whitespace via regex.
 
 ## Minor (nice to fix)
-- `demo/__main__.py:37` - `print()` to stdout lacks BrokenPipeError handling. If output is piped to a command that exits early (e.g., `python -m demo | head -1`), a BrokenPipeError traceback may clutter stderr. Consider wrapping in try/except BrokenPipeError or using `sys.stdout.write()` with error suppression.
+- `demo/hello.py:42-45` - **Type validation scope limited to API usage**: The explicit type checking (None check and `isinstance(name, str)`) only applies to direct Python API calls. The CLI (`__main__.py`) uses `argparse` which always returns strings for positional arguments, so TypeError will never be raised from CLI use. While the validation is valuable for library usage, this distinction should be noted in documentation or docstrings to avoid confusion about when these errors occur.
 
-- `demo/hello.py:48-49` - Docstring states "Empty strings and whitespace-only strings return the full greeting 'Hello, World!'" but this could be clearer. The actual behavior substitutes the default name "World" when the cleaned name is empty, which is slightly different semantic intent from "returning the full greeting."
+- `demo/hello.py:48-49` - **Docstring semantics slightly misleading**: The docstring states "Empty strings and whitespace-only strings return the full greeting 'Hello, World!'" which implies the original string is preserved in some form. The actual behavior substitutes "World" when the cleaned input is empty. This distinction matters for logging/debugging scenarios. Consider rephrasing: "When the cleaned name is empty (after stripping whitespace), 'World' is substituted."
 
-- `tests/test_demo_hello.py:58-61` - Whitespace test only covers ASCII whitespace (space, tab, newline, carriage return). Python's `str.strip()` also removes other Unicode whitespace characters (e.g., non-breaking space `\u00A0`, zero-width space `\u200B`). Consider adding a test case for at least one non-ASCII whitespace character to document this behavior.
+- `demo/hello.py:42` - **Redundant None check**: The explicit `if name is None` check is redundant because `isinstance(None, str)` returns False, triggering the same error at line 45. While the separate error message for None ("got NoneType") is more user-friendly than "got NoneType" from the generic check, this could be consolidated without losing clarity. However, the current implementation prioritizes UX, so this is a minor style preference.
 
 ## Warnings (follow-up ticket)
-- `demo/__main__.py:33` - No signal handling for SIGINT/SIGTERM. While unlikely to cause issues in this simple CLI, a follow-up could add proper signal handlers for clean shutdown if the tool grows more complex (e.g., adding file I/O or network operations).
+- `demo/hello.py:46` - **Unicode normalization not applied**: The function does not perform Unicode normalization, so canonically equivalent strings may produce different whitespace stripping behavior. For example, the non-breaking space U+00A0 IS stripped by `str.strip()`, but its decomposed form might behave differently in edge cases. This is unlikely to cause issues in practice but could be noted if the tool grows to handle international names.
 
-- `demo/__main__.py:15` - The docstring example `$ python -m demo ""` behavior depends on shell quoting rules. In some Windows shells or when invoked via certain subprocess calls, empty string arguments may be stripped. Consider noting this is shell-dependent behavior.
+- `tests/test_demo_hello.py` - **Missing edge case for zero-width whitespace**: Test coverage includes ASCII whitespace variants but does not test non-stripped Unicode whitespace (e.g., U+200B zero-width space). Adding a test case that documents this behavior would prevent confusion if users encounter invisible characters in output.
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py:42-45` - The explicit `None` check is redundant. `isinstance(None, str)` returns `False`, so the code could be simplified by removing lines 42-43. However, the separate error message for None is arguably more user-friendly, so this is a style preference.
+- `demo/__main__.py:28` - **Default value redundancy**: The `argparse` default value `"World"` is technically redundant because the `hello()` function already defaults to `"World"`. Setting `default=None` would reduce duplication without changing behavior. However, the current explicit default is clearer for documentation and type inference.
 
-- `demo/hello.py:46` - Consider using `typing.cast(str, name)` or adding a `# pyright: ignore` comment after the isinstance check to help type checkers understand that `cleaned_name` is definitely a string, eliminating potential downstream type inference issues.
+- `demo/hello.py:1-19` - **Consider adding security note**: While this simple utility has no security implications, if it evolves to process user input for display in web contexts, consider documenting that `cleaned_name` is not sanitized for HTML/JavaScript injection (current f-string does not escape special characters).
 
 ## Positive Notes
-- Excellent test coverage with 11 tests covering unit and CLI layers, happy paths and edge cases
-- Proper type validation with clear error messages that include the actual type received
-- Good use of `__future__` imports for forward compatibility
-- Clean separation between library code (`hello.py`) and CLI interface (`__main__.py`)
-- `__all__` properly defined in both package and module for clean public API
-- Docstrings follow Google style with clear Args/Returns/Raises sections
-- CLI uses argparse correctly with help text and proper exit codes
+- Clean separation of concerns between library API and CLI interface
+- Comprehensive test coverage for standard use cases (11 tests)
+- Modern Python practices with `__future__` imports and proper `__all__` exports
+- Type validation provides helpful error messages for library users
+- Good handling of common edge cases: empty strings, leading/trailing whitespace, None values
+- CLI uses argparse correctly with proper help text and exit codes
+- Memory handling is correct - `str.strip()` creates a copy but this is acceptable for typical name inputs
+- Unicode decomposition is preserved (e.g., "Café" in composed vs. NFD form), which is appropriate
 
 ## Summary Statistics
 - Critical: 0
-- Major: 0
+- Major: 1
 - Minor: 3
 - Warnings: 2
 - Suggestions: 2

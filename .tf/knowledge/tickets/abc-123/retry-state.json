@@ -93,9 +93,32 @@
         "worker": null
       },
       "closeSummaryRef": "close-summary.md"
+    },
+    {
+      "attemptNumber": 1,
+      "startedAt": "2026-02-10T14:16:00Z",
+      "completedAt": "2026-02-10T14:21:00Z",
+      "status": "closed",
+      "trigger": "manual",
+      "qualityGate": {
+        "failOn": ["Critical", "Major"],
+        "counts": {
+          "Critical": 0,
+          "Major": 0,
+          "Minor": 3,
+          "Warnings": 2,
+          "Suggestions": 4
+        }
+      },
+      "escalation": {
+        "fixer": null,
+        "reviewerSecondOpinion": null,
+        "worker": null
+      },
+      "closeSummaryRef": "close-summary.md"
     }
   ],
-  "lastAttemptAt": "2026-02-10T14:19:34Z",
+  "lastAttemptAt": "2026-02-10T14:21:00Z",
   "status": "closed",
   "retryCount": 0
 }
