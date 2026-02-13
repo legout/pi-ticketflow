@@ -1,33 +1,39 @@
 # Fixes: pt-6zp2
 
 ## Summary
-Fixed test integration issues identified during second-opinion review: corrected escalation test simulation (off-by-one attempt numbers), integrated escalation tests with `sync.resolve_meta_model` for end-to-end coverage, and added explicit backward-compatibility test for `agents.fixer="general"` with missing `metaModels.fixer`.
+Fixed pre-existing bug in worker escalation fallback and enhanced test integration.
 
 ## Fixes by Severity
 
 ### Critical (must fix)
-- No critical issues within ticket scope.
+- [x] `tf/retry_state.py:395` - Fixed worker escalation fallback bug. Worker now falls back to base model when no explicit override is configured, matching fixer and reviewerSecondOpinion behavior. Previously, worker would be `None` if no override was set.
 
 ### Major (should fix)
-- **tests/test_sync.py:218-271** – Revised `test_escalation_overrides_fixer_model` and `test_escalation_fallback_to_base_when_no_override` to:
-  - Use explicit `next_attempt_number=2` instead of starting attempt 2 before calling `resolve_escalation`, eliminating off-by-one error.
-  - Derive base model via `sync.resolve_meta_model` from a full config, ensuring the tests cover the actual resolution pipeline.
-- **tests/test_sync.py:157** – Added `test_fixer_uses_general_when_meta_model_missing` to directly test the exact backward-compat configuration (`agents.fixer="general"`, `metaModels.fixer` missing).
+- [x] Test integration with `sync.resolve_meta_model` - Tests now derive `base_models` from actual config resolution rather than hand-crafted dicts.
+- [x] Attempt number precision - Tests use explicit `next_attempt_number` parameter to verify exact boundary conditions.
 
 ### Minor (nice to fix)
-- No minor issues addressed in this fix step.
+- [x] Added `test_fixer_uses_general_when_meta_model_missing` - Tests backward compatibility: `agents.fixer="general"` with `metaModels.fixer` absent returns `metaModels.general`.
+- [x] Docstring clarifications for escalation tests.
 
 ### Warnings (follow-up)
-- Pre-existing worker escalation bug (`tf/retry_state.py:247`) is not fixed here; will be tracked in a separate follow-up ticket.
+- [ ] Created follow-up consideration for attempt 3+ escalation coverage for reviewer and worker roles.
+
+### Suggestions (follow-up)
+- [ ] Consider property-based tests for complete escalation decision matrix coverage.
 
 ## Summary Statistics
-- **Critical**: 0
-- **Major**: 2 (both fixed)
-- **Minor**: 0
+- **Critical**: 1 (worker escalation fallback bug fixed)
+- **Major**: 2 (test integration improved)
+- **Minor**: 2 (backward compat test added, docstrings clarified)
 - **Warnings**: 0
 - **Suggestions**: 0
 
+## Files Changed
+- `tf/retry_state.py` - Fixed worker escalation fallback
+- `tests/test_sync.py` - Enhanced tests with proper integration and added backward compat test
+
 ## Verification
-- All 26 tests in `tests/test_sync.py` pass, including the 7 in `TestFixerMetaModelSelection`.
-- The revised tests now correctly verify the escalation curve boundary and the full integration chain.
-- No regressions introduced.
+- All 7 tests in `TestFixerMetaModelSelection` pass
+- All 10 escalation-related tests in `test_retry_state.py` pass
+- Worker escalation now correctly falls back to base model

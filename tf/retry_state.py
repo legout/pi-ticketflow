@@ -393,8 +393,7 @@ class RetryState:
                 models_config.get("reviewerSecondOpinion")
                 or base_models.get("reviewerSecondOpinion")
             )
-            if models_config.get("worker"):
-                result.worker = models_config.get("worker")
+            result.worker = models_config.get("worker") or base_models.get("worker")
 
         return result
 
