@@ -19,6 +19,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.5.0] - 2026-02-13
+
+### Changed
+
+#### Deterministic `/tf` Orchestration
+- **`tf irf` CLI command** - New deterministic backend for `/tf` workflow
+  - Strict flag parsing and validation
+  - Config-aware research entry selection
+  - Deterministic `/chain-prompts` command construction
+  - Post-chain command execution only on successful chain completion
+  - `--plan`/`--dry-run` support for plan inspection
+- **`/tf` as thin wrapper** - `/tf` now delegates to `tf irf` for all orchestration
+- **Removed `pi-model-switch` dependency** - No longer required; each phase has its own `model:` frontmatter
+
+#### Project-Root Asset Layout
+- **Canonical paths** - `agents/`, `prompts/`, `skills/` at project root (not `.pi/`)
+- **Updated tooling** - `tf init`, `tf sync`, `tf asset_planner`, `tf ralph` updated for new layout
+- **Legacy fallback** - `.pi/` still supported as fallback for backward compatibility
+
+#### Phase Skills & Prompts Architecture
+- **`tf-review` skill restored** - Shared reviewer subagent contract (used by reviewer agents)
+- **`tf-review-phase` skill added** - Review phase orchestration (parallel fan-out + merge)
+- **Phase prompts** - `/tf-research`, `/tf-implement`, `/tf-review`, `/tf-fix`, `/tf-close` as thin wrappers with frontmatter
+- **Removed post-chain from close phase** - Post-chain logic now in `tf irf`
+
+### Added
+
+#### New CLI Commands
+- **`tf irf <ticket-id> [flags]`** - Deterministic `/chain-prompts` IRF workflow wrapper
+
+#### New Pi Prompts
+- `/tf-research` - Research phase prompt
+- `/tf-implement` - Implementation phase prompt  
+- `/tf-review` - Review phase prompt (uses `tf-review-phase` skill)
+- `/tf-fix` - Fix phase prompt
+- `/tf-close` - Close phase prompt
+
+#### New Skills
+- `tf-research` - Research phase procedure
+- `tf-implement` - Implementation phase procedure
+- `tf-review` - Shared reviewer subagent contract
+- `tf-review-phase` - Review phase orchestration
+- `tf-fix` - Fix phase procedure
+- `tf-close` - Close phase procedure
+
+### Fixed
+
+- **Critical regression** - `tf-review` skill collision between reviewer contract and phase orchestration
+- **Asset routing** - Manifest now routes to project-root `agents/`, `prompts/`, `skills/`
+- **Model sync** - `tf sync` now supports both project-root and legacy `.pi/` layouts
+- **Ralph prompt discovery** - Checks both `prompts/tf.md` and legacy `.pi/prompts/tf.md`
+- **Doctor checks** - Removed `pi-model-switch` from required extensions
+
+### Removed
+
+- **`pi-model-switch` as required extension** - No longer needed; each phase has its own `model:` frontmatter
+
+### Documentation
+
+- Updated all docs for deterministic workflow and project-root asset layout
+- Added smoke-test procedure to `docs/workflows.md`
+- Added `tf irf` command documentation to `docs/commands.md`
+- Updated model strategy tables to match current config defaults
+- Removed stale runtime model-switch guidance
+
+### Migration Notes
+
+Users upgrading from 0.4.0:
+1. Run `tf init` to install new project-root assets
+2. Run `tf sync` to update model frontmatter
+3. Remove `pi-model-switch` if only used for TF: `pi uninstall npm:pi-model-switch`
+4. Optional: Clean up `.pi/agents/`, `.pi/prompts/`, `.pi/skills/` after migration
+
 ## [0.4.0] - 2026-02-09
 
 ### Added
