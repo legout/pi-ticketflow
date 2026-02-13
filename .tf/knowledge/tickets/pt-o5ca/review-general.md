@@ -1,31 +1,32 @@
 # Review: pt-o5ca
 
 ## Overall Assessment
-The decision document is clear and well-structured, and it provides concrete mapping examples for key `/tf` flags. However, it currently introduces compatibility regressions versus the existing `tf-workflow` contract around research enablement and retry reset behavior. Those two gaps should be resolved before downstream implementation tickets consume this design.
+The hybrid strategy is a strong direction and the document is clear, but the pseudo-implementation has several correctness gaps that would cause wrong runtime behavior if implemented as written. The highest-risk issues are around phase sequencing and post-chain execution semantics, which currently conflict with the intended workflow guarantees. These should be resolved in the design doc before downstream implementation tickets proceed.
 
 ## Critical (must fix)
-- No issues found.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:75-76,86` - With `--no-research`, `research_entry` is set to `tf-implement`, but the chain still explicitly includes `-> tf-implement -> ...`, so implement would run twice. This breaks the intended phase order and can cause duplicate edits/artifacts.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:85-91,203-206` - The pseudo-code runs post-chain commands unconditionally after invoking the chain and does not gate them on successful close status. That contradicts the stated quality-gate behavior and can trigger follow-up actions on failed/BLOCKED tickets.
 
 ## Major (should fix)
-- `.tf/knowledge/tickets/pt-o5ca/implementation.md:44-46` - The proposed default mapping always includes `tf-research`, which conflicts with current behavior where research is conditional on `workflow.enableResearcher` unless `--with-research` is set (`skills/tf-workflow/SKILL.md:70-71`, `skills/tf-workflow/SKILL.md:231`). This breaks the stated backward-compatibility goal and can increase runtime/cost unexpectedly for configurations that intentionally disable research.
-- `.tf/knowledge/tickets/pt-o5ca/implementation.md:88-90` - `--retry-reset` is marked as unsupported with no compatibility bridge, while current workflow explicitly supports it (`skills/tf-workflow/SKILL.md:75`, `skills/tf-workflow/SKILL.md:92-94`). Dropping this behavior risks operational regressions in retry/escalation flows and makes it harder to recover from stale retry state.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:49,77,89-90` - `--create-followups` is documented as `/tf-followups <artifact-dir>/review.md`, but pseudo-code only stores `"tf-followups"` and executes `pi "/$cmd"` without required arguments. This would fail or produce non-deterministic artifact selection.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:70,161` - The wrapper defaults to `tf-research` regardless of config, while the doc claims default behavior remains "research runs if enabled in config." Without explicit config-aware branching, behavior changes when research is disabled.
 
 ## Minor (nice to fix)
-- `.tf/knowledge/tickets/pt-o5ca/implementation.md:45-46` - The design does not define precedence when both `--no-research` and `--with-research` are provided. Without an explicit rule, wrapper implementations may diverge, causing inconsistent behavior across environments.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:65-67,86` - No explicit validation for missing/empty `ticket_id` is shown. Failing fast with a usage error would prevent ambiguous chain invocations and simplify troubleshooting.
 
 ## Warnings (follow-up ticket)
-- `.tf/knowledge/tickets/pt-o5ca/implementation.md:79` - Post-chain actions are delegated to “wrapper (or closer phase)” without a strict sequencing contract for partial-chain failures. This is a maintainability risk: future implementers may trigger follow-up commands after failed/aborted chains unless failure gating is explicitly standardized.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:73-81` - Flag conflict handling (e.g., both `--no-research` and `--with-research`) is implicit rather than specified. Documenting precedence now avoids inconsistent behavior across shell or Python wrapper implementations.
 
 ## Suggestions (follow-up ticket)
-- `.tf/knowledge/tickets/pt-o5ca/implementation.md:92-129` - Add a small flag-resolution test matrix (or executable examples) covering default, `--no-research`, `--with-research`, combined optional post-chain flags, and conflicting flags. This would reduce regressions in pt-mdl0 by making expected behavior unambiguous.
+- `.tf/knowledge/tickets/pt-o5ca/implementation.md:53-57` - Add explicit rationale for post-chain execution order and failure policy per command (stop-on-first-failure vs best-effort). This improves maintainability and testability for future optional flags.
 
 ## Positive Notes
-- The hybrid strategy cleanly separates chain selection from optional post-chain actions and is easy to reason about.
-- The mapping tables and concrete command examples make the proposal implementation-friendly.
-- Dependency links to pt-74hd / pt-qmhr / pt-mdl0 are clearly identified, which helps sequencing.
+- The chosen hybrid model is sensible and avoids combinatorial chain explosion.
+- Flag mapping is presented clearly with examples, making the design easy to implement.
+- Backward compatibility and migration concerns are explicitly documented.
 
 ## Summary Statistics
-- Critical: 0
+- Critical: 2
 - Major: 2
 - Minor: 1
 - Warnings: 1

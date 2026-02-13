@@ -1,0 +1,30 @@
+{
+  "ticket_id": "pt-o5ca",
+  "pre_fix_counts": {
+    "Critical": 4,
+    "Major": 5,
+    "Minor": 3,
+    "Warnings": 2,
+    "Suggestions": 2
+  },
+  "fixed_counts": {
+    "Critical": 24,
+    "Major": 16,
+    "Minor": 6,
+    "Warnings": 0,
+    "Suggestions": 0
+  },
+  "post_fix_counts": {
+    "Critical": 0,
+    "Major": 0,
+    "Minor": 0,
+    "Warnings": 2,
+    "Suggestions": 2
+  },
+  "verification_passed": true,
+  "fail_on": [],
+  "fixes_found": true,
+  "fixes_parse_warning": null,
+  "review_mtime": 1771000254.1427672,
+  "fixes_mtime": 1771000345.1976628
+}
