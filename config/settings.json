@@ -39,6 +39,11 @@
       "model": "openrouter/stepfun/step-3.5-flash:free",
       "thinking": "high",
       "description": "Fast model for second-opinion review"
+    },
+    "fixer": {
+      "model": "chutes/zai-org/GLM-4.7-Flash",
+      "thinking": "medium",
+      "description": "Fast, cheap model for fix iterations and small edits"
     }
   },
   "agents": {
@@ -46,7 +51,7 @@
     "reviewer-spec-audit": "review-spec",
     "reviewer-second-opinion": "review-secop",
     "review-merge": "general",
-    "fixer": "general",
+    "fixer": "fixer",
     "closer": "fast",
     "researcher": "research",
     "researcher-fetch": "research"
@@ -152,7 +157,16 @@
       "coverage/**",
       ".venv/**",
       "vendor/**"
-    ]
+    ],
+    "escalation": {
+      "enabled": false,
+      "maxRetries": 3,
+      "models": {
+        "fixer": null,
+        "reviewerSecondOpinion": null,
+        "worker": null
+      }
+    }
   },
   "ralph": {
     "parallelWorkers": 1,

@@ -1,0 +1,33 @@
+{
+  "ticket_id": "pt-g2tu",
+  "pre_fix_counts": {
+    "Critical": 0,
+    "Major": 0,
+    "Minor": 0,
+    "Warnings": 0,
+    "Suggestions": 0
+  },
+  "fixed_counts": {
+    "Critical": 0,
+    "Major": 0,
+    "Minor": 0,
+    "Warnings": 0,
+    "Suggestions": 0
+  },
+  "post_fix_counts": {
+    "Critical": 0,
+    "Major": 0,
+    "Minor": 0,
+    "Warnings": 0,
+    "Suggestions": 0
+  },
+  "verification_passed": true,
+  "fail_on": [
+    "Critical",
+    "Major"
+  ],
+  "fixes_found": false,
+  "fixes_parse_warning": null,
+  "review_mtime": 1770987497.799393,
+  "fixes_mtime": null
+}

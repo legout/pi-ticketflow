@@ -1,17 +1,17 @@
 {
   "metaModels": {
     "planning": {
-      "model": "openai-codex/gpt-5.2",
+      "model": "openai-codex/gpt-5.3-codex",
       "thinking": "medium",
       "description": "Fast, capable model for planning and specification"
     },
     "worker": {
-      "model": "kimi-coding/k2p5",
+      "model": "minimax/MiniMax-M2.5",
       "thinking": "high",
       "description": "Strong model for implementation and complex reasoning"
     },
     "research": {
-      "model": "minimax/MiniMax-M2.1",
+      "model": "kimi-coding/k2p5",
       "thinking": "medium",
       "description": "Fast model for research and information gathering"
     },
@@ -21,7 +21,7 @@
       "description": "Cheapest model for quick tasks, fixes, and summaries"
     },
     "general": {
-      "model": "zai/glm-4.7",
+      "model": "kimi-coding/k2p5",
       "thinking": "medium",
       "description": "General-purpose model for admin tasks"
     },
@@ -31,7 +31,7 @@
       "description": "Capable model for general code review"
     },
     "review-spec": {
-      "model": "openai-codex/gpt-5.2-codex",
+      "model": "openai-codex/gpt-5.3-codex",
       "thinking": "medium",
       "description": "Strong model for specification compliance audit"
     },
@@ -39,6 +39,11 @@
       "model": "openrouter/stepfun/step-3.5-flash:free",
       "thinking": "high",
       "description": "Fast model for second-opinion review"
+    },
+    "fixer": {
+      "model": "chutes/zai-org/GLM-4.7-Flash",
+      "thinking": "medium",
+      "description": "Fast, cheap model for fix iterations and small edits"
     }
   },
   "agents": {
@@ -46,7 +51,7 @@
     "reviewer-spec-audit": "review-spec",
     "reviewer-second-opinion": "review-secop",
     "review-merge": "general",
-    "fixer": "general",
+    "fixer": "fixer",
     "closer": "fast",
     "researcher": "research",
     "researcher-fetch": "research"
