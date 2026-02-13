@@ -1,29 +1,36 @@
 # Fixes: pt-g2tu
 
 ## Summary
-Added missing `metaModels.fixer` entry and corrected `agents.fixer` mapping in the template configuration (`config/settings.json`) to match the project configuration, ensuring new installs get the correct fixer model.
+Addressed review findings by updating documentation to match the new `metaModels.fixer` configuration. The template config (`config/settings.json`) was already correct.
 
 ## Fixes by Severity
 
 ### Critical (must fix)
-- None
+- [x] No issues found
 
 ### Major (should fix)
-- [x] `config/settings.json:39-51` - Added `metaModels.fixer` with model `chutes/zai-org/GLM-4.7-Flash`, thinking `medium`, and description.
-- [x] `config/settings.json:54` - Changed `agents.fixer` from `"general"` to `"fixer"`.
+- [x] `config/settings.json` - Upon inspection, the template already contains `metaModels.fixer` and `agents.fixer: "fixer"`. No changes needed.
 
 ### Minor (nice to fix)
-- [ ] `docs/configuration.md:124-132` - Deferred: documentation update is tracked separately in pt-lpw2 (blocking link)
+- [x] `docs/configuration.md` - Updated the configuration example to include `metaModels.fixer` and changed `agents.fixer` from `"general"` to `"fixer"`.
+- [x] `docs/configuration.md` - Added `fixer` role to the Model Strategy table.
+
+### Warnings (follow-up)
+- [ ] No issues fixed (deferred)
+
+### Suggestions (follow-up)
+- [ ] No issues fixed (deferred)
 
 ## Summary Statistics
 - **Critical**: 0
-- **Major**: 1
-- **Minor**: 0
+- **Major**: 0 (template was already correct)
+- **Minor**: 2 (documentation updated)
 - **Warnings**: 0
 - **Suggestions**: 0
 
+## Files Changed
+- `docs/configuration.md` - Updated configuration example and Model Strategy table
+
 ## Verification
-- JSON validation: `python3 -c "import json; json.load(open('config/settings.json'))"` → valid.
-- Verified `metaModels.fixer` exists with correct model, thinking, description.
-- Verified `agents.fixer` points to `"fixer"`.
-- Ran `tf post-fix-verify` to confirm quality gate passes.
+- JSON validation passed for `config/settings.json`
+- Documentation now accurately reflects the new fixer meta-model configuration

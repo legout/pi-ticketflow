@@ -119,6 +119,11 @@ Models are configured in `config/settings.json`:
       "model": "google-antigravity/gemini-3-flash",
       "thinking": "high",
       "description": "Fast model for second-opinion review"
+    },
+    "fixer": {
+      "model": "chutes/zai-org/GLM-4.7-Flash",
+      "thinking": "medium",
+      "description": "Fast, cheap model for fix iterations and small edits"
     }
   },
   "agents": {
@@ -126,7 +131,7 @@ Models are configured in `config/settings.json`:
     "reviewer-spec-audit": "review-spec",
     "reviewer-second-opinion": "review-secop",
     "review-merge": "general",
-    "fixer": "general",
+    "fixer": "fixer",
     "closer": "fast",
     "researcher": "research",
     "researcher-fetch": "research"
@@ -166,6 +171,7 @@ Models are configured in `config/settings.json`:
 | review-general | openai-codex/gpt-5.1-codex-mini | General code review |
 | review-spec | openai-codex/gpt-5.3-codex | Specification compliance audit |
 | review-secop | google-antigravity/gemini-3-flash | Second-opinion review |
+| fixer | zai-org/GLM-4.7-Flash | Fast model for fix iterations and small edits |
 | planning | openai-codex/gpt-5.2 | Planning and specification |
 
 ### Applying Changes
