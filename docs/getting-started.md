@@ -79,6 +79,12 @@ Use the topic id returned by `/tf-seed` (for example, `seed-build-a-cli-tool`).
 /tf <ticket-id>
 ```
 
+For deterministic orchestration debugging (optional):
+
+```bash
+tf irf <ticket-id> --plan
+```
+
 4. Optional autonomous execution:
 
 ```bash

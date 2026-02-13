@@ -56,6 +56,23 @@ The CLI wrapper resolves flags, builds `/chain-prompts`, and runs optional post-
 **Close step behavior:**
 - Stages and commits ticket artifact directory plus paths from `files_changed.txt`.
 
+### `/tf-research`, `/tf-implement`, `/tf-review`, `/tf-fix`, `/tf-close`
+
+Phase prompts used by `/chain-prompts`.
+
+```bash
+/tf-research <ticket-id> [--no-research] [--with-research]
+/tf-implement <ticket-id>
+/tf-review <ticket-id>
+/tf-fix <ticket-id>
+/tf-close <ticket-id>
+```
+
+Notes:
+- Prompts are thin wrappers with frontmatter (`model`, `thinking`, `skill`).
+- `tf-review` prompt uses `skill: tf-review-phase` (phase orchestration).
+- Reviewer subagents use `skill: tf-review` (shared reviewer contract).
+
 ---
 
 ### `/tf-next`
@@ -740,6 +757,22 @@ tf agentsmd status                # Show AGENTS.md overview
 tf agentsmd validate              # Check for bloat, stale paths
 tf agentsmd fix                   # Auto-fix common issues
 ```
+
+### `tf irf` (deterministic `/tf` backend)
+
+```bash
+tf irf <ticket-id> [--auto] [--no-clarify] [--no-research] [--with-research]
+       [--plan|--dry-run] [--create-followups] [--simplify-tickets]
+       [--final-review-loop] [--retry-reset]
+```
+
+Responsibilities:
+- strict flag validation
+- config-aware research entry selection
+- deterministic `/chain-prompts` command construction
+- post-chain command execution only after successful chain completion
+
+Use this directly for orchestration debugging; `/tf` calls this internally.
 
 ### Project Initialization (Workflow Files)
 

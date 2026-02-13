@@ -3,6 +3,8 @@
 ## 1. Workflow Execution
 
 - `/tf <ticket-id>` runs the Implement -> Review -> Fix -> Close loop
+- `/tf` delegates deterministically to `tf irf <ticket-id> [flags]`
+- Phase prompts are available for direct execution: `/tf-research`, `/tf-implement`, `/tf-review`, `/tf-fix`, `/tf-close`
 - Optional research and final review-loop integrations
 - Artifacts written per ticket under `.tf/knowledge/tickets/<ticket-id>/`
 
@@ -34,8 +36,9 @@
 
 ## 6. Project-Scoped Assets and State
 
-- Workflow assets in `.pi/`
+- Workflow assets in `agents/`, `prompts/`, and `skills/`
 - TF-owned runtime/config state in `.tf/`
+- Deterministic orchestration in `tf irf` (CLI), with `/tf` as thin PI wrapper
 - Explicit artifact policy for generated vs committed files
 
 ## 7. Python API Modules

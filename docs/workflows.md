@@ -2,6 +2,61 @@
 
 Step-by-step guides for common development scenarios.
 
+> `/tf` is a thin prompt wrapper. Deterministic orchestration is performed by `tf irf`.
+
+---
+
+## Smoke Test: `/tf` Chain Workflow (Interactive + `pi -p`)
+
+Use this after refactors to verify `/tf` + `/chain-prompts` behavior.
+
+### 1) Dry-run plan resolution (CLI)
+
+```bash
+tf irf <ticket-id> --plan
+```
+
+Verify:
+- expected chain order (`tf-research -> tf-implement -> tf-review -> tf-fix -> tf-close`)
+- flags are resolved as expected (`--no-research`, post-chain commands)
+
+### 2) Non-interactive run (`pi -p`)
+
+```bash
+pi -p "/tf <ticket-id> --dry-run"
+```
+
+Verify:
+- command executes headlessly
+- no unknown-flag errors
+
+### 3) Phase command sanity (optional)
+
+```bash
+pi -p "/tf-research <ticket-id> --no-research"
+pi -p "/tf-implement <ticket-id>"
+pi -p "/tf-review <ticket-id>"
+pi -p "/tf-fix <ticket-id>"
+pi -p "/tf-close <ticket-id>"
+```
+
+### 4) Artifact presence checks
+
+```bash
+ls .tf/knowledge/tickets/<ticket-id>/
+```
+
+Expected key artifacts:
+- `research.md` (if research enabled)
+- `implementation.md`
+- `review.md`
+- `fixes.md`
+- `close-summary.md`
+
+### 5) Model restore check
+
+After chain completion/failure, verify Pi returns to original model/thinking (handled by `/chain-prompts`).
+
 ---
 
 ## Choosing Between Seed and Plan

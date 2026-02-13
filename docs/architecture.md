@@ -257,33 +257,29 @@ The `/tf` command delegates to `tf irf`, which deterministically builds and exec
 │     - MCP tools (context7, exa, grep_app)                   │
 │     - Write to .tf/knowledge/tickets/{id}/research.md       │
 ├─────────────────────────────────────────────────────────────┤
-│  2. Implement (prompt chain)                                │
-│     - Switch to worker model                                │
+│  2. Implement (phase prompt)                                │
+│     - Frontmatter-selected worker model                     │
 │     - Write implementation.md (ticket artifact dir)         │
 ├─────────────────────────────────────────────────────────────┤
-│  3. Parallel Reviews (subagents)                            │
+│  3. Review (phase prompt + subagents)                       │
 │     - reviewer-general                                      │
 │     - reviewer-spec-audit                                   │
 │     - reviewer-second-opinion                               │
+│     - review-merge consolidates to review.md                │
 ├─────────────────────────────────────────────────────────────┤
-│  4. Merge Reviews (prompt chain)                            │
-│     - Switch to cheap model                                 │
-│     - Deduplicate issues                                    │
-│     - Write review.md (ticket artifact dir)                 │
-├─────────────────────────────────────────────────────────────┤
-│  5. Fix Issues                                              │
+│  4. Fix Issues                                              │
 │     - Fix Critical/Major/Minor                              │
 │     - Write fixes.md (ticket artifact dir)                  │
 ├─────────────────────────────────────────────────────────────┤
-│  6. Follow-ups (optional, --create-followups)               │
+│  5. Follow-ups (optional, --create-followups)               │
 │     - Create tickets from Warnings/Suggestions              │
 ├─────────────────────────────────────────────────────────────┤
-│  7. Close Ticket                                            │
+│  6. Close Ticket                                            │
 │     - Add note to tk                                        │
 │     - Close ticket                                          │
 │     - Write close-summary.md (ticket artifact dir)          │
 ├─────────────────────────────────────────────────────────────┤
-│  8. Ralph Integration (if .tf/ralph/ exists)                │
+│  7. Ralph Integration (if .tf/ralph/ exists)                │
 │     - Update progress.md                                    │
 │     - Extract lessons → AGENTS.md                           │
 │     - Output <promise>TICKET_COMPLETE</promise>             │
@@ -346,20 +342,21 @@ plan.md (status: draft)
 
 ## Model Strategy
 
-Models are configured in `config/settings.json`:
+Models are configured in `.tf/config/settings.json`:
 
 | Role | Default Model | Purpose |
 |------|---------------|---------|
-| worker | kimi-coding/k2p5 | Deep reasoning for implementation |
-| researcher | minimax/MiniMax-M2.1 | Fast research and information gathering |
-| fast | zai-org/GLM-4.7-Flash | Cheapest model for quick tasks |
-| general | zai/glm-4.7 | General-purpose admin tasks |
-| review-general | openai-codex/gpt-5.1-codex-mini | General code review |
-| review-spec | openai-codex/gpt-5.3-codex | Specification compliance audit |
-| review-secop | google-antigravity/gemini-3-flash | Second-opinion review |
-| planning | openai-codex/gpt-5.2 | Planning and specification |
+| worker | minimax/MiniMax-M2.5 | Deep reasoning for implementation |
+| research | kimi-coding/k2p5 | Research and information gathering |
+| fast | chutes/zai-org/GLM-4.7-Flash | Fast/cheap summarization and close tasks |
+| general | kimi-coding/k2p5 | General orchestration and admin |
+| review-general | openai-codex/gpt-5.3-codex | General code review |
+| review-spec | openai-codex/gpt-5.1-codex-mini | Specification compliance audit |
+| review-secop | kimi-coding/k2p5 | Second-opinion review |
+| fixer | zai/glm-5 | Fix iterations |
+| planning | openai-codex/gpt-5.3-codex | Planning and specification |
 
-Run `/tf-sync` after editing config to apply changes.
+Run `tf sync` (or `/tf-sync`) after editing config to apply frontmatter updates.
 
 ---
 

@@ -24,7 +24,7 @@ Implement -> Review -> Fix -> Close
 - Backlog generation and maintenance (`/tf-backlog`, `/tf-tags-suggest`, `/tf-deps-sync`)
 - Agent-driven quality loop (parallel reviewers + fixer + closer)
 - Persistent knowledge base under `.tf/knowledge/`
-- Project-scoped workflow assets under `.pi/` and `.tf/`
+- Project-scoped workflow assets under `agents/`, `prompts/`, `skills/`, and `.tf/`
 
 See detailed capabilities in [`docs/features.md`](docs/features.md).
 

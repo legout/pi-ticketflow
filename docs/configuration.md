@@ -79,89 +79,34 @@ pi install npm:pi-web-access
 
 ## Model Configuration
 
-Models are configured in `config/settings.json`:
+Models are configured in `.tf/config/settings.json`:
 
 ### Default Config
+
+Canonical defaults live in `.tf/config/settings.json`.
+
+A minimal representative excerpt:
 
 ```json
 {
   "metaModels": {
-    "planning": {
-      "model": "openai-codex/gpt-5.2",
-      "thinking": "medium",
-      "description": "Fast, capable model for planning and specification"
-    },
-    "worker": {
-      "model": "kimi-coding/k2p5",
-      "thinking": "high",
-      "description": "Strong model for implementation and complex reasoning"
-    },
-    "research": {
-      "model": "minimax/MiniMax-M2.1",
-      "thinking": "medium",
-      "description": "Fast model for research and information gathering"
-    },
-    "fast": {
-      "model": "zai-org/GLM-4.7-Flash",
-      "thinking": "medium",
-      "description": "Cheapest model for quick tasks, fixes, and summaries"
-    },
-    "general": {
-      "model": "zai/glm-4.7",
-      "thinking": "medium",
-      "description": "General-purpose model for admin tasks"
-    },
-    "review-general": {
-      "model": "openai-codex/gpt-5.1-codex-mini",
-      "thinking": "high",
-      "description": "Capable model for general code review"
-    },
-    "review-spec": {
-      "model": "openai-codex/gpt-5.3-codex",
-      "thinking": "high",
-      "description": "Strong model for specification compliance audit"
-    },
-    "review-secop": {
-      "model": "google-antigravity/gemini-3-flash",
-      "thinking": "high",
-      "description": "Fast model for second-opinion review"
-    },
-    "fixer": {
-      "model": "chutes/zai-org/GLM-4.7-Flash",
-      "thinking": "medium",
-      "description": "Fast, cheap model for fix iterations and small edits"
-    }
-  },
-  "agents": {
-    "reviewer-general": "review-general",
-    "reviewer-spec-audit": "review-spec",
-    "reviewer-second-opinion": "review-secop",
-    "review-merge": "general",
-    "fixer": "fixer",
-    "closer": "fast",
-    "researcher": "research",
-    "researcher-fetch": "research"
+    "planning": {"model": "openai-codex/gpt-5.3-codex", "thinking": "high"},
+    "worker": {"model": "minimax/MiniMax-M2.5", "thinking": "high"},
+    "research": {"model": "kimi-coding/k2p5", "thinking": "medium"},
+    "fast": {"model": "chutes/zai-org/GLM-4.7-Flash", "thinking": "medium"},
+    "general": {"model": "kimi-coding/k2p5", "thinking": "medium"},
+    "review-general": {"model": "openai-codex/gpt-5.3-codex", "thinking": "high"},
+    "review-spec": {"model": "openai-codex/gpt-5.1-codex-mini", "thinking": "high"},
+    "review-secop": {"model": "kimi-coding/k2p5", "thinking": "high"},
+    "fixer": {"model": "zai/glm-5", "thinking": "high"}
   },
   "prompts": {
-    "tf": "worker",
-    "tf-next": "general",
-    "tf-plan": "planning",
-    "tf-plan-chain": "planning",
-    "tf-plan-consult": "planning",
-    "tf-plan-revise": "planning",
-    "tf-plan-review": "planning",
-    "tf-seed": "planning",
-    "tf-backlog": "planning",
-    "tf-backlog-ls": "fast",
-    "tf-spike": "planning",
-    "tf-baseline": "planning",
-    "tf-followups": "planning",
-    "tf-tags-suggest": "planning",
-    "tf-deps-sync": "planning",
-    "tf-dedup": "planning",
-    "tf-backlog-from-openspec": "planning",
-    "tf-sync": "general",
-    "ralph-start": "general"
+    "tf": "general",
+    "tf-research": "research",
+    "tf-implement": "worker",
+    "tf-review": "review-general",
+    "tf-fix": "fixer",
+    "tf-close": "fast"
   }
 }
 ```
@@ -170,15 +115,15 @@ Models are configured in `config/settings.json`:
 
 | Role | Default Model | Purpose |
 |------|---------------|---------|
-| worker | kimi-coding/k2p5 | Deep reasoning for implementation |
-| researcher | minimax/MiniMax-M2.1 | Fast research and information gathering |
-| fast | zai-org/GLM-4.7-Flash | Cheapest model for quick tasks |
-| general | zai/glm-4.7 | General-purpose admin tasks |
-| review-general | openai-codex/gpt-5.1-codex-mini | General code review |
-| review-spec | openai-codex/gpt-5.3-codex | Specification compliance audit |
-| review-secop | google-antigravity/gemini-3-flash | Second-opinion review |
-| fixer | chutes/zai-org/GLM-4.7-Flash | Fast model for fix iterations and small edits |
-| planning | openai-codex/gpt-5.2 | Planning and specification |
+| worker | minimax/MiniMax-M2.5 | Deep reasoning for implementation |
+| research | kimi-coding/k2p5 | Research and information gathering |
+| fast | chutes/zai-org/GLM-4.7-Flash | Fast/cheap close and summary tasks |
+| general | kimi-coding/k2p5 | General-purpose orchestration |
+| review-general | openai-codex/gpt-5.3-codex | General code review |
+| review-spec | openai-codex/gpt-5.1-codex-mini | Specification compliance audit |
+| review-secop | kimi-coding/k2p5 | Second-opinion review |
+| fixer | zai/glm-5 | Fix iterations |
+| planning | openai-codex/gpt-5.3-codex | Planning and specification |
 
 ### Fixer Meta-Model
 
@@ -191,8 +136,8 @@ The `fixer` meta-model allows you to configure a dedicated model for the fix ste
 {
   "metaModels": {
     "fixer": {
-      "model": "chutes/zai-org/GLM-4.7-Flash",
-      "thinking": "medium",
+      "model": "zai/glm-5",
+      "thinking": "high",
       "description": "Fast, cheap model for fix iterations and small edits"
     }
   },
@@ -218,7 +163,7 @@ This updates `model:` frontmatter in all agent and prompt files.
 
 ## Workflow Configuration
 
-Additional workflow settings in `config/settings.json`:
+Additional workflow settings in `.tf/config/settings.json`:
 
 ```json
 {
@@ -247,7 +192,7 @@ Additional workflow settings in `config/settings.json`:
 }
 ```
 
-> Because `config/settings.json` is version-controlled, keep the `workflow.escalation` block there so the elevated defaults are tracked in the repo. Run `/tf-sync` (or `tf sync`) after editing `.tf/config/settings.json` to sync any overrides from the repository config.
+> Keep the `workflow.escalation` block in `.tf/config/settings.json` so defaults are tracked in the repository. Run `/tf-sync` (or `tf sync`) after edits.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -508,6 +453,6 @@ pi install npm:pi-prompt-template-model
 
 ### Knowledge base not created
 
-- Check `workflow.knowledgeDir` in config/settings.json
+- Check `workflow.knowledgeDir` in `.tf/config/settings.json`
 - Ensure write permissions in project directory
 - Knowledge base is auto-created on first use
