@@ -171,8 +171,30 @@ Models are configured in `config/settings.json`:
 | review-general | openai-codex/gpt-5.1-codex-mini | General code review |
 | review-spec | openai-codex/gpt-5.3-codex | Specification compliance audit |
 | review-secop | google-antigravity/gemini-3-flash | Second-opinion review |
-| fixer | zai-org/GLM-4.7-Flash | Fast model for fix iterations and small edits |
+| fixer | chutes/zai-org/GLM-4.7-Flash | Fast model for fix iterations and small edits |
 | planning | openai-codex/gpt-5.2 | Planning and specification |
+
+### Fixer Meta-Model
+
+The `fixer` meta-model allows you to configure a dedicated model for the fix step of the IRF workflow, independent of the `general` model used for other admin tasks.
+
+**Important:** Both `metaModels.fixer` and `agents.fixer` must be configured together. If you map `agents.fixer` to `"fixer"` but don't define `metaModels.fixer`, the system will attempt to use "fixer" as a direct model ID (which will fail). To use the `general` model for fixes, set `agents.fixer` to `"general"` instead.
+
+**Example configuration:**
+```json
+{
+  "metaModels": {
+    "fixer": {
+      "model": "chutes/zai-org/GLM-4.7-Flash",
+      "thinking": "medium",
+      "description": "Fast, cheap model for fix iterations and small edits"
+    }
+  },
+  "agents": {
+    "fixer": "fixer"
+  }
+}
+```
 
 ### Applying Changes
 
