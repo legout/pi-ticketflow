@@ -944,6 +944,11 @@ def run_ticket_dispatch(
 
         log.info(f"Dispatching: pi -p \"{cmd}\" (session: {session_id})", ticket=ticket)
 
+        # Log attach hint for user observability (pt-zmah)
+        # Note: session_id here is our internal tracking ID, not the Pi session ID
+        # Users can list and attach to background Pi sessions via: pi /list-background and pi /attach <name>
+        log.info(f"To watch: pi /list-background | grep {ticket}", ticket=ticket)
+
         # Start the process in background (non-blocking)
         # Use start_new_session=True to create a new process group
         # This allows us to track the process independently
@@ -986,6 +991,18 @@ def run_ticket_dispatch(
                 status="running",
             )
             register_dispatch_session(ralph_dir, session_state, log)
+
+        # Session observability: log session ID, attach instructions, and output paths (pt-zmah)
+        log.info(f"Session started: {session_id}", ticket=ticket, session_id=session_id)
+        log.info(f"To attach and watch: pi /attach {session_id}", ticket=ticket, session_id=session_id)
+        
+        # Log output capture path if file mode is enabled
+        if pi_output == "file" and pi_log_path:
+            log.info(f"Output will be captured at: {pi_log_path}", ticket=ticket, log_path=str(pi_log_path))
+        elif capture_json and logs_dir:
+            # JSON capture path follows same pattern as log files
+            json_path = logs_dir / f"{ticket}.jsonl"
+            log.info(f"JSON output will be captured at: {json_path}", ticket=ticket, json_path=str(json_path))
 
         _release_dispatch_session_id(session_id)
         return DispatchResult(
@@ -2745,6 +2762,7 @@ def ralph_start(args: List[str]) -> int:
                 ticket_rc = 0
                 worktree_path: Optional[Path] = None
                 worktree_cwd: Optional[Path] = None
+                dispatch_error_msg: Optional[str] = None  # Track dispatch-specific error context (pt-4eor minor fix)
 
                 while attempt < max_attempts:
                     attempt += 1
@@ -2793,6 +2811,7 @@ def ralph_start(args: List[str]) -> int:
                     # Reset worktree variables for each attempt
                     worktree_path = None
                     worktree_cwd = None
+                    dispatch_error_msg = None  # Reset dispatch error context
 
                     # Determine if we should use worktree for this ticket
                     use_worktree = execution_backend == "dispatch" and not options["dry_run"]
@@ -2843,6 +2862,7 @@ def ralph_start(args: List[str]) -> int:
                         )
 
                         if dispatch_result.status == "failed":
+                            dispatch_error_msg = dispatch_result.error  # Preserve error context (pt-4eor minor fix)
                             ticket_logger.error(f"Dispatch launch failed: {dispatch_result.error}", ticket=ticket)
                             # Clean up worktree on launch failure (Major fix)
                             if worktree_path is not None:
@@ -2873,8 +2893,10 @@ def ralph_start(args: List[str]) -> int:
                                 ticket_rc = completion_result.return_code or 0
                             elif completion_result.status == DispatchCompletionStatus.TIMEOUT:
                                 ticket_rc = -1  # Timeout signal for restart loop
+                                dispatch_error_msg = completion_result.error  # Preserve error context
                             else:
                                 ticket_rc = completion_result.return_code or 1
+                                dispatch_error_msg = completion_result.error  # Preserve error context
 
                             # Update dispatch tracking with completion status
                             update_dispatch_tracking_status(
@@ -2894,6 +2916,18 @@ def ralph_start(args: List[str]) -> int:
                                 ralph_dir, dispatch_result.session_id, session_status,
                                 return_code=ticket_rc, logger=ticket_logger
                             )
+
+                            # Log artifact paths for completed/failed tickets (pt-zmah)
+                            if logs_dir:
+                                log_file = logs_dir / f"{ticket}.log"
+                                json_file = logs_dir / f"{ticket}.jsonl"
+                                ticket_logger.info(
+                                    f"Session artifacts: log={log_file}, json={json_file}",
+                                    ticket=ticket,
+                                    log_path=str(log_file),
+                                    json_path=str(json_file),
+                                    session_id=dispatch_result.session_id,
+                                )
                     else:
                         # Legacy subprocess backend
                         ticket_rc = run_ticket(
@@ -2996,6 +3030,9 @@ def ralph_start(args: List[str]) -> int:
                     if ticket_rc != 0:
                         if ticket_rc == -1:
                             error_msg = f"Ticket failed after {attempt} attempt(s) due to timeout (last threshold: {effective_timeout_ms}ms)"
+                        elif dispatch_error_msg:
+                            # Include preserved dispatch error context (pt-4eor minor fix)
+                            error_msg = f"dispatch failed: {dispatch_error_msg} (exit {ticket_rc})"
                         else:
                             error_msg = f"pi -p failed (exit {ticket_rc})"
                         # Update progress display on failure
