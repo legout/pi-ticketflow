@@ -130,7 +130,6 @@ DEFAULTS: Dict[str, Any] = {
     "parallelAllowUntagged": False,
     "componentTagPrefix": "component:",
     "parallelKeepWorktrees": False,
-    "parallelAutoMerge": True,
     "logLevel": "normal",  # quiet, normal, verbose, debug
     "captureJson": False,  # Capture Pi JSON mode output for debugging
     "attemptTimeoutMs": 600000,  # 10 minutes default (0 = no timeout). Serial mode only.
@@ -828,25 +827,25 @@ def run_ticket_dispatch(
     stdout_file: Optional[Any] = None
     stderr_file: Optional[Any] = None
 
-    if pi_output == "file" and pi_log_path:
-        pi_log_path.parent.mkdir(parents=True, exist_ok=True)
-        stdout_file = open(pi_log_path, "w", encoding="utf-8")
-        stdout = stdout_file
-        stderr = subprocess.STDOUT
-        log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
-    elif pi_output == "discard":
-        stdout_file = open(os.devnull, "w")
-        stdout = stdout_file
-        stderr = subprocess.STDOUT
-    else:
-        # For "inherit" mode, use DEVNULL to avoid pipe buffer deadlock
-        # The child process inherits no stdout/stderr from parent
-        stdout = subprocess.DEVNULL
-        stderr = subprocess.DEVNULL
-
-    log.info(f"Dispatching: pi -p \"{cmd}\" (session: {session_id})", ticket=ticket)
-
     try:
+        if pi_output == "file" and pi_log_path:
+            pi_log_path.parent.mkdir(parents=True, exist_ok=True)
+            stdout_file = open(pi_log_path, "w", encoding="utf-8")
+            stdout = stdout_file
+            stderr = subprocess.STDOUT
+            log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
+        elif pi_output == "discard":
+            stdout_file = open(os.devnull, "w")
+            stdout = stdout_file
+            stderr = subprocess.STDOUT
+        else:
+            # For "inherit" mode, use DEVNULL to avoid pipe buffer deadlock
+            # The child process inherits no stdout/stderr from parent
+            stdout = subprocess.DEVNULL
+            stderr = subprocess.DEVNULL
+
+        log.info(f"Dispatching: pi -p \"{cmd}\" (session: {session_id})", ticket=ticket)
+
         # Start the process in background (non-blocking)
         # Use start_new_session=True to create a new process group
         # This allows us to track the process independently
@@ -860,14 +859,6 @@ def run_ticket_dispatch(
         )
 
         log.info(f"Dispatch launched with PID: {proc.pid}", ticket=ticket, pid=proc.pid)
-
-        # Close file handles in parent after successful launch
-        # Child process has its own copies via fork
-        if stdout_file is not None:
-            try:
-                stdout_file.close()
-            except Exception:
-                pass
 
         # Post-launch health check: poll immediately to catch startup failures
         # A process that dies right away will have a non-None return code
@@ -898,6 +889,19 @@ def run_ticket_dispatch(
             status="failed",
             error=error_msg,
         )
+    finally:
+        # Always close file handles in parent, whether launch succeeded or failed
+        # Child process has its own copies via fork
+        if stdout_file is not None:
+            try:
+                stdout_file.close()
+            except Exception:
+                pass
+        if stderr_file is not None:
+            try:
+                stderr_file.close()
+            except Exception:
+                pass
 
 
 def extract_components(ticket_id: str, tag_prefix: str, allow_untagged: bool) -> Optional[set]:
@@ -2923,6 +2927,8 @@ def ralph_start(args: List[str]) -> int:
                     proc = subprocess.Popen(args, cwd=worktree_path)
                     processes.append((proc, ticket, worktree_path, None))
 
+            # Wait for all processes and track first error
+            first_error_rc = 0
             for proc, ticket, worktree_path, jsonl_file in processes:
                 rc = proc.wait()
                 # Get ticket title for verbose logging (only if fetched)
@@ -2955,7 +2961,18 @@ def ralph_start(args: List[str]) -> int:
                         error_msg,
                         worktree_path / ".tf/knowledge",
                     )
-                    return rc
+                    # Track first error but continue processing remaining processes
+                    if first_error_rc == 0:
+                        first_error_rc = rc
+                    # Clean up failed worktree to avoid leaving stale state
+                    if not keep_worktrees:
+                        remove = subprocess.run(
+                            ["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)],
+                            capture_output=True,
+                        )
+                        if remove.returncode != 0:
+                            shutil.rmtree(worktree_path, ignore_errors=True)
+                    continue
 
                 if ticket_title:
                     logger.log_ticket_complete(ticket, "COMPLETE", mode="parallel", iteration=iteration, ticket_title=ticket_title)
@@ -2989,6 +3006,10 @@ def ralph_start(args: List[str]) -> int:
                                 ticket, "remove", str(worktree_path), success=False, error=error_msg, mode=mode, iteration=iteration
                             )
                         shutil.rmtree(worktree_path, ignore_errors=True)
+
+            # Return error if any ticket in batch failed (after all cleanup complete)
+            if first_error_rc != 0:
+                return first_error_rc
 
             iteration += len(selected)
             time.sleep(sleep_between / 1000)

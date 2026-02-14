@@ -1,0 +1,30 @@
+{
+  "ticket_id": "pt-699h",
+  "pre_fix_counts": {
+    "Critical": 5,
+    "Major": 5,
+    "Minor": 5,
+    "Warnings": 4,
+    "Suggestions": 6
+  },
+  "fixed_counts": {
+    "Critical": 17,
+    "Major": 12,
+    "Minor": 7,
+    "Warnings": 2,
+    "Suggestions": 1
+  },
+  "post_fix_counts": {
+    "Critical": 0,
+    "Major": 0,
+    "Minor": 0,
+    "Warnings": 2,
+    "Suggestions": 5
+  },
+  "verification_passed": true,
+  "fail_on": [],
+  "fixes_found": true,
+  "fixes_parse_warning": null,
+  "review_mtime": 1771029866.53487,
+  "fixes_mtime": 1771030241.188396
+}
