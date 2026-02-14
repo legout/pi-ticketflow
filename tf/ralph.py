@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -22,6 +23,19 @@ from tf.utils import calculate_timeout_backoff, find_project_root
 
 # Import queue state for progress display
 from tf.ralph.queue_state import QueueStateSnapshot, get_queue_state
+
+# Dispatch monitoring helpers
+from tf.ralph_completion import graceful_terminate_dispatch, poll_dispatch_status
+
+# Session recovery and TTL cleanup (pt-8qk8)
+from tf.ralph.session_recovery import (
+    DEFAULT_SESSION_TTL_MS,
+    DispatchSessionState,
+    get_process_start_time,
+    register_dispatch_session,
+    run_startup_recovery,
+    update_dispatch_session_status,
+)
 
 
 class ProgressDisplay:
@@ -110,6 +124,78 @@ class ProgressDisplay:
 # Module-level cache for ticket titles to avoid repeated tk show calls
 _ticket_title_cache: dict[str, Optional[str]] = {}
 
+# Track detached dispatch children to avoid orphaned processes on parent shutdown.
+_dispatch_child_pids: set[int] = set()
+_dispatch_active_session_ids: set[str] = set()
+_dispatch_signal_handlers_installed = False
+
+
+def _terminate_process_group(pid: int) -> None:
+    """Best-effort terminate a detached process group."""
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    except Exception:
+        return
+
+    time.sleep(0.2)
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return
+    except Exception:
+        return
+
+
+def _cleanup_dispatch_children() -> None:
+    for pid in list(_dispatch_child_pids):
+        _terminate_process_group(pid)
+
+
+def _install_dispatch_signal_handlers() -> None:
+    global _dispatch_signal_handlers_installed
+    if _dispatch_signal_handlers_installed:
+        return
+
+    def _handler(signum: int, _frame: Any) -> None:
+        _cleanup_dispatch_children()
+        raise SystemExit(128 + signum)
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            signal.signal(sig, _handler)
+        except Exception:
+            pass
+
+    _dispatch_signal_handlers_installed = True
+
+
+def _register_dispatch_child(pid: Optional[int]) -> None:
+    if not pid:
+        return
+    _install_dispatch_signal_handlers()
+    _dispatch_child_pids.add(pid)
+
+
+def _unregister_dispatch_child(pid: Optional[int]) -> None:
+    if not pid:
+        return
+    _dispatch_child_pids.discard(pid)
+
+
+def _allocate_dispatch_session_id() -> str:
+    while True:
+        candidate = str(uuid.uuid4())
+        if candidate not in _dispatch_active_session_ids:
+            _dispatch_active_session_ids.add(candidate)
+            return candidate
+
+
+def _release_dispatch_session_id(session_id: str) -> None:
+    if session_id:
+        _dispatch_active_session_ids.discard(session_id)
+
 
 DEFAULTS: Dict[str, Any] = {
     "maxIterations": 50,
@@ -130,6 +216,7 @@ DEFAULTS: Dict[str, Any] = {
     "parallelAllowUntagged": False,
     "componentTagPrefix": "component:",
     "parallelKeepWorktrees": False,
+    "parallelDispatchTimeoutMs": 1800000,  # 30 min timeout for each dispatch ticket in parallel mode
     "logLevel": "normal",  # quiet, normal, verbose, debug
     "captureJson": False,  # Capture Pi JSON mode output for debugging
     "attemptTimeoutMs": 600000,  # 10 minutes default (0 = no timeout). Serial mode only.
@@ -145,6 +232,8 @@ DEFAULTS: Dict[str, Any] = {
         # Note: "mode" is reserved for future use (e.g., "dispatch" vs "hands-free")
         "mode": "dispatch",  # Currently unused but reserved for future expansion
     },
+    # Session recovery settings (pt-8qk8)
+    "sessionTtlMs": DEFAULT_SESSION_TTL_MS,  # 7 days retention for finished session metadata
 }
 
 # Valid execution backend values
@@ -728,6 +817,7 @@ def run_ticket_dispatch(
     pi_output: str = "inherit",
     pi_output_file: Optional[str] = None,
     timeout_ms: int = 0,
+    ralph_dir: Optional[Path] = None,
 ) -> DispatchResult:
     """Launch a ticket in dispatch mode using subprocess.
 
@@ -789,8 +879,8 @@ def run_ticket_dispatch(
     if capture_json and "--mode json" not in cmd:
         cmd = f"{cmd} --mode json".strip()
 
-    # Generate a session ID for tracking (full UUID for uniqueness)
-    session_id = str(uuid.uuid4())
+    # Generate a session ID for tracking with in-process collision checks.
+    session_id = _allocate_dispatch_session_id()
 
     # Determine log file path if output to file
     pi_log_path: Optional[Path] = None
@@ -810,6 +900,7 @@ def run_ticket_dispatch(
         elif pi_output == "discard":
             output_note = " (output discarded)"
         log.info(f"Dry run (dispatch): pi {cmd}{prefix}{output_note}", ticket=ticket)
+        _release_dispatch_session_id(session_id)
         return DispatchResult(
             session_id=session_id,
             ticket_id=ticket,
@@ -859,6 +950,7 @@ def run_ticket_dispatch(
         )
 
         log.info(f"Dispatch launched with PID: {proc.pid}", ticket=ticket, pid=proc.pid)
+        _register_dispatch_child(proc.pid)
 
         # Post-launch health check: poll immediately to catch startup failures
         # A process that dies right away will have a non-None return code
@@ -866,6 +958,8 @@ def run_ticket_dispatch(
         if proc.returncode is not None:
             error_msg = f"Process exited immediately with code {proc.returncode}"
             log.error(error_msg, ticket=ticket)
+            _unregister_dispatch_child(proc.pid)
+            _release_dispatch_session_id(session_id)
             return DispatchResult(
                 session_id=session_id,
                 ticket_id=ticket,
@@ -873,6 +967,20 @@ def run_ticket_dispatch(
                 error=error_msg,
             )
 
+        # Register session in state file for recovery tracking (pt-8qk8)
+        if ralph_dir is not None:
+            session_state = DispatchSessionState(
+                session_id=session_id,
+                ticket_id=ticket,
+                pid=proc.pid,
+                process_start_time=get_process_start_time(proc.pid),
+                started_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                worktree_path=str(cwd) if cwd else None,
+                status="running",
+            )
+            register_dispatch_session(ralph_dir, session_state, log)
+
+        _release_dispatch_session_id(session_id)
         return DispatchResult(
             session_id=session_id,
             ticket_id=ticket,
@@ -883,6 +991,7 @@ def run_ticket_dispatch(
     except Exception as e:
         error_msg = str(e)
         log.error(f"Failed to launch dispatch: {error_msg}", ticket=ticket)
+        _release_dispatch_session_id(session_id)
         return DispatchResult(
             session_id=session_id,
             ticket_id=ticket,
@@ -1103,6 +1212,23 @@ def resolve_timeout_backoff_max_ms(config: Dict[str, Any]) -> int:
         return max(0, result)
     except (ValueError, TypeError):
         return DEFAULTS["timeoutBackoffMaxMs"]
+
+
+def resolve_session_ttl_ms(config: Dict[str, Any]) -> int:
+    """Resolve session metadata TTL from config.
+
+    Args:
+        config: Ralph config dictionary
+
+    Returns:
+        TTL in milliseconds (0 = no pruning). Always >= 0.
+    """
+    value = config.get("sessionTtlMs", DEFAULTS["sessionTtlMs"])
+    try:
+        result = int(value)
+        return max(0, result)
+    except (ValueError, TypeError):
+        return DEFAULTS["sessionTtlMs"]
 
 
 def calculate_effective_timeout(
@@ -2256,6 +2382,7 @@ def ralph_run(args: List[str]) -> int:
                 pi_output_file=pi_output_file,
                 timeout_ms=effective_timeout_ms,
                 cwd=worktree_cwd,
+                ralph_dir=ralph_dir,
             )
 
             # Handle dispatch result
@@ -2284,7 +2411,7 @@ def ralph_run(args: List[str]) -> int:
                     "pid": dispatch_result.pid,
                     "worktree_path": str(worktree_path),
                     "repo_root": str(project_root),
-                    "launched_at": datetime.datetime.now().isoformat(),
+                    "launched_at": datetime.now().isoformat(),
                     "status": "DISPATCHED",
                 }
                 try:
@@ -2488,10 +2615,9 @@ def ralph_start(args: List[str]) -> int:
 
     if use_parallel > 1 and (base_timeout_ms > 0 or max_restarts > 0):
         logger.warn(
-            f"Timeout ({base_timeout_ms}ms) and restart ({max_restarts}) settings are not supported in parallel mode. "
-            "Falling back to serial mode for safe cleanup semantics."
+            f"Timeout ({base_timeout_ms}ms) and restart ({max_restarts}) settings are serial-mode features. "
+            "Continuing in parallel mode and ignoring restart/backoff semantics for this run."
         )
-        use_parallel = 1
 
     # Validate: --progress is only supported in serial mode
     progress = options.get("progress", False)
@@ -2518,6 +2644,23 @@ def ralph_start(args: List[str]) -> int:
         set_state(ralph_dir, "RUNNING")
 
     try:
+        # Session recovery: clean up orphaned sessions and prune expired metadata (pt-8qk8)
+        # Skip recovery in dry-run mode to avoid mutating state or killing processes
+        if not options["dry_run"]:
+            # Get repo_root for worktree cleanup (also needed for serial mode)
+            recovery_repo_root = git_repo_root()
+            recovery_worktrees_dir = Path(str(config.get("parallelWorktreesDir", DEFAULTS["parallelWorktreesDir"])))
+            if not recovery_worktrees_dir.is_absolute():
+                recovery_worktrees_dir = recovery_repo_root / recovery_worktrees_dir
+            ttl_ms = resolve_session_ttl_ms(config)
+            orphaned_cleaned, expired_pruned = run_startup_recovery(
+                ralph_dir=ralph_dir,
+                repo_root=recovery_repo_root,
+                ttl_ms=ttl_ms,
+                worktrees_root=recovery_worktrees_dir,
+                logger=logger,
+            )
+
         iteration = 0
 
         if use_parallel <= 1:
@@ -2857,6 +3000,157 @@ def ralph_start(args: List[str]) -> int:
                     else:
                         logger.info(f"Dry run: pi -p{json_note} \"{cmd}\" (worktree)", ticket=ticket)
                 iteration += len(selected)
+                time.sleep(sleep_between / 1000)
+                continue
+
+            if execution_backend == "dispatch":
+                # Parallel dispatch backend: launch isolated dispatch sessions and poll completion.
+                dispatch_timeout_ms = int(
+                    config.get("parallelDispatchTimeoutMs", DEFAULTS["parallelDispatchTimeoutMs"])
+                )
+                env_timeout = os.environ.get("RALPH_PARALLEL_DISPATCH_TIMEOUT_MS", "").strip()
+                if env_timeout:
+                    try:
+                        dispatch_timeout_ms = int(env_timeout)
+                    except ValueError:
+                        pass
+
+                active_dispatches: Dict[str, DispatchResult] = {}
+                dispatch_started_at: Dict[str, float] = {}
+                dispatch_worktrees: Dict[str, Path] = {}
+                failed_tickets: List[str] = []
+                processed_count = 0
+
+                for ticket in selected:
+                    ticket_title = ticket_titles.get(ticket) if ticket_titles else None
+                    worktree_path = create_worktree_for_ticket(
+                        repo_root=project_root,
+                        worktrees_dir=worktrees_dir,
+                        ticket=ticket,
+                        logger=logger,
+                    )
+                    if worktree_path is None:
+                        error_msg = "worktree create failed"
+                        logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
+                        update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                        failed_tickets.append(ticket)
+                        processed_count += 1
+                        continue
+
+                    dispatch_worktrees[ticket] = worktree_path
+                    dispatch_result = run_ticket_dispatch(
+                        ticket,
+                        workflow,
+                        workflow_flags,
+                        options["dry_run"],
+                        cwd=worktree_path,
+                        logger=logger,
+                        mode="parallel",
+                        capture_json=capture_json,
+                        logs_dir=logs_dir,
+                        ticket_title=ticket_title,
+                        pi_output=pi_output,
+                        pi_output_file=pi_output_file,
+                        timeout_ms=dispatch_timeout_ms,
+                        ralph_dir=ralph_dir,
+                    )
+                    if dispatch_result.status != "launched" or not dispatch_result.pid:
+                        error_msg = dispatch_result.error or "dispatch launch failed"
+                        logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
+                        update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                        cleanup_worktree(project_root, worktree_path, ticket, logger)
+                        _release_dispatch_session_id(dispatch_result.session_id)
+                        failed_tickets.append(ticket)
+                        processed_count += 1
+                        continue
+
+                    active_dispatches[ticket] = dispatch_result
+                    dispatch_started_at[ticket] = time.time()
+
+                while active_dispatches:
+                    for ticket, dispatch_result in list(active_dispatches.items()):
+                        pid = dispatch_result.pid
+                        worktree_path = dispatch_worktrees[ticket]
+                        ticket_title = ticket_titles.get(ticket) if ticket_titles else None
+
+                        if not pid:
+                            error_msg = "dispatch missing pid"
+                            logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
+                            # Update session status to failed (pt-8qk8)
+                            update_dispatch_session_status(ralph_dir, dispatch_result.session_id, "failed", logger=logger)
+                            update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                            cleanup_worktree(project_root, worktree_path, ticket, logger)
+                            _release_dispatch_session_id(dispatch_result.session_id)
+                            failed_tickets.append(ticket)
+                            processed_count += 1
+                            active_dispatches.pop(ticket, None)
+                            continue
+
+                        if dispatch_timeout_ms > 0:
+                            elapsed_ms = int((time.time() - dispatch_started_at[ticket]) * 1000)
+                            if elapsed_ms >= dispatch_timeout_ms:
+                                graceful_terminate_dispatch(pid=pid, session_id=dispatch_result.session_id, logger=logger)
+                                _unregister_dispatch_child(pid)
+                                _release_dispatch_session_id(dispatch_result.session_id)
+                                # Update session status to failed (pt-8qk8)
+                                update_dispatch_session_status(ralph_dir, dispatch_result.session_id, "failed", logger=logger)
+                                cleanup_worktree(project_root, worktree_path, ticket, logger)
+                                error_msg = f"dispatch timeout after {dispatch_timeout_ms}ms"
+                                logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
+                                update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                                failed_tickets.append(ticket)
+                                processed_count += 1
+                                active_dispatches.pop(ticket, None)
+                                continue
+
+                        is_running, return_code = poll_dispatch_status(pid)
+                        if is_running:
+                            continue
+
+                        _unregister_dispatch_child(pid)
+                        _release_dispatch_session_id(dispatch_result.session_id)
+                        active_dispatches.pop(ticket, None)
+                        processed_count += 1
+
+                        if return_code not in (0, None):
+                            error_msg = f"dispatch failed (exit {return_code})"
+                            logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
+                            # Update session status to failed (pt-8qk8)
+                            update_dispatch_session_status(ralph_dir, dispatch_result.session_id, "failed", return_code, logger=logger)
+                            update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                            cleanup_worktree(project_root, worktree_path, ticket, logger)
+                            failed_tickets.append(ticket)
+                            continue
+
+                        merge_ok = merge_and_close_worktree(
+                            repo_root=project_root,
+                            worktree_path=worktree_path,
+                            ticket=ticket,
+                            logger=logger,
+                        )
+                        if not merge_ok:
+                            error_msg = "worktree merge failed"
+                            # Update session status to failed (pt-8qk8)
+                            update_dispatch_session_status(ralph_dir, dispatch_result.session_id, "failed", logger=logger)
+                            update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                            failed_tickets.append(ticket)
+                            continue
+
+                        # Update session status to completed (pt-8qk8)
+                        update_dispatch_session_status(ralph_dir, dispatch_result.session_id, "completed", logger=logger)
+                        logger.log_ticket_complete(ticket, "COMPLETE", mode="parallel", iteration=iteration, ticket_title=ticket_title)
+                        update_state(ralph_dir, project_root, ticket, "COMPLETE", "")
+
+                    if active_dispatches:
+                        time.sleep(1.0)
+
+                if failed_tickets:
+                    logger.error(
+                        f"Parallel dispatch failed for tickets: {', '.join(sorted(set(failed_tickets)))}"
+                    )
+                    return 1
+
+                iteration += processed_count
                 time.sleep(sleep_between / 1000)
                 continue
 

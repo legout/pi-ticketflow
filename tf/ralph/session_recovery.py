@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from tf.logger import LogLevel, RalphLogger, create_logger
 
@@ -37,6 +37,8 @@ class DispatchSessionState:
         session_id: Unique session identifier
         ticket_id: Ticket being processed
         pid: Process ID of the dispatch process
+        process_start_time: Process start time from /proc/<pid>/stat (Linux clock ticks)
+            used to detect PID reuse across restarts.
         started_at: ISO timestamp when session started
         worktree_path: Path to the worktree for this session
         status: Current status (running, completed, orphaned, failed)
@@ -46,7 +48,8 @@ class DispatchSessionState:
     session_id: str
     ticket_id: str
     pid: Optional[int]
-    started_at: str
+    process_start_time: Optional[int] = None
+    started_at: str = ""
     worktree_path: Optional[str] = None
     status: str = "running"
     completed_at: Optional[str] = None
@@ -58,6 +61,7 @@ class DispatchSessionState:
             "session_id": self.session_id,
             "ticket_id": self.ticket_id,
             "pid": self.pid,
+            "process_start_time": self.process_start_time,
             "started_at": self.started_at,
             "worktree_path": self.worktree_path,
             "status": self.status,
@@ -72,6 +76,7 @@ class DispatchSessionState:
             session_id=data.get("session_id", ""),
             ticket_id=data.get("ticket_id", ""),
             pid=data.get("pid"),
+            process_start_time=data.get("process_start_time"),
             started_at=data.get("started_at", ""),
             worktree_path=data.get("worktree_path"),
             status=data.get("status", "running"),
@@ -153,46 +158,6 @@ def get_session_state_path(ralph_dir: Path) -> Path:
     return ralph_dir / "dispatch-sessions.json"
 
 
-def load_session_state(ralph_dir: Path, logger: Optional[RalphLogger] = None) -> SessionStateFile:
-    """Load session state from file.
-
-    Creates an empty state file if it doesn't exist.
-
-    Args:
-        ralph_dir: Ralph directory path
-        logger: Optional logger
-
-    Returns:
-        SessionStateFile with loaded or empty state
-    """
-    state_path = get_session_state_path(ralph_dir)
-
-    if not state_path.exists():
-        return SessionStateFile()
-
-    try:
-        data = json.loads(state_path.read_text(encoding="utf-8"))
-        state = SessionStateFile.from_dict(data)
-
-        # Validate version
-        if state.version > SESSION_STATE_VERSION:
-            if logger:
-                logger.warning(
-                    f"Session state file version {state.version} is newer than "
-                    f"supported version {SESSION_STATE_VERSION}. Some data may be lost."
-                )
-
-        return state
-    except json.JSONDecodeError as e:
-        if logger:
-            logger.warning(f"Failed to parse session state file: {e}. Starting fresh.")
-        return SessionStateFile()
-    except Exception as e:
-        if logger:
-            logger.warning(f"Failed to load session state file: {e}. Starting fresh.")
-        return SessionStateFile()
-
-
 def _with_lock(file_obj, exclusive: bool = True) -> None:
     """Acquire a file lock on the given file object.
 
@@ -215,61 +180,128 @@ def _release_lock(file_obj) -> None:
     fcntl.flock(file_obj.fileno(), fcntl.LOCK_UN)
 
 
+def _deserialize_state(state_path: Path, logger: Optional[RalphLogger] = None) -> SessionStateFile:
+    """Deserialize session state from disk without acquiring locks.
+
+    Caller is responsible for synchronization.
+    """
+    if not state_path.exists():
+        return SessionStateFile()
+
+    try:
+        data = json.loads(state_path.read_text(encoding="utf-8"))
+        state = SessionStateFile.from_dict(data)
+        if state.version > SESSION_STATE_VERSION and logger:
+            logger.warning(
+                f"Session state file version {state.version} is newer than "
+                f"supported version {SESSION_STATE_VERSION}. Some data may be lost."
+            )
+        return state
+    except json.JSONDecodeError as e:
+        if logger:
+            logger.warning(f"Failed to parse session state file: {e}. Starting fresh.")
+        return SessionStateFile()
+    except Exception as e:
+        if logger:
+            logger.warning(f"Failed to load session state file: {e}. Starting fresh.")
+        return SessionStateFile()
+
+
+def _write_state_unlocked(state_path: Path, state: SessionStateFile) -> None:
+    """Write session state atomically without acquiring locks.
+
+    Caller must hold an exclusive lock.
+    """
+    state.last_updated = _utc_now()
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_path = state_path.with_suffix(".tmp")
+    temp_path.write_text(json.dumps(state.to_dict(), indent=2), encoding="utf-8")
+    temp_path.replace(state_path)
+
+    if temp_path.exists():
+        try:
+            temp_path.unlink()
+        except Exception:
+            pass
+
+
+def _mutate_session_state(
+    ralph_dir: Path,
+    mutator: Callable[[SessionStateFile], Tuple[bool, Any]],
+    logger: Optional[RalphLogger] = None,
+) -> Tuple[bool, Any]:
+    """Mutate session state under a single exclusive lock.
+
+    The mutator returns:
+      - should_save: whether to persist the modified state
+      - result: arbitrary result payload returned to caller
+    """
+    state_path = get_session_state_path(ralph_dir)
+    lock_path = state_path.with_suffix(".lock")
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(lock_path, "a+", encoding="utf-8") as lock_file:
+            _with_lock(lock_file, exclusive=True)
+            try:
+                state = _deserialize_state(state_path, logger)
+                should_save, result = mutator(state)
+                if should_save:
+                    _write_state_unlocked(state_path, state)
+                return True, result
+            finally:
+                _release_lock(lock_file)
+    except Exception as e:
+        if logger:
+            logger.error(f"Failed to mutate session state file: {e}")
+        return False, None
+
+
+def load_session_state(ralph_dir: Path, logger: Optional[RalphLogger] = None) -> SessionStateFile:
+    """Load session state from file.
+
+    Creates an empty state file if it doesn't exist.
+
+    Args:
+        ralph_dir: Ralph directory path
+        logger: Optional logger
+
+    Returns:
+        SessionStateFile with loaded or empty state
+    """
+    state_path = get_session_state_path(ralph_dir)
+    lock_path = state_path.with_suffix(".lock")
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(lock_path, "a+", encoding="utf-8") as lock_file:
+            _with_lock(lock_file, exclusive=False)
+            try:
+                return _deserialize_state(state_path, logger)
+            finally:
+                _release_lock(lock_file)
+    except Exception as e:
+        if logger:
+            logger.warning(f"Failed to load session state file: {e}. Starting fresh.")
+        return SessionStateFile()
+
+
 def save_session_state(
     ralph_dir: Path,
     state: SessionStateFile,
     logger: Optional[RalphLogger] = None,
 ) -> bool:
-    """Save session state to file with atomic write and file locking.
+    """Save session state to file with atomic write and file locking."""
 
-    Uses write-to-temp-then-rename for atomicity and fcntl for file locking
-    to prevent concurrent writer corruption.
+    def _set_state(current: SessionStateFile) -> Tuple[bool, bool]:
+        current.version = state.version
+        current.last_updated = state.last_updated
+        current.sessions = state.sessions
+        return True, True
 
-    Args:
-        ralph_dir: Ralph directory path
-        state: Session state to save
-        logger: Optional logger
-
-    Returns:
-        True if save succeeded
-    """
-    state_path = get_session_state_path(ralph_dir)
-
-    try:
-        state.last_updated = _utc_now()
-        state_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Use a lock file to prevent concurrent writes
-        lock_path = state_path.with_suffix(".lock")
-
-        # Write to temp file, then rename atomically
-        temp_path = state_path.with_suffix(".tmp")
-
-        with open(lock_path, "w") as lock_file:
-            _with_lock(lock_file, exclusive=True)
-            try:
-                # Write to temp file
-                temp_path.write_text(
-                    json.dumps(state.to_dict(), indent=2),
-                    encoding="utf-8"
-                )
-                # Atomic rename
-                temp_path.rename(state_path)
-            finally:
-                _release_lock(lock_file)
-
-        # Clean up temp file if it still exists (e.g., after failed rename)
-        if temp_path.exists():
-            try:
-                temp_path.unlink()
-            except Exception:
-                pass
-
-        return True
-    except Exception as e:
-        if logger:
-            logger.error(f"Failed to save session state file: {e}")
-        return False
+    ok, result = _mutate_session_state(ralph_dir, _set_state, logger)
+    return bool(ok and result)
 
 
 def register_dispatch_session(
@@ -277,34 +309,25 @@ def register_dispatch_session(
     session: DispatchSessionState,
     logger: Optional[RalphLogger] = None,
 ) -> bool:
-    """Register a new dispatch session in the state file.
+    """Register a new dispatch session in the state file."""
 
-    Args:
-        ralph_dir: Ralph directory path
-        session: Session state to register
-        logger: Optional logger
+    def _register(state: SessionStateFile) -> Tuple[bool, bool]:
+        existing_ids = {s.session_id for s in state.sessions}
+        if session.session_id in existing_ids:
+            if logger:
+                logger.warning(
+                    f"Session {session.session_id} already exists in state file, updating"
+                )
+            state.sessions = [
+                session if s.session_id == session.session_id else s
+                for s in state.sessions
+            ]
+        else:
+            state.sessions.append(session)
+        return True, True
 
-    Returns:
-        True if registration succeeded
-    """
-    state = load_session_state(ralph_dir, logger)
-
-    # Check for duplicate session_id
-    existing_ids = {s.session_id for s in state.sessions}
-    if session.session_id in existing_ids:
-        if logger:
-            logger.warning(
-                f"Session {session.session_id} already exists in state file, updating"
-            )
-        # Update existing session
-        state.sessions = [
-            session if s.session_id == session.session_id else s
-            for s in state.sessions
-        ]
-    else:
-        state.sessions.append(session)
-
-    return save_session_state(ralph_dir, state, logger)
+    ok, result = _mutate_session_state(ralph_dir, _register, logger)
+    return bool(ok and result)
 
 
 def update_dispatch_session_status(
@@ -314,36 +337,26 @@ def update_dispatch_session_status(
     return_code: Optional[int] = None,
     logger: Optional[RalphLogger] = None,
 ) -> bool:
-    """Update the status of a dispatch session.
+    """Update the status of a dispatch session."""
 
-    Args:
-        ralph_dir: Ralph directory path
-        session_id: Session ID to update
-        status: New status (completed, failed, orphaned)
-        return_code: Optional exit code
-        logger: Optional logger
+    def _update(state: SessionStateFile) -> Tuple[bool, bool]:
+        for session in state.sessions:
+            if session.session_id == session_id:
+                session.status = status
+                session.completed_at = _utc_now()
+                if return_code is not None:
+                    session.return_code = return_code
+                return True, True
+        return False, False
 
-    Returns:
-        True if update succeeded
-    """
-    state = load_session_state(ralph_dir, logger)
-
-    found = False
-    for session in state.sessions:
-        if session.session_id == session_id:
-            session.status = status
-            session.completed_at = _utc_now()
-            if return_code is not None:
-                session.return_code = return_code
-            found = True
-            break
-
-    if not found:
+    ok, updated = _mutate_session_state(ralph_dir, _update, logger)
+    if not ok:
+        return False
+    if not updated:
         if logger:
             logger.warning(f"Session {session_id} not found in state file for update")
         return False
-
-    return save_session_state(ralph_dir, state, logger)
+    return True
 
 
 def remove_dispatch_session(
@@ -351,27 +364,20 @@ def remove_dispatch_session(
     session_id: str,
     logger: Optional[RalphLogger] = None,
 ) -> bool:
-    """Remove a dispatch session from the state file.
+    """Remove a dispatch session from the state file."""
 
-    Args:
-        ralph_dir: Ralph directory path
-        session_id: Session ID to remove
-        logger: Optional logger
+    def _remove(state: SessionStateFile) -> Tuple[bool, bool]:
+        original_count = len(state.sessions)
+        state.sessions = [s for s in state.sessions if s.session_id != session_id]
+        removed = len(state.sessions) != original_count
+        return removed, removed
 
-    Returns:
-        True if removal succeeded
-    """
-    state = load_session_state(ralph_dir, logger)
-
-    original_count = len(state.sessions)
-    state.sessions = [s for s in state.sessions if s.session_id != session_id]
-
-    if len(state.sessions) == original_count:
-        if logger:
-            logger.debug(f"Session {session_id} not found in state file for removal")
-        return True  # Not found is still a success
-
-    return save_session_state(ralph_dir, state, logger)
+    ok, removed = _mutate_session_state(ralph_dir, _remove, logger)
+    if not ok:
+        return False
+    if not removed and logger:
+        logger.debug(f"Session {session_id} not found in state file for removal")
+    return True
 
 
 def _is_process_alive(pid: int) -> bool:
@@ -399,6 +405,24 @@ def _is_process_alive(pid: int) -> bool:
     except OSError:
         # Any other OS error (e.g., invalid PID)
         return False
+
+
+def get_process_start_time(pid: int) -> Optional[int]:
+    """Read process start time from /proc/<pid>/stat (Linux).
+
+    Returns the kernel start-time tick count used to distinguish PID reuse.
+    Returns None when unavailable.
+    """
+    stat_path = Path(f"/proc/{pid}/stat")
+    try:
+        data = stat_path.read_text(encoding="utf-8", errors="replace").strip()
+        parts = data.split()
+        # Field 22 in /proc/<pid>/stat is starttime (index 21)
+        if len(parts) <= 21:
+            return None
+        return int(parts[21])
+    except Exception:
+        return None
 
 
 def detect_orphaned_sessions(
@@ -433,28 +457,43 @@ def detect_orphaned_sessions(
 
         # Check if the process is still alive
         if session.pid:
-            # Use os.kill(pid, 0) instead of poll_dispatch_status() because
-            # orphaned sessions are NOT our children - waitpid won't work
-            is_running = _is_process_alive(session.pid)
-
-            if is_running:
-                # Process is still running but we don't own it
-                # (it was started by a previous Ralph instance)
-                if logger:
-                    logger.info(
-                        f"Found orphaned running session: {session.session_id} "
-                        f"(ticket: {session.ticket_id}, pid: {session.pid})"
-                    )
-                orphaned.append(session)
-            else:
+            if not _is_process_alive(session.pid):
                 # Process is dead but session is still marked as running
-                # This is also orphaned (stale state)
                 if logger:
                     logger.info(
                         f"Found stale session (process dead): {session.session_id} "
                         f"(ticket: {session.ticket_id})"
                     )
                 orphaned.append(session)
+                continue
+
+            # Process exists. If we have process identity metadata, validate PID reuse.
+            if session.process_start_time is not None:
+                current_start = get_process_start_time(session.pid)
+                if current_start is None:
+                    if logger:
+                        logger.warning(
+                            f"Unable to verify process identity for session {session.session_id} "
+                            f"(pid: {session.pid}); treating as stale orphan"
+                        )
+                    orphaned.append(session)
+                    continue
+                if current_start != session.process_start_time:
+                    if logger:
+                        logger.warning(
+                            f"PID reuse detected for session {session.session_id} "
+                            f"(pid: {session.pid}); treating as stale orphan"
+                        )
+                    orphaned.append(session)
+                    continue
+
+            # Process is running and matches recorded identity (or legacy metadata missing).
+            if logger:
+                logger.info(
+                    f"Found orphaned running session: {session.session_id} "
+                    f"(ticket: {session.ticket_id}, pid: {session.pid})"
+                )
+            orphaned.append(session)
         else:
             # No PID - session is incomplete/orphaned
             if logger:
@@ -471,6 +510,7 @@ def cleanup_orphaned_session(
     ralph_dir: Path,
     session: DispatchSessionState,
     repo_root: Path,
+    worktrees_root: Optional[Path] = None,
     logger: Optional[RalphLogger] = None,
 ) -> bool:
     """Clean up a single orphaned session.
@@ -484,6 +524,7 @@ def cleanup_orphaned_session(
         ralph_dir: Ralph directory path
         session: Session to clean up
         repo_root: Repository root path (for worktree cleanup)
+        worktrees_root: Optional explicit worktrees root for strict path validation
         logger: Optional logger
 
     Returns:
@@ -498,8 +539,26 @@ def cleanup_orphaned_session(
 
     # Step 1: Terminate process if still running
     # Use _is_process_alive() because orphaned processes are NOT our children
-    if session.pid:
-        if _is_process_alive(session.pid):
+    if session.pid and _is_process_alive(session.pid):
+        should_terminate = True
+
+        # If we have process identity metadata, verify we're targeting the same process.
+        if session.process_start_time is not None:
+            current_start = get_process_start_time(session.pid)
+            if current_start is None:
+                log.warning(
+                    f"Unable to verify process identity for pid={session.pid}; "
+                    f"skipping termination for safety"
+                )
+                should_terminate = False
+            elif current_start != session.process_start_time:
+                log.warning(
+                    f"PID reuse detected for session {session.session_id} (pid={session.pid}); "
+                    f"skipping termination of unrelated process"
+                )
+                should_terminate = False
+
+        if should_terminate:
             log.info(
                 f"Terminating orphaned session process: pid={session.pid}, "
                 f"session={session.session_id}"
@@ -527,26 +586,23 @@ def cleanup_orphaned_session(
                 log.warning(f"Failed to terminate orphaned session process: {e}")
 
     # Step 2: Clean up worktree if it exists
-    # Security: Validate worktree_path is under repo_root before deletion
     if session.worktree_path:
         worktree_path = Path(session.worktree_path).resolve()
-        safe_repo_root = repo_root.resolve()
+        allowed_root = worktrees_root.resolve() if worktrees_root else repo_root.resolve()
 
-        # Validate path is under repo_root (prevent path traversal attacks)
+        # Security: Validate path is strictly under the allowed worktrees root.
         try:
-            worktree_path.relative_to(safe_repo_root)
+            worktree_path.relative_to(allowed_root)
         except ValueError:
             log.warning(
-                f"Worktree path {worktree_path} is outside repo root {safe_repo_root}, "
-                f"skipping cleanup for safety"
+                f"Worktree path {worktree_path} is outside allowed worktrees root "
+                f"{allowed_root}, skipping cleanup for safety"
             )
             worktree_cleaned = False
         else:
             # Path validation passed, proceed with cleanup
             if worktree_path.exists():
-                log.info(
-                    f"Cleaning up orphaned session worktree: {worktree_path}"
-                )
+                log.info(f"Cleaning up orphaned session worktree: {worktree_path}")
                 # Try git worktree remove first
                 remove_result = subprocess.run(
                     ["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)],
@@ -595,6 +651,7 @@ def cleanup_orphaned_session(
 def cleanup_all_orphaned_sessions(
     ralph_dir: Path,
     repo_root: Path,
+    worktrees_root: Optional[Path] = None,
     logger: Optional[RalphLogger] = None,
 ) -> int:
     """Detect and clean up all orphaned sessions.
@@ -605,6 +662,7 @@ def cleanup_all_orphaned_sessions(
     Args:
         ralph_dir: Ralph directory path
         repo_root: Repository root path
+        worktrees_root: Optional explicit worktrees root for strict cleanup validation
         logger: Optional logger
 
     Returns:
@@ -623,7 +681,7 @@ def cleanup_all_orphaned_sessions(
     cleaned = 0
     for session in orphaned:
         try:
-            if cleanup_orphaned_session(ralph_dir, session, repo_root, log):
+            if cleanup_orphaned_session(ralph_dir, session, repo_root, worktrees_root, log):
                 cleaned += 1
         except Exception as e:
             log.error(
@@ -657,54 +715,59 @@ def prune_expired_sessions(
 
     log = logger or create_logger(level=LogLevel.NORMAL)
 
-    state = load_session_state(ralph_dir, log)
     now = time.time()
     ttl_sec = ttl_ms / 1000.0
 
     # Terminal states that can be pruned
     terminal_states = {"completed", "failed", "orphaned"}
 
-    original_count = len(state.sessions)
-    pruned_sessions: List[DispatchSessionState] = []
-    retained_sessions: List[DispatchSessionState] = []
+    def _prune(state: SessionStateFile) -> Tuple[bool, int]:
+        pruned_count = 0
+        retained_sessions: List[DispatchSessionState] = []
 
-    for session in state.sessions:
-        # Keep non-terminal sessions
-        if session.status not in terminal_states:
+        for session in state.sessions:
+            # Keep non-terminal sessions
+            if session.status not in terminal_states:
+                retained_sessions.append(session)
+                continue
+
+            # Check if session is within TTL
+            if session.completed_at:
+                completed_ts = _parse_timestamp(session.completed_at)
+                if completed_ts:
+                    age_sec = now - completed_ts
+                    if age_sec > ttl_sec:
+                        pruned_count += 1
+                        continue
+
+            # Keep session if within TTL or no timestamp
             retained_sessions.append(session)
-            continue
 
-        # Check if session is within TTL
-        if session.completed_at:
-            completed_ts = _parse_timestamp(session.completed_at)
-            if completed_ts:
-                age_sec = now - completed_ts
-                if age_sec > ttl_sec:
-                    pruned_sessions.append(session)
-                    continue
+        if pruned_count > 0:
+            state.sessions = retained_sessions
+            return True, pruned_count
 
-        # Keep session if within TTL or no timestamp
-        retained_sessions.append(session)
+        return False, 0
 
-    if not pruned_sessions:
+    ok, pruned_count = _mutate_session_state(ralph_dir, _prune, log)
+    if not ok:
+        return 0
+    if not pruned_count:
         return 0
 
-    # Update state with only retained sessions
-    state.sessions = retained_sessions
-    save_session_state(ralph_dir, state, log)
-
     log.info(
-        f"Pruned {len(pruned_sessions)} expired session(s) "
+        f"Pruned {pruned_count} expired session(s) "
         f"(older than {ttl_ms}ms)"
     )
 
-    return len(pruned_sessions)
+    return pruned_count
 
 
 def run_startup_recovery(
     ralph_dir: Path,
     repo_root: Path,
     ttl_ms: int = DEFAULT_SESSION_TTL_MS,
+    worktrees_root: Optional[Path] = None,
     logger: Optional[RalphLogger] = None,
 ) -> tuple[int, int]:
     """Run full startup recovery: orphaned session cleanup + TTL pruning.
@@ -715,6 +778,7 @@ def run_startup_recovery(
         ralph_dir: Ralph directory path
         repo_root: Repository root path
         ttl_ms: Retention TTL in milliseconds (0 = no TTL pruning)
+        worktrees_root: Optional explicit worktrees root for strict cleanup validation
         logger: Optional logger
 
     Returns:
@@ -725,7 +789,12 @@ def run_startup_recovery(
     log.info("Running session recovery...")
 
     # Step 1: Clean up orphaned sessions
-    orphaned_cleaned = cleanup_all_orphaned_sessions(ralph_dir, repo_root, log)
+    orphaned_cleaned = cleanup_all_orphaned_sessions(
+        ralph_dir,
+        repo_root,
+        worktrees_root=worktrees_root,
+        logger=log,
+    )
 
     # Step 2: Prune expired sessions
     expired_pruned = prune_expired_sessions(ralph_dir, ttl_ms, log)
