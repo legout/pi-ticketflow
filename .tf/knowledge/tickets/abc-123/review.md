@@ -1,19 +1,19 @@
 # Review: abc-123
 
 ## Critical (must fix)
-- No issues found.
+- None.
 
 ## Major (should fix)
-- No issues found.
+- None.
 
 ## Minor (nice to fix)
-- No issues found.
+- None.
 
 ## Warnings (follow-up ticket)
-- No issues found.
+- None.
 
 ## Suggestions (follow-up ticket)
-- `tests/test_demo_hello.py` - Consider adding an explicit test that exercises `BrokenPipeError` handling in `demo.__main__.main` to guard CLI pipe behavior. *(Sources: reviewer-second-opinion)*
+- `tests/test_demo_hello.py` - Consider adding an explicit test that exercises `BrokenPipeError` handling in `demo.__main__.main` to guard CLI pipe behavior. (source: reviewer-second-opinion)
 
 ## Summary Statistics
 - Critical: 0
