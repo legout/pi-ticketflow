@@ -1,25 +1,32 @@
 # Review: abc-123
 
 ## Critical (must fix)
-No issues found
+*No critical issues found.*
 
 ## Major (should fix)
-No issues found
+*No major issues found.*
 
 ## Minor (nice to fix)
-- `demo/__main__.py:29-32` - BrokenPipeError handling suppresses output silently. Consider adding comment explaining behavior for future maintainers.
+- `demo/hello.py:47` - The docstring explains TypeError is only raised for direct function calls, but this distinction could be clearer for users reading the API documentation.
 
 ## Warnings (follow-up ticket)
-- `demo/hello.py:47-48` - TypeError message uses `type(x).__name__` which could fail for custom classes without `__name__`. Low risk but consider defensive coding.
+- `tests/test_demo_hello.py` - No subprocess-based integration tests for CLI. While unit tests cover the logic, actual CLI execution path (argument parsing edge cases) isn't tested via subprocess.
 
 ## Suggestions (follow-up ticket)
-- `demo/hello.py:1` - Consider adding `__version__` attribute for library usability
-- `demo/hello.py:45-46` - Test count in docstring is a maintenance burden
-- `tests/test_demo_hello.py:95-101` - Module exports test depends on package structure
+- `demo/hello.py` - Consider adding `__version__` attribute to the module.
+- `tests/test_demo_hello.py` - Property-based testing (with hypothesis) could strengthen the whitespace normalization tests.
+- `demo/hello.py` - Document the regex patterns with usage examples in module comments.
+- Consider edge case: extremely long input strings - no validation for max length.
+- Consider adding `--version` flag to CLI for standard CLI conventions.
 
 ## Summary Statistics
 - Critical: 0
 - Major: 0
 - Minor: 1
 - Warnings: 1
-- Suggestions: 3
+- Suggestions: 5
+
+## Review Sources
+- reviewer-general: 0 Critical, 0 Major, 1 Minor, 0 Warnings, 2 Suggestions
+- reviewer-spec-audit: 0 Critical, 0 Major, 0 Minor, 0 Warnings, 1 Suggestion
+- reviewer-second-opinion: 0 Critical, 0 Major, 0 Minor, 1 Warning, 2 Suggestions

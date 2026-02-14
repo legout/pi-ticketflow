@@ -3,28 +3,28 @@
   "pre_fix_counts": {
     "Critical": 0,
     "Major": 0,
-    "Minor": 0,
-    "Warnings": 0,
-    "Suggestions": 1
+    "Minor": 1,
+    "Warnings": 1,
+    "Suggestions": 4
   },
   "fixed_counts": {
-    "Critical": 0,
-    "Major": 0,
-    "Minor": 0,
-    "Warnings": 0,
-    "Suggestions": 0
+    "Critical": 6,
+    "Major": 6,
+    "Minor": 6,
+    "Warnings": 5,
+    "Suggestions": 4
   },
   "post_fix_counts": {
     "Critical": 0,
     "Major": 0,
     "Minor": 0,
     "Warnings": 0,
-    "Suggestions": 1
+    "Suggestions": 0
   },
   "verification_passed": true,
   "fail_on": [],
   "fixes_found": true,
   "fixes_parse_warning": null,
-  "review_mtime": 1771034051.6993551,
-  "fixes_mtime": 1771034120.6342843
+  "review_mtime": 1771038803.8024294,
+  "fixes_mtime": 1771038814.988418
 }
