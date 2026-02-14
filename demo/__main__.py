@@ -41,7 +41,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     args: argparse.Namespace = parser.parse_args(argv)
-    print(hello(args.name))
+    try:
+        print(hello(args.name))
+    except BrokenPipeError:
+        # Handle piped output where reader closes early (e.g., `python -m demo | head -1`)
+        # Suppress error and exit cleanly
+        return 0
     return 0
 
 

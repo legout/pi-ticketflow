@@ -24,17 +24,21 @@ from __future__ import annotations
 
 import re
 
+# Pre-compiled regex for performance
+# Matches zero-width chars (U+200B-U+200D, U+FEFF) and whitespace
+_ZERO_WIDTH_RE = re.compile(r"[\u200B-\u200D\uFEFF]+")
+_WHITESPACE_RE = re.compile(r"\s+")
+
 
 def hello(name: str = "World") -> str:
     """Return a greeting message.
 
     Args:
         name: The name to greet. Defaults to "World".
-            All whitespace runs (including internal) are collapsed to a single
-            space, and zero-width Unicode characters (U+200B-U+200D, U+FEFF)
-            are removed from anywhere in the string. Leading/trailing whitespace
-            is then stripped. Empty strings and whitespace-only strings return
-            the full greeting "Hello, World!".
+            Zero-width Unicode characters (U+200B-U+200D, U+FEFF) are removed.
+            Then all whitespace runs (including internal) are collapsed to a
+            single space, and leading/trailing whitespace is stripped.
+            If the result is empty after cleaning, "Hello, World!" is returned.
 
     Returns:
         str: A greeting string in the format "Hello, {name}!".
@@ -45,9 +49,13 @@ def hello(name: str = "World") -> str:
             non-string input as a string argument and not raise TypeError.
     """
     if not isinstance(name, str):
-        raise TypeError(f"name must be a string, got {type(name).__name__}")
-    # Remove all Unicode whitespace including zero-width chars (U+200B-U+200D, U+FEFF)
-    cleaned_name = re.sub(r'[\s\u200B-\u200D\uFEFF]+', ' ', name).strip()
+        # Special-case None for better error message
+        type_name = "None" if name is None else type(name).__name__
+        raise TypeError(f"name must be a string, got {type_name}")
+    # Step 1: Remove zero-width chars first (U+200B-U+200D, U+FEFF)
+    name_no_zw = _ZERO_WIDTH_RE.sub("", name)
+    # Step 2: Collapse whitespace runs to single space
+    cleaned_name = _WHITESPACE_RE.sub(" ", name_no_zw).strip()
     if not cleaned_name:
         return "Hello, World!"
     return f"Hello, {cleaned_name}!"

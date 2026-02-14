@@ -1,40 +1,50 @@
 # Fixes: abc-123
 
 ## Summary
-No code fixes required. The Critical issue identified in the review is a **process failure** (nested subagent depth limit), not an actual code defect. The implementation is complete with all 13 tests passing.
+Fixed 4 Major issues identified in code review. All fixes applied successfully with 14 tests passing.
 
 ## Fixes by Severity
 
 ### Critical (must fix)
-- [ ] `N/A` - Review failed due to nested subagent depth limit
-
-  **Analysis**: This is a workflow infrastructure issue, not a code problem. The review subagents could not be spawned due to subagent nesting constraints (depth=2, max=2). The implementation itself is verified:
-  - 13/13 tests passing
-  - All quality checks complete
-  - Ticket was previously closed successfully
-
-  **Resolution**: No code fix possible or needed. This requires workflow-level changes (e.g., running reviews at a higher nesting level, or using a different review mechanism). Defer to follow-up if needed.
+- [ ] None
 
 ### Major (should fix)
-- None
+- [x] `demo/hello.py:50` - **Unicode zero-width character handling bug**: Fixed by separating the regex into two steps - first remove zero-width chars (U+200B-U+200D, U+FEFF), then collapse whitespace. This prevents inserting spaces where zero-width chars were removed from inside words (e.g., "Ali\u200Bce" now correctly becomes "Alice" not "Ali ce").
+
+- [x] `demo/hello.py:35` - **Regex compiled on each call**: Fixed by moving regex compilation to module level with `_ZERO_WIDTH_RE` and `_WHITESPACE_RE` constants. This eliminates O(n) overhead per call.
+
+- [x] `demo/hello.py:33` - **Error message inconsistency**: Fixed by special-casing None in error messages. Now shows "got None" instead of "got NoneType" for better readability.
+
+- [x] `demo/__main__.py:38` - **No BrokenPipeError handling**: Fixed by wrapping `print()` in try/except to catch BrokenPipeError and exit silently with code 0 when output is piped and reader closes early.
 
 ### Minor (nice to fix)
-- None
+- [x] `tests/test_demo_hello.py:59` - Added `test_hello_zero_width_inside_word()` test to verify zero-width chars inside words are removed without adding spaces. This prevents regression of the Major bug.
+
+- [x] `demo/hello.py:27-30` - Updated docstring to accurately reflect behavior: "If the result is empty after cleaning, 'Hello, World!' is returned" instead of just "Empty strings and whitespace-only strings".
 
 ### Warnings (follow-up)
-- None
+- [ ] None fixed (deferred to follow-up tickets)
 
 ### Suggestions (follow-up)
-- None
+- [ ] None fixed (deferred to follow-up tickets)
 
 ## Summary Statistics
-- **Critical**: 0 (1 process issue - no code fix possible)
-- **Major**: 0
-- **Minor**: 0
-- **Warnings**: 0
-- **Suggestions**: 0
+- **Critical**: 0 fixed
+- **Major**: 4 fixed
+- **Minor**: 2 fixed
+- **Warnings**: 0 fixed
+- **Suggestions**: 0 fixed
+
+## Files Changed
+- `demo/hello.py` - Fixed Unicode handling, module-level regex compilation, improved error messages, updated docstring
+- `demo/__main__.py` - Added BrokenPipeError handling
+- `tests/test_demo_hello.py` - Added test for zero-width chars inside words, updated test for None error message
 
 ## Verification
-- Implementation verified via existing test suite: 13/13 tests passing
-- No code changes made (none required)
-- Review failure is infrastructure-related, not code quality
+- All 14 tests passing (added 1 new test)
+- Python syntax validation: ✅ Passed
+- Test commands run:
+  ```bash
+  python -m pytest tests/test_demo_hello.py -v
+  # 14 passed in 0.05s
+  ```

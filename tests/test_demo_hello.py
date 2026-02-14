@@ -71,6 +71,19 @@ def test_hello_unicode_whitespace_stripped() -> None:
     assert result == "Hello, World!"
 
 
+def test_hello_zero_width_inside_word() -> None:
+    """Test zero-width characters inside words are removed without adding spaces."""
+    # Zero-width chars embedded inside a word should NOT create spaces
+    result = hello("Ali\u200Bce")  # U+200B zero-width space
+    assert result == "Hello, Alice!", f"Expected 'Hello, Alice!' but got {result!r}"
+    result = hello("Jo\u200Chn")  # U+200C zero-width non-joiner
+    assert result == "Hello, John!", f"Expected 'Hello, John!' but got {result!r}"
+    result = hello("Te\u200Dst")  # U+200D zero-width joiner
+    assert result == "Hello, Test!", f"Expected 'Hello, Test!' but got {result!r}"
+    result = hello("Bo\uFEFFb")  # U+FEFF zero-width no-break space
+    assert result == "Hello, Bob!", f"Expected 'Hello, Bob!' but got {result!r}"
+
+
 def test_cli_default(capsys: pytest.CaptureFixture[str]) -> None:
     """Test CLI entry point with no arguments."""
     result = main([])
@@ -97,7 +110,7 @@ def test_cli_empty_string(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_hello_none_raises() -> None:
     """Test hello with None raises TypeError."""
-    with pytest.raises(TypeError, match="name must be a string, got NoneType"):
+    with pytest.raises(TypeError, match="name must be a string, got None"):
         hello(None)  # type: ignore[arg-type]
 
 
