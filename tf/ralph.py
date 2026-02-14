@@ -7,6 +7,8 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -141,9 +143,72 @@ DEFAULTS: Dict[str, Any] = {
     "executionBackend": "dispatch",  # "dispatch" (default) or "subprocess"
     "interactiveShell": {
         "enabled": True,  # Use interactive_shell tool when True
-        "mode": "dispatch",  # "dispatch" (headless) or "hands-free" (monitored)
+        # Note: "mode" is reserved for future use (e.g., "dispatch" vs "hands-free")
+        "mode": "dispatch",  # Currently unused but reserved for future expansion
     },
 }
+
+# Valid execution backend values
+VALID_EXECUTION_BACKENDS = ("dispatch", "subprocess")
+
+
+def resolve_execution_backend(
+    cli_execution_backend: Optional[str],
+    config: dict,
+    logger: "Logger",  # type: ignore[name-defined]
+) -> str:
+    """
+    Resolve execution backend from CLI flag, env var, or config.
+
+    Priority: CLI flag > Environment variable > Config > Default
+
+    Args:
+        cli_execution_backend: Value from CLI flag (--dispatch or --no-interactive-shell)
+        config: Ralph config dictionary
+        logger: Logger instance for warnings
+
+    Returns:
+        "dispatch" or "subprocess"
+    """
+    # Start with default
+    execution_backend: str = DEFAULTS["executionBackend"]
+
+    # CLI flag has highest priority
+    if cli_execution_backend:
+        # Validate CLI value
+        if cli_execution_backend in VALID_EXECUTION_BACKENDS:
+            execution_backend = cli_execution_backend
+        else:
+            logger.warning(f"Invalid CLI execution_backend '{cli_execution_backend}', using default")
+        return execution_backend
+
+    # Check environment variable
+    env_no_interactive = os.environ.get("RALPH_NO_INTERACTIVE_SHELL", "").strip()
+    if env_no_interactive in ("1", "true", "yes"):
+        execution_backend = "subprocess"
+    else:
+        # Check config value - first check if key exists in config
+        if "executionBackend" in config:
+            # Key exists - validate it
+            config_backend = config.get("executionBackend")
+            if isinstance(config_backend, str) and config_backend in VALID_EXECUTION_BACKENDS:
+                execution_backend = config_backend
+            else:
+                # Invalid config value - log warning and use default
+                logger.warning(
+                    f"Invalid executionBackend '{config_backend}' in config, "
+                    f"expected 'dispatch' or 'subprocess', using default"
+                )
+        else:
+            # Key doesn't exist - check interactiveShell.enabled for backward compatibility
+            interactive_shell_config = config.get("interactiveShell", {})
+            if isinstance(interactive_shell_config, dict):
+                enabled = interactive_shell_config.get("enabled", True)
+                if parse_bool(enabled, True) is False:
+                    execution_backend = "subprocess"
+
+    return execution_backend
+
 
 # Legacy session directory for backward compatibility detection
 LEGACY_SESSION_DIR = ".tf/ralph/sessions"
@@ -425,6 +490,24 @@ def prompt_exists(project_root: Path, logger: Optional[RalphLogger] = None) -> b
 
 
 def build_cmd(workflow: str, ticket: str, flags: str) -> str:
+    """Build a workflow command string.
+
+    Args:
+        workflow: Workflow command (e.g., "/tf")
+        ticket: Ticket ID (validated for safety)
+        flags: Additional flags
+
+    Returns:
+        Command string
+
+    Raises:
+        ValueError: If ticket contains unsafe characters
+    """
+    # Validate ticket ID for safe command construction
+    # Allow alphanumeric, hyphens, underscores, and common ticket prefixes
+    if not re.match(r'^[a-zA-Z0-9_-]+$', ticket):
+        raise ValueError(f"Invalid ticket ID format: {ticket}")
+
     cmd = f"{workflow} {ticket}".strip()
     if flags:
         cmd = f"{cmd} {flags}".strip()
@@ -515,14 +598,12 @@ def run_ticket(
         if not prompt_exists(cwd, log):
             return 1
 
-    # Log execution backend (pt-6d99)
+    # Log execution backend selection (pt-6d99)
     if execution_backend == "dispatch":
-        log.info(f"Execution backend: dispatch (interactive_shell) - NOTE: using subprocess fallback until pt-9yjn")
+        # Dispatch backend uses run_ticket_dispatch() for isolated Pi sessions (pt-9yjn)
+        log.info(f"Execution backend: dispatch")
     else:
         log.info(f"Execution backend: subprocess (legacy)")
-
-    # TODO(pt-9yjn): Implement actual dispatch execution via interactive_shell tool
-    # For now, both backends use subprocess (this ticket only defines the contract)
     cmd = build_cmd(workflow, ticket, flags)
 
     # Determine JSON capture path if enabled
@@ -622,6 +703,201 @@ def run_ticket(
         log.error(f"Command failed with exit code {return_code}. Output log: {pi_log_path}", ticket=ticket)
 
     return return_code
+
+
+@dataclass
+class DispatchResult:
+    """Result of a dispatch ticket launch."""
+    session_id: str
+    ticket_id: str
+    status: str  # "launched" | "failed"
+    pid: Optional[int] = None
+    error: Optional[str] = None
+
+
+def run_ticket_dispatch(
+    ticket: str,
+    workflow: str,
+    flags: str,
+    dry_run: bool,
+    cwd: Optional[Path] = None,
+    logger: Optional[RalphLogger] = None,
+    mode: str = "serial",
+    capture_json: bool = False,
+    logs_dir: Optional[Path] = None,
+    ticket_title: Optional[str] = None,
+    pi_output: str = "inherit",
+    pi_output_file: Optional[str] = None,
+    timeout_ms: int = 0,
+) -> DispatchResult:
+    """Launch a ticket in dispatch mode using subprocess.
+
+    This function launches a Pi session in background using subprocess.Popen.
+    It returns immediately with a session ID, allowing the caller to track
+    completion asynchronously.
+
+    Architecture Note:
+        The implementation uses subprocess.Popen() to launch 'pi' rather than
+        calling the interactive_shell tool directly. This is required because:
+        1. Python code in tf/ralph.py runs as a subprocess within Pi
+        2. Python cannot directly invoke Pi tools like interactive_shell
+        3. Launching 'pi -p' via subprocess achieves equivalent isolation
+        4. The dispatch session is attachable via 'pi /attach <session>'
+
+    Args:
+        ticket: Ticket ID to run
+        workflow: Workflow command (e.g., "/tf")
+        flags: Additional flags for the workflow
+        dry_run: If True, log what would be executed without executing
+        cwd: Working directory for the execution
+        logger: Logger instance
+        mode: Execution mode (serial, parallel)
+        capture_json: If True, add --mode json flag for JSON output capture
+        logs_dir: Directory for log files
+        ticket_title: Title of the ticket for logging
+        pi_output: Output mode (inherit, file, discard)
+        pi_output_file: Specific file for pi output
+        timeout_ms: Timeout in milliseconds
+
+    Returns:
+        DispatchResult with session_id, ticket_id, status, pid, and optional error
+    """
+    log = logger or create_logger(mode=mode, ticket_id=ticket, ticket_title=ticket_title)
+
+    if not ticket:
+        log.error("No ticket specified")
+        return DispatchResult(session_id="", ticket_id="", status="failed", error="No ticket specified")
+
+    if not ensure_pi():
+        log.error("pi not found in PATH; cannot run workflow")
+        return DispatchResult(session_id="", ticket_id=ticket, status="failed", error="pi not found in PATH")
+
+    # Validate prompt exists
+    if cwd is None:
+        project_root = find_project_root()
+        if project_root and not prompt_exists(project_root, log):
+            return DispatchResult(session_id="", ticket_id=ticket, status="failed", error="Prompt not found")
+    else:
+        if not prompt_exists(cwd, log):
+            return DispatchResult(session_id="", ticket_id=ticket, status="failed", error="Prompt not found")
+
+    # Build the command: pi /tf <ticket> --auto
+    cmd = build_cmd(workflow, ticket, flags)
+    # Add --auto flag for autonomous execution
+    if "--auto" not in flags:
+        cmd = f"{cmd} --auto".strip()
+    # Add --mode json for JSON output capture
+    if capture_json and "--mode json" not in cmd:
+        cmd = f"{cmd} --mode json".strip()
+
+    # Generate a session ID for tracking (full UUID for uniqueness)
+    session_id = str(uuid.uuid4())
+
+    # Determine log file path if output to file
+    pi_log_path: Optional[Path] = None
+    if pi_output == "file":
+        if pi_output_file:
+            pi_log_path = Path(pi_output_file).expanduser()
+        elif logs_dir:
+            pi_log_path = logs_dir / f"{ticket}.log"
+        else:
+            pi_log_path = Path(".tf/ralph/logs") / f"{ticket}.log"
+
+    if dry_run:
+        prefix = " (worktree)" if cwd else ""
+        output_note = ""
+        if pi_output == "file":
+            output_note = f" (output to {pi_log_path})"
+        elif pi_output == "discard":
+            output_note = " (output discarded)"
+        log.info(f"Dry run (dispatch): pi {cmd}{prefix}{output_note}", ticket=ticket)
+        return DispatchResult(
+            session_id=session_id,
+            ticket_id=ticket,
+            status="launched",
+            pid=None,
+        )
+
+    # Build the full command for subprocess
+    # Use "pi -p" for non-interactive mode with the workflow command
+    full_cmd = ["pi", "-p", cmd]
+
+    # Prepare environment and stdout/stderr
+    env = os.environ.copy()
+    # Track file handles that need cleanup
+    stdout_file: Optional[Any] = None
+    stderr_file: Optional[Any] = None
+
+    if pi_output == "file" and pi_log_path:
+        pi_log_path.parent.mkdir(parents=True, exist_ok=True)
+        stdout_file = open(pi_log_path, "w", encoding="utf-8")
+        stdout = stdout_file
+        stderr = subprocess.STDOUT
+        log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
+    elif pi_output == "discard":
+        stdout_file = open(os.devnull, "w")
+        stdout = stdout_file
+        stderr = subprocess.STDOUT
+    else:
+        # For "inherit" mode, use DEVNULL to avoid pipe buffer deadlock
+        # The child process inherits no stdout/stderr from parent
+        stdout = subprocess.DEVNULL
+        stderr = subprocess.DEVNULL
+
+    log.info(f"Dispatching: pi -p \"{cmd}\" (session: {session_id})", ticket=ticket)
+
+    try:
+        # Start the process in background (non-blocking)
+        # Use start_new_session=True to create a new process group
+        # This allows us to track the process independently
+        proc = subprocess.Popen(
+            full_cmd,
+            cwd=cwd,
+            stdout=stdout,
+            stderr=stderr,
+            env=env,
+            start_new_session=True,
+        )
+
+        log.info(f"Dispatch launched with PID: {proc.pid}", ticket=ticket, pid=proc.pid)
+
+        # Close file handles in parent after successful launch
+        # Child process has its own copies via fork
+        if stdout_file is not None:
+            try:
+                stdout_file.close()
+            except Exception:
+                pass
+
+        # Post-launch health check: poll immediately to catch startup failures
+        # A process that dies right away will have a non-None return code
+        proc.poll()
+        if proc.returncode is not None:
+            error_msg = f"Process exited immediately with code {proc.returncode}"
+            log.error(error_msg, ticket=ticket)
+            return DispatchResult(
+                session_id=session_id,
+                ticket_id=ticket,
+                status="failed",
+                error=error_msg,
+            )
+
+        return DispatchResult(
+            session_id=session_id,
+            ticket_id=ticket,
+            status="launched",
+            pid=proc.pid,
+        )
+
+    except Exception as e:
+        error_msg = str(e)
+        log.error(f"Failed to launch dispatch: {error_msg}", ticket=ticket)
+        return DispatchResult(
+            session_id=session_id,
+            ticket_id=ticket,
+            status="failed",
+            error=error_msg,
+        )
 
 
 def extract_components(ticket_id: str, tag_prefix: str, allow_untagged: bool) -> Optional[set]:
@@ -1175,6 +1451,206 @@ def extract_lesson_block(close_summary: Path) -> str:
     return "\n".join(buffer).strip()
 
 
+# Per-ticket worktree functions for dispatch backend (pt-0v53)
+def create_worktree_for_ticket(
+    repo_root: Path,
+    worktrees_dir: Path,
+    ticket: str,
+    logger: Optional["RalphLogger"] = None,
+) -> Optional[Path]:
+    """Create a git worktree for a ticket.
+
+    Args:
+        repo_root: Root of the git repository
+        worktrees_dir: Directory where worktrees are created
+        ticket: Ticket ID to create worktree for
+        logger: Optional logger for status messages
+
+    Returns:
+        Path to the created worktree, or None if creation failed
+    """
+    worktree_path = worktrees_dir / ticket
+    worktree_path.mkdir(parents=True, exist_ok=True)
+
+    # Remove any existing worktree first
+    remove_result = subprocess.run(
+        ["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)],
+        capture_output=True,
+    )
+    if remove_result.returncode != 0 and worktree_path.exists():
+        # Worktree might not be tracked by git, try removing directory directly
+        if logger:
+            logger.warn(f"git worktree remove failed, trying direct removal: {worktree_path}")
+        try:
+            shutil.rmtree(worktree_path, ignore_errors=True)
+        except Exception:
+            pass
+
+    # Create new worktree
+    add_result = subprocess.run(
+        ["git", "-C", str(repo_root), "worktree", "add", "-B", f"ralph/{ticket}", str(worktree_path), "HEAD"],
+        capture_output=True,
+    )
+
+    if add_result.returncode != 0:
+        error_msg = add_result.stderr.decode("utf-8", errors="replace") if add_result.stderr else "worktree add failed"
+        if logger:
+            logger.error(f"Failed to create worktree for {ticket}: {error_msg}")
+        return None
+
+    if logger:
+        logger.info(f"Created worktree for {ticket}: {worktree_path}")
+
+    return worktree_path
+
+
+def merge_and_close_worktree(
+    repo_root: Path,
+    worktree_path: Path,
+    ticket: str,
+    logger: Optional["RalphLogger"] = None,
+) -> bool:
+    """Merge worktree changes to main branch and close (remove) the worktree.
+
+    Args:
+        repo_root: Root of the git repository
+        worktree_path: Path to the ticket's worktree
+        ticket: Ticket ID
+        logger: Optional logger for status messages
+
+    Returns:
+        True if merge and close succeeded, False otherwise
+    """
+    branch_name = f"ralph/{ticket}"
+
+    # Determine target branch (main or master)
+    target_branch = None
+    for branch in ["main", "master"]:
+        check_result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--verify", f"{branch}"],
+            capture_output=True,
+            text=True,
+        )
+        if check_result.returncode == 0:
+            target_branch = branch
+            break
+
+    if not target_branch:
+        if logger:
+            logger.error(f"Cannot find main or master branch in {repo_root}")
+        return False
+
+    # Ensure we're on the target branch before merging
+    checkout_result = subprocess.run(
+        ["git", "-C", str(repo_root), "checkout", target_branch],
+        capture_output=True,
+    )
+    if checkout_result.returncode != 0:
+        if logger:
+            logger.error(f"Failed to checkout {target_branch} before merge")
+        return False
+
+    # Checkout main branch in the worktree to ensure we're merging from a clean state
+    # First, get the main branch name
+    main_branch_result = subprocess.run(
+        ["git", "-C", str(worktree_path), "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    current_branch = main_branch_result.stdout.strip() if main_branch_result.returncode == 0 else None
+
+    if current_branch and current_branch != "main" and current_branch != "master":
+        # Try to checkout main or master
+        for main_branch in ["main", "master"]:
+            checkout_result = subprocess.run(
+                ["git", "-C", str(worktree_path), "checkout", main_branch],
+                capture_output=True,
+            )
+            if checkout_result.returncode == 0:
+                break
+
+    # Merge the worktree branch to main
+    merge_result = subprocess.run(
+        ["git", "-C", str(repo_root), "merge", "--no-ff", "-m", f"Merge {ticket} via Ralph", branch_name],
+        capture_output=True,
+    )
+
+    if merge_result.returncode != 0:
+        # Merge conflict or other error - don't remove worktree, let user handle
+        error_msg = merge_result.stderr.decode("utf-8", errors="replace") if merge_result.stderr else "merge failed"
+        if logger:
+            logger.warn(f"Merge failed for {ticket}: {error_msg}. Worktree preserved for manual resolution.")
+        return False
+
+    # Close (remove) the worktree after successful merge
+    remove_result = subprocess.run(
+        ["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)],
+        capture_output=True,
+    )
+
+    if remove_result.returncode != 0:
+        error_msg = remove_result.stderr.decode("utf-8", errors="replace") if remove_result.stderr else "worktree remove failed"
+        if logger:
+            logger.warn(f"Failed to remove worktree for {ticket}: {error_msg}")
+        else:
+            # Fallback to direct removal
+            try:
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            except Exception:
+                pass
+    else:
+        if logger:
+            logger.info(f"Merged and closed worktree for {ticket}")
+
+    # Optionally delete the branch (keep it for debugging by default)
+    # subprocess.run(["git", "-C", str(repo_root), "branch", "-d", branch_name], capture_output=True)
+
+    return True
+
+
+def cleanup_worktree(
+    repo_root: Path,
+    worktree_path: Path,
+    ticket: str,
+    logger: Optional["RalphLogger"] = None,
+) -> bool:
+    """Safely clean up a worktree without merging (failure path).
+
+    Args:
+        repo_root: Root of the git repository
+        worktree_path: Path to the ticket's worktree
+        ticket: Ticket ID
+        logger: Optional logger for status messages
+
+    Returns:
+        True if cleanup succeeded, False otherwise
+    """
+    # Remove worktree without merging (safe cleanup)
+    remove_result = subprocess.run(
+        ["git", "-C", str(repo_root), "worktree", "remove", "-f", str(worktree_path)],
+        capture_output=True,
+    )
+
+    if remove_result.returncode != 0:
+        error_msg = remove_result.stderr.decode("utf-8", errors="replace") if remove_result.stderr else "worktree remove failed"
+        if logger:
+            logger.warn(f"Failed to clean up worktree for {ticket}: {error_msg}")
+        # Fallback to direct removal
+        try:
+            shutil.rmtree(worktree_path, ignore_errors=True)
+        except Exception:
+            pass
+
+    if logger:
+        logger.info(f"Cleaned up worktree for {ticket} (no merge)")
+
+    # Optionally delete the branch
+    branch_name = f"ralph/{ticket}"
+    subprocess.run(["git", "-C", str(repo_root), "branch", "-D", branch_name], capture_output=True)
+
+    return True
+
+
 def load_retry_state(artifact_dir: Path) -> Optional[Dict[str, Any]]:
     """Load retry state from ticket artifact directory.
     
@@ -1635,25 +2111,8 @@ def ralph_run(args: List[str]) -> int:
     if not capture_json:
         capture_json = parse_bool(config.get("captureJson", DEFAULTS["captureJson"]), DEFAULTS["captureJson"])
 
-    # Resolve execution backend from CLI flag, env var, or config (in that order)
-    # Priority: CLI flag > Environment variable > Config > Default
-    execution_backend: str = DEFAULTS["executionBackend"]
-    if cli_execution_backend:
-        execution_backend = cli_execution_backend
-    else:
-        env_no_interactive = os.environ.get("RALPH_NO_INTERACTIVE_SHELL", "").strip()
-        if env_no_interactive in ("1", "true", "yes"):
-            execution_backend = "subprocess"
-        else:
-            config_backend = config.get("executionBackend", DEFAULTS["executionBackend"])
-            if isinstance(config_backend, str) and config_backend in ("dispatch", "subprocess"):
-                execution_backend = config_backend
-            else:
-                # Check interactiveShell.enabled config for backward compatibility
-                interactive_shell_config = config.get("interactiveShell", {})
-                if isinstance(interactive_shell_config, dict):
-                    if not parse_bool(interactive_shell_config.get("enabled", True), True):
-                        execution_backend = "subprocess"
+    # Resolve execution backend using shared function
+    execution_backend = resolve_execution_backend(cli_execution_backend, config, logger)
 
     # Log execution backend selection (in verbose mode)
     if log_level in (LogLevel.DEBUG, LogLevel.VERBOSE):
@@ -1745,6 +2204,104 @@ def ralph_run(args: List[str]) -> int:
             # First attempt with backoff enabled but no effective change yet
             logger.info(timeout_log, ticket=ticket)
 
+        # Per-ticket worktree lifecycle for dispatch backend (pt-0v53)
+        worktree_path: Optional[Path] = None
+        worktree_cwd: Optional[Path] = None
+
+        # Determine if we should use worktree for this ticket
+        use_worktree = execution_backend == "dispatch" and not dry_run
+
+        if use_worktree:
+            # Get worktrees directory from config
+            worktrees_dir = Path(str(config.get("parallelWorktreesDir", DEFAULTS["parallelWorktreesDir"])))
+            if not worktrees_dir.is_absolute():
+                worktrees_dir = project_root / worktrees_dir
+            worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create worktree for this ticket
+            worktree_path = create_worktree_for_ticket(
+                repo_root=project_root,
+                worktrees_dir=worktrees_dir,
+                ticket=ticket,
+                logger=logger,
+            )
+
+            if worktree_path is None:
+                # Worktree creation failed - fail the ticket
+                error_msg = f"Failed to create worktree for {ticket}"
+                logger.error(error_msg, ticket=ticket)
+                update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                return 1
+
+            worktree_cwd = worktree_path
+
+        # Use dispatch backend if enabled (pt-9yjn)
+        if execution_backend == "dispatch":
+            # Launch dispatch session
+            dispatch_result = run_ticket_dispatch(
+                ticket,
+                workflow,
+                workflow_flags,
+                dry_run,
+                logger=logger,
+                mode="serial",
+                capture_json=capture_json,
+                logs_dir=logs_dir,
+                ticket_title=ticket_title,
+                pi_output=pi_output,
+                pi_output_file=pi_output_file,
+                timeout_ms=effective_timeout_ms,
+                cwd=worktree_cwd,
+            )
+
+            # Handle dispatch result
+            if dispatch_result.status == "failed":
+                logger.error(f"Dispatch failed: {dispatch_result.error}", ticket=ticket)
+                # Clean up worktree on failure
+                if worktree_path is not None:
+                    cleanup_worktree(
+                        repo_root=project_root,
+                        worktree_path=worktree_path,
+                        ticket=ticket,
+                        logger=logger,
+                    )
+                update_state(ralph_dir, project_root, ticket, "FAILED", dispatch_result.error or "dispatch failed")
+                return 1
+
+            # Dispatch launched successfully
+            # Register worktree for deferred cleanup by pt-7jzy
+            if worktree_path is not None:
+                dispatch_dir = ralph_dir / "dispatch"
+                dispatch_dir.mkdir(parents=True, exist_ok=True)
+                tracking_file = dispatch_dir / f"{ticket}.json"
+                tracking_data = {
+                    "ticket": ticket,
+                    "session_id": dispatch_result.session_id,
+                    "pid": dispatch_result.pid,
+                    "worktree_path": str(worktree_path),
+                    "repo_root": str(project_root),
+                    "launched_at": datetime.datetime.now().isoformat(),
+                    "status": "DISPATCHED",
+                }
+                try:
+                    with open(tracking_file, "w") as f:
+                        json.dump(tracking_data, f, indent=2)
+                    logger.info(f"Worktree registered for deferred cleanup: {worktree_path}", ticket=ticket)
+                except Exception as e:
+                    logger.warning(f"Failed to write dispatch tracking file: {e}", ticket=ticket)
+
+            if dry_run:
+                logger.log_ticket_complete(ticket, "DRY_RUN", mode="serial", ticket_title=ticket_title)
+            else:
+                logger.info(f"Dispatch launched: session_id={dispatch_result.session_id}, pid={dispatch_result.pid}", ticket=ticket)
+                logger.log_ticket_complete(ticket, "DISPATCHED", mode="serial", ticket_title=ticket_title)
+                update_state(ralph_dir, project_root, ticket, "DISPATCHED", f"session_id={dispatch_result.session_id}")
+
+            # For dispatch mode, we return success after launch
+            # The actual completion will be tracked by pt-7jzy
+            return 0
+
+        # Legacy subprocess backend
         rc = run_ticket(
             ticket,
             workflow,
@@ -1759,7 +2316,32 @@ def ralph_run(args: List[str]) -> int:
             pi_output_file=pi_output_file,
             timeout_ms=effective_timeout_ms,
             execution_backend=execution_backend,
+            cwd=worktree_cwd,
         )
+
+        # Per-ticket worktree lifecycle: handle success/failure (pt-0v53)
+        if worktree_path is not None:
+            if rc == 0:
+                # Success: merge and close worktree
+                merge_ok = merge_and_close_worktree(
+                    repo_root=project_root,
+                    worktree_path=worktree_path,
+                    ticket=ticket,
+                    logger=logger,
+                )
+                if not merge_ok:
+                    # Merge failed - mark as failed, don't update rc since pi succeeded
+                    logger.error(f"Worktree merge failed for {ticket}, marking as FAILED", ticket=ticket)
+                    update_state(ralph_dir, project_root, ticket, "FAILED", "worktree merge failed")
+                    return 1
+            else:
+                # Failure: safe cleanup without merge
+                cleanup_worktree(
+                    repo_root=project_root,
+                    worktree_path=worktree_path,
+                    ticket=ticket,
+                    logger=logger,
+                )
 
         if dry_run:
             logger.log_ticket_complete(ticket, "DRY_RUN", mode="serial", ticket_title=ticket_title)
@@ -1836,26 +2418,9 @@ def ralph_start(args: List[str]) -> int:
     if not capture_json:
         capture_json = parse_bool(config.get("captureJson", DEFAULTS["captureJson"]), DEFAULTS["captureJson"])
 
-    # Resolve execution backend from CLI flag, env var, or config (in that order)
-    # Priority: CLI flag > Environment variable > Config > Default
-    execution_backend: str = DEFAULTS["executionBackend"]
+    # Resolve execution backend using shared function
     cli_execution_backend = options.get("execution_backend")
-    if cli_execution_backend:
-        execution_backend = cli_execution_backend
-    else:
-        env_no_interactive = os.environ.get("RALPH_NO_INTERACTIVE_SHELL", "").strip()
-        if env_no_interactive in ("1", "true", "yes"):
-            execution_backend = "subprocess"
-        else:
-            config_backend = config.get("executionBackend", DEFAULTS["executionBackend"])
-            if isinstance(config_backend, str) and config_backend in ("dispatch", "subprocess"):
-                execution_backend = config_backend
-            else:
-                # Check interactiveShell.enabled config for backward compatibility
-                interactive_shell_config = config.get("interactiveShell", {})
-                if isinstance(interactive_shell_config, dict):
-                    if not parse_bool(interactive_shell_config.get("enabled", True), True):
-                        execution_backend = "subprocess"
+    execution_backend = resolve_execution_backend(cli_execution_backend, config, logger)
 
     # Set up logs directory for JSON capture or pi output file mode
     pi_output = options.get("pi_output", "inherit")
@@ -2068,6 +2633,37 @@ def ralph_start(args: List[str]) -> int:
                         # First attempt with backoff enabled but no effective change yet
                         ticket_logger.info(timeout_log, ticket=ticket)
 
+                    # Per-ticket worktree lifecycle for dispatch backend (pt-0v53)
+                    worktree_path: Optional[Path] = None
+                    worktree_cwd: Optional[Path] = None
+
+                    # Determine if we should use worktree for this ticket
+                    use_worktree = execution_backend == "dispatch" and not options["dry_run"]
+
+                    if use_worktree:
+                        # Get worktrees directory from config
+                        worktrees_dir = Path(str(config.get("parallelWorktreesDir", DEFAULTS["parallelWorktreesDir"])))
+                        if not worktrees_dir.is_absolute():
+                            worktrees_dir = project_root / worktrees_dir
+                        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+                        # Create worktree for this ticket
+                        worktree_path = create_worktree_for_ticket(
+                            repo_root=project_root,
+                            worktrees_dir=worktrees_dir,
+                            ticket=ticket,
+                            logger=ticket_logger,
+                        )
+
+                        if worktree_path is None:
+                            # Worktree creation failed - fail the ticket
+                            error_msg = f"Failed to create worktree for {ticket}"
+                            ticket_logger.error(error_msg, ticket=ticket)
+                            update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                            return 1
+
+                        worktree_cwd = worktree_path
+
                     cmd = build_cmd(workflow, ticket, workflow_flags)
                     ticket_rc = run_ticket(
                         ticket,
@@ -2083,8 +2679,33 @@ def ralph_start(args: List[str]) -> int:
                         pi_output_file=pi_output_file,
                         timeout_ms=effective_timeout_ms,
                         execution_backend=execution_backend,
+                        cwd=worktree_cwd,
                     )
                     ticket_logger.log_command_executed(ticket, cmd, ticket_rc, mode="serial", iteration=iteration, ticket_title=ticket_title)
+
+                    # Per-ticket worktree lifecycle: handle success/failure (pt-0v53)
+                    if worktree_path is not None:
+                        if ticket_rc == 0:
+                            # Success: merge and close worktree
+                            merge_ok = merge_and_close_worktree(
+                                repo_root=project_root,
+                                worktree_path=worktree_path,
+                                ticket=ticket,
+                                logger=ticket_logger,
+                            )
+                            if not merge_ok:
+                                # Merge failed - mark as failed
+                                ticket_logger.error(f"Worktree merge failed for {ticket}, marking as FAILED", ticket=ticket)
+                                update_state(ralph_dir, project_root, ticket, "FAILED", "worktree merge failed")
+                                ticket_rc = 1  # Override to mark as failed
+                        else:
+                            # Failure: safe cleanup without merge
+                            cleanup_worktree(
+                                repo_root=project_root,
+                                worktree_path=worktree_path,
+                                ticket=ticket,
+                                logger=ticket_logger,
+                            )
 
                     if options["dry_run"]:
                         break  # Only one attempt in dry-run mode

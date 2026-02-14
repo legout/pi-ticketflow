@@ -88,6 +88,10 @@ is_ticket_blocked_by_retries = _ralph_module.is_ticket_blocked_by_retries
 resolve_max_retries_from_settings = _ralph_module.resolve_max_retries_from_settings
 resolve_escalation_enabled = _ralph_module.resolve_escalation_enabled
 
+# Dispatch functions from ralph.py
+DispatchResult = _ralph_module.DispatchResult
+run_ticket_dispatch = _ralph_module.run_ticket_dispatch
+
 # Expose main entry point functions
 ralph_start = _ralph_module.ralph_start
 ralph_run = _ralph_module.ralph_run
@@ -100,6 +104,17 @@ os_mod = _ralph_module.os
 
 # Import from queue_state module
 from tf.ralph.queue_state import QueueStateSnapshot, get_queue_state
+
+# Import completion handling functions from completion module
+from tf.ralph_completion import (
+    DispatchCompletionResult,
+    DispatchCompletionStatus,
+    cleanup_dispatch_tracking,
+    graceful_terminate_dispatch,
+    poll_dispatch_status,
+    update_dispatch_tracking_status,
+    wait_for_dispatch_completion,
+)
 
 # Import from utils for backward compatibility with tests that patch these
 from tf.utils import find_project_root
@@ -116,4 +131,14 @@ __all__ = [
     "ralph_start",
     "ralph_run",
     "main",
+    # Completion handling
+    "DispatchResult",
+    "run_ticket_dispatch",
+    "DispatchCompletionResult",
+    "DispatchCompletionStatus",
+    "poll_dispatch_status",
+    "graceful_terminate_dispatch",
+    "wait_for_dispatch_completion",
+    "cleanup_dispatch_tracking",
+    "update_dispatch_tracking_status",
 ]
