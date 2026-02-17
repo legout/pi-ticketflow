@@ -19,6 +19,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [1.1.0] - 2026-02-17
+
+### Added
+
+- **Phase CLI commands** - Standalone commands for workflow phases
+  - `tf research <ticket>` - Research phase execution
+  - `tf implement <ticket>` - Implementation phase execution
+  - `tf review <ticket>` - Review phase execution
+  - `tf fix <ticket>` - Fix phase execution
+  - `tf close <ticket>` - Close phase execution
+  - `tf config` - Interactive configuration wizard with model presets
+  - `tf post-fix-verify <ticket>` - Manual post-fix verification
+  - `tf self-update` - Update global tf CLI to latest version
+- **Retry and escalation documentation** - `docs/retries-and-escalation.md`
+  - Quality-gate blocked ticket detection
+  - Retry state persistence in `.tf/knowledge/tickets/{id}/retry-state.json`
+  - Model escalation configuration for fixer/reviewer/worker roles
+  - `--retry-reset` flag for manual retry state reset
+
+### Fixed
+
+- **`/ralph-loop` prompt installation** - Added `prompts/ralph-loop.md` to install manifest so `tf init` installs it correctly
+- **`ralph-loop` model mapping** - Added `"ralph-loop": "general"` to settings.json prompts mapping
+
 ## [1.0.0] - 2026-02-17
 
 ### Added
