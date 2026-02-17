@@ -1,137 +1,97 @@
 ---
 name: tf-workflow
-description: Orchestrate the Implement → Review → Fix → Close workflow. Use as the main entry point skill that delegates to phase-specific skills.
+description: Orchestrate the Implement → Review → Fix → Close workflow using /chain-prompts in the same Pi session.
 ---
 
 # TF Workflow Skill
 
-Orchestration skill for the IRF (Implement → Review → Fix → Close) cycle. This skill provides overview and coordination logic, while detailed procedures are in phase-specific skills.
+Orchestration skill for the IRF (Implement → Review → Fix → Close) cycle. The `/tf` command **must** use `/chain-prompts` and run entirely within the **same Pi session**.
 
-## When to Use This Skill
+## Requirements
 
-- As the main entry point for `/tf` command
-- When understanding the full workflow structure
-- For flag handling and chain construction
+- `pi-prompt-template-model` extension installed (provides `/chain-prompts`)
+- Phase prompts exist with model/thinking frontmatter
 
-## Phase Skills
+## Phase Prompts
 
-Detailed procedures are in separate skills:
+| Phase | Prompt | Skill | Model Source |
+|-------|--------|-------|--------------|
+| Research | `tf-research` | `tf-research` | frontmatter in `prompts/tf-research.md` |
+| Implement | `tf-implement` | `tf-implement` | frontmatter in `prompts/tf-implement.md` |
+| Review | `tf-review` | `tf-review-phase` | frontmatter in `prompts/tf-review.md` |
+| Fix | `tf-fix` | `tf-fix` | frontmatter in `prompts/tf-fix.md` |
+| Close | `tf-close` | `tf-close` | frontmatter in `prompts/tf-close.md` |
 
-| Phase | Skill | Description |
-|-------|-------|-------------|
-| Research | `tf-research` | Gather context and knowledge |
-| Implement | `tf-implement` | Code changes with quality checks |
-| Review | `tf-review-phase` | Parallel reviewers and merge |
-| Fix | `tf-fix` | Apply fixes from review feedback |
-| Close | `tf-close` | Quality gate, commit, close ticket |
+## Flag Resolution
 
-## Extension Requirements
-
-| Extension | Purpose |
-|-----------|---------|
-| `pi-prompt-template-model` | Chain orchestration with per-phase model/skill |
-| `pi-subagents` | Parallel reviews |
-
-Install:
-```bash
-pi install npm:pi-prompt-template-model
-pi install npm:pi-subagents
+**Research entry decision:**
+```
+if --no-research: skip to implement
+if --with-research: force research
+else: check workflow.enableResearcher in settings.json
 ```
 
-## Configuration
+**Passthrough flags** (passed to all phases):
+- `--auto`
+- `--no-clarify`
+- `--retry-reset`
 
-Read from `.tf/config/settings.json`:
+**Dry-run flags** (stop after planning):
+- `--plan`
+- `--dry-run`
 
-| Config | Description |
-|--------|-------------|
-| `workflow.enableResearcher` | Whether research runs by default |
-| `workflow.enableReviewers` | Which reviewers to run |
-| `workflow.enableFixer` | Whether fix phase runs |
-| `workflow.enableCloser` | Whether close phase runs |
-| `workflow.enableQualityGate` | Enforce fail-on severities |
-| `workflow.failOn` | Severities that block closing |
-| `workflow.knowledgeDir` | Artifact directory base |
+**Post-chain flags** (run after main chain):
+- `--create-followups`
+- `--simplify-tickets`
+- `--final-review-loop`
 
-## Flag Handling
+## Chain Construction
 
-Parse flags to construct the appropriate chain:
-
-| Flag | Chain Entry Point | Notes |
-|------|-------------------|-------|
-| (default) | `tf-research` | Full workflow |
-| `--no-research` | `tf-implement` | Skip research |
-| `--with-research` | `tf-research` | Force research |
-
-Post-chain commands (run after chain completes with CLOSED status):
-
-| Flag | Command |
-|------|---------|
-| `--create-followups` | `tf-followups` |
-| `--simplify-tickets` | `simplify` |
-| `--final-review-loop` | `review-start` |
-
-## Deterministic Orchestration
-
-`/tf` should delegate to Python tooling:
-
-```bash
-tf irf <ticket-id> [flags]
+**With research:**
 ```
-
-`tf irf` resolves flags/config and constructs the `/chain-prompts` command deterministically.
-
-Equivalent chain forms:
-
-```bash
-# Default or --with-research
 /chain-prompts tf-research -> tf-implement -> tf-review -> tf-fix -> tf-close -- $@
+```
 
-# With --no-research
+**Without research:**
+```
 /chain-prompts tf-implement -> tf-review -> tf-fix -> tf-close -- $@
 ```
 
-## Context Flow
+## Review Phase (Parallel Subagents)
 
-Each phase writes artifacts to `{artifactDir}/`:
+The review phase launches 3 reviewers concurrently (via `subagent` tool):
 
+```json
+{
+  "agentScope": "project",
+  "tasks": [
+    {"agent": "reviewer-general", "task": "{ticket}", "cwd": "{repoRoot}"},
+    {"agent": "reviewer-spec-audit", "task": "{ticket}", "cwd": "{repoRoot}"},
+    {"agent": "reviewer-second-opinion", "task": "{ticket}", "cwd": "{repoRoot}"}
+  ]
+}
 ```
-tf-research  → research.md, ticket_id.txt
-tf-implement → implementation.md, files_changed.txt
-tf-review    → review.md (consolidated)
-tf-fix       → fixes.md
-tf-close     → close-summary.md, chain-summary.md
-```
 
-Subsequent phases read artifacts from previous phases.
+Then merges with `review-merge` agent.
 
-## Retry Escalation
+## Artifact Directory
 
-When `workflow.escalation.enabled: true`:
+`.tf/knowledge/tickets/{ticket-id}/`
 
-| Attempt | Worker | Fixer | Reviewer-2nd-Op |
-|---------|--------|-------|-----------------|
-| 1 | Base | Base | Base |
-| 2 | Base | Escalated | Base |
-| 3+ | Escalated | Escalated | Escalated |
+## How to Execute `/chain-prompts`
 
-State persisted in `{artifactDir}/retry-state.json`.
+**CRITICAL: `/chain-prompts` is a Pi slash command (in-session), NOT a bash/shell command.**
 
-## Error Handling
+When the agent executes a chain, it must output `/chain-prompts ...` directly so Pi handles it as a slash command.
 
-- Chain failure: Restore original model, stop
-- Quality gate blocks: Write BLOCKED status, don't close ticket
-- Reviewer timeout: Continue with available reviews
-- Post-chain failure: Warn and continue (best-effort)
+Do **not**:
+- run `/chain-prompts` via bash
+- wrap `/chain-prompts` in a bash code block
+- run `pi "/chain-prompts ..."`
 
-## Output Artifacts
+## No Subprocess Rule
 
-| File | Phase | Description |
-|------|-------|-------------|
-| `research.md` | Research | Research findings |
-| `implementation.md` | Implement | Implementation summary |
-| `review.md` | Review | Consolidated review |
-| `fixes.md` | Fix | Fixes applied |
-| `close-summary.md` | Close | Final summary with status |
-| `chain-summary.md` | Close | Artifact index |
-| `files_changed.txt` | Implement | Tracked changed files |
-| `ticket_id.txt` | Research | Ticket ID reference |
+- **Do not** call `tf irf` or spawn `pi -p` subprocesses
+- **Do not** wrap `/chain-prompts` in bash commands
+- `/chain-prompts` must be output directly for Pi to execute
+- Phases are driven by prompt frontmatter (model/thinking/skill)
