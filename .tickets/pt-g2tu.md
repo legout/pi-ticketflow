@@ -30,3 +30,9 @@ Currently `agents.fixer` points at `general`. We want a configurable fixer model
 - Seed: seed-add-a-fixer-model-to-the-metamodels-in-t
 
 
+
+## Notes
+
+**2026-02-13T13:05:01Z**
+
+Implemented: Added metaModels.fixer to .tf/config/settings.json with GLM-4.7-Flash as default. Updated agents.fixer to point to 'fixer'. Also updated docs/configuration.md to reflect the new configuration. Commit: 5d8e05c
