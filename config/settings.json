@@ -81,7 +81,8 @@
     "tf-backlog-from-openspec": "planning",
     "tf-sync": "general",
     "tf-priority-reclassify": "worker",
-    "ralph-start": "general"
+    "ralph-start": "general",
+    "ralph-loop": "general"
   },
   "checkers": {
     "python": {

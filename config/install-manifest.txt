@@ -33,6 +33,7 @@ skills/tf-tickets/SKILL.md
 skills/tf-workflow/SKILL.md
 
 prompts/ralph-start.md
+prompts/ralph-loop.md
 prompts/tf.md
 prompts/tf-backlog-from-openspec.md
 prompts/tf-backlog-ls.md
