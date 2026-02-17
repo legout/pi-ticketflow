@@ -1,32 +1,31 @@
 # Review: pt-0v53
 
 ## Overall Assessment
-The per-ticket worktree lifecycle is a solid structural improvement, and the extraction into dedicated helper functions keeps the flow readable. However, there is a correctness bug in both serial entry points where merge failures are ignored and tickets are still marked COMPLETE. There are also branch-target and configurability issues that can lead to unexpected repository state and make debugging harder.
+The worktree lifecycle extraction is a good structural improvement, and the merge-failure handling bug from prior review is now fixed in both serial flows. However, there is still a high-impact correctness issue in how the worktree base commit is chosen, plus one cleanup-path reliability problem that can leave stale worktrees behind. Test coverage for these new git lifecycle paths is still missing.
 
 ## Critical (must fix)
-- `tf/ralph.py:2021-2026,2041-2044,2380-2385,2453-2456` - `merge_and_close_worktree()` can return `False` on merge failure, but callers ignore the return value and continue marking the ticket as `COMPLETE`. Impact: false-positive success state, stale/unmerged worktree branch, and potentially closed tickets without integrated code.
+- `tf/ralph.py:1280,1332-1364` - `create_worktree_for_ticket()` creates `ralph/<ticket>` from `HEAD` instead of from the merge target branch (main/master). Later, `merge_and_close_worktree()` force-checks out main/master and merges that ticket branch. If Ralph is started while the repo is on a feature branch, unrelated feature commits become ancestors of `ralph/<ticket>` and can be merged into main unintentionally. Impact: accidental integration of unrelated commits into the target branch.
 
 ## Major (should fix)
-- `tf/ralph.py:1335-1338` - merge is executed in `repo_root` without first asserting/checking out the intended target branch (main/master). Impact: Ralph may merge `ralph/<ticket>` into whichever branch happens to be checked out, causing unintended history changes.
-- `tf/ralph.py:1974-2034,2331-2393` - serial dispatch worktree cleanup/merge path does not consult `parallelKeepWorktrees`; worktrees are always cleaned up on failure and merged/removed on success. Impact: user configuration expectations are violated and debugging artifacts can be lost.
+- `tf/ralph.py:1380-1389,1397` - on successful merge, a failed `git worktree remove` still returns `True` and (with logger present) skips fallback directory cleanup. Callers then treat the ticket as successful (`tf/ralph.py:2054-2076`, `tf/ralph.py:2418-2437`) even though cleanup did not complete. Impact: stale worktree metadata/directories can accumulate and break future runs.
 
 ## Minor (nice to fix)
-- `tf/ralph.py:1261-1273` - `worktree_path.mkdir()` is called before `git worktree remove`; on first run this commonly triggers a non-actionable warning path (`remove` fails, then manual delete). Impact: noisy logs and harder signal/noise during ticket runs.
+- `tf/ralph.py:1342-1359` - the extra “checkout main/master in the worktree” block is not required for the merge operation and its result is ignored. In common setups it will fail because that branch is already checked out in the primary worktree, adding noisy/fragile logic. Impact: lower maintainability and harder debugging.
 
 ## Warnings (follow-up ticket)
-- `tf/ralph.py:1244-1413` - no direct automated tests were added for new helper functions and failure semantics (create failure, merge conflict/failure, cleanup failure). Impact: regressions in worktree lifecycle behavior are likely to slip through.
+- `tf/ralph.py:1244-1440,1996-2067,2358-2430` - new worktree lifecycle behavior (create/merge/cleanup and failure semantics) has no focused automated tests. Impact: regressions in branch-base selection, merge-failure handling, and cleanup behavior are likely to recur.
 
 ## Suggestions (follow-up ticket)
-- `tests/test_ralph_state.py:1` - add explicit tests that assert: (1) merge failure does not produce `COMPLETE`, (2) merge target branch is deterministic, and (3) keep-worktree config behavior in serial dispatch mode.
+- `tests/test_ralph_state.py:1` - add integration-style tests that verify: (1) worktree base is always target branch, (2) merge success + remove failure behavior, and (3) retry attempts recreate from a clean expected base.
 
 ## Positive Notes
-- `tf/ralph.py:1244-1413` clean separation of worktree lifecycle concerns into dedicated helpers improves maintainability.
-- `tf/ralph.py:1969-2034,2326-2393` integration points are straightforward and easy to follow in both `ralph_run` and `ralph_start` serial flows.
-- `tf/ralph/__init__.py:87-90` new helper exports maintain backwards import compatibility for callers.
+- `tf/ralph.py:2048-2058,2412-2422` correctly checks `merge_and_close_worktree()` return value and now marks tickets FAILED when merge fails.
+- `tf/ralph.py:1244-1440` helper extraction keeps lifecycle logic centralized and easier to reason about.
+- `tf/ralph.py:1996-2067,2358-2430` serial integration points are clear and consistent across `ralph_run()` and `ralph_start()`.
 
 ## Summary Statistics
 - Critical: 1
-- Major: 2
+- Major: 1
 - Minor: 1
 - Warnings: 1
 - Suggestions: 1

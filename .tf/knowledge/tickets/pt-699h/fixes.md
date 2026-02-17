@@ -1,80 +1,46 @@
 # Fixes: pt-699h
 
 ## Summary
-Applied targeted fixes for the most critical issues identified in the review phase. Three critical issues and one minor issue were addressed. Remaining issues require architectural changes and are documented as follow-ups.
+Applied targeted fixes to align parallel scheduling behavior with dispatch semantics and harden dispatch lifecycle handling. The key fixes ensure parallel mode is no longer silently disabled by serial timeout settings, dispatch backend is honored in parallel execution, and dispatch child processes are tracked/cleaned up on termination.
 
 ## Fixes by Severity
 
 ### Critical (must fix)
-
-- [x] `tf/ralph.py:825-885` - **File handle leak in error path**: Fixed by wrapping file handle operations in try/finally block. The `stdout_file` is now always closed in the `finally` block whether launch succeeds or fails.
-
-- [x] `tf/ralph.py:2915-2985` - **No cleanup of remaining processes on batch failure**: Fixed by tracking `first_error_rc` and continuing to process all processes in the batch before returning. All file handles are closed, all worktrees are cleaned up (or preserved per config), and then the error is returned.
-
-- [ ] `tf/ralph.py:2485-2490` - **Parallel mode disabled under default timeout**: NOT FIXED - This is a design decision for safe cleanup semantics. Requires architectural change to support timeouts in parallel mode. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:2859-2924` - **execution_backend not honored in parallel branch**: NOT FIXED - Parallel branch always uses subprocess. Requires refactoring to support dispatch mode in parallel. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:1016-1040` - **Orphaned process risk on parent termination**: NOT FIXED - Requires signal handler infrastructure for SIGTERM/SIGINT propagation. **Follow-up ticket needed.**
+- [x] `tf/ralph.py:2490` - Parallel mode no longer falls back to serial when `attemptTimeoutMs`/`maxRestarts` are set. Parallel run now continues with a warning that serial restart/backoff semantics are ignored.
+- [x] `tf/ralph.py:2860+` - Added explicit `execution_backend == "dispatch"` branch in parallel loop. Parallel dispatch now launches via `run_ticket_dispatch()` and tracks completion with `poll_dispatch_status()`.
+- [x] `tf/ralph.py:109-179,804+` - Added dispatch child PID tracking + SIGINT/SIGTERM cleanup hooks to reduce orphaned detached process groups on parent termination.
+- [x] `tf/ralph.py:786+` - Hardened dispatch session-id allocation with in-process collision checks (`_allocate_dispatch_session_id`).
+- [ ] `tf/ralph.py:parallel subprocess branch` - Zombie-window concern in legacy subprocess branch not fully eliminated in this pass (deferred; low practical impact due explicit wait/reap loop and default dispatch backend).
 
 ### Major (should fix)
-
-- [ ] `tf/ralph.py:2880-2893` - **Worktree creation failure increments iteration incorrectly**: NOT FIXED - Requires batch accounting refactor. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:2919-2924` - **No try/finally protection for launch loop**: NOT FIXED - Partially addressed by Critical #3 fix. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:962-1010` - **No timeout for dispatch polling**: NOT FIXED - Requires timeout parameter in dispatch mode. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:1540-1600` - **Merge conflict leaves dirty worktree state**: NOT FIXED - Requires worktree state cleanup logic. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:968` - **Session ID collision risk with UUID4**: NOT FIXED - Requires collision detection. **Follow-up ticket needed.**
+- [x] `tf/ralph.py:2860+` - Added timeout handling for parallel dispatch sessions (`parallelDispatchTimeoutMs` + `RALPH_PARALLEL_DISPATCH_TIMEOUT_MS`) with graceful termination.
+- [x] `tf/ralph.py:2860+` - Added full-batch completion processing for dispatch mode; failed tickets are collected and reported after cleanup.
+- [ ] `tf/ralph.py:merge_and_close_worktree` - Merge-conflict dirty-state recovery not changed in this pass (deferred).
+- [ ] `tf/ralph.py:legacy subprocess launch loop` - Full try/finally batch resource hardening for legacy subprocess backend deferred.
+- [ ] `tf/ralph.py:parallel iteration accounting (legacy subprocess path)` - Worktree-add failure iteration accounting semantics unchanged in this pass.
 
 ### Minor (nice to fix)
-
-- [x] `tf/ralph.py:133` - **parallelAutoMerge is dead config**: Removed the unused config option to reduce confusion.
-
-- [ ] `tf/ralph.py:2904-2906` - **Misleading jsonl_path usage**: NOT FIXED - Low priority cleanup. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:935-940` - **DEVNULL inheritance creates silent failures**: NOT FIXED - Requires output mode refactor. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:976-986` - **Immediate exit check is racy**: NOT FIXED - Low priority robustness improvement. **Follow-up ticket needed.**
-
-- [ ] `tf/ralph.py:1540-1600` - **Branch deletion on merge failure**: NOT FIXED - Low priority cleanup. **Follow-up ticket needed.**
+- [x] `tf/ralph.py:dispatch session tracking helpers` - Added explicit register/unregister helpers for clearer process lifecycle accounting.
 
 ### Warnings (follow-up)
-- [ ] All 4 warnings deferred to follow-up tickets (as per workflow spec)
+- [ ] Integration coverage for parallel dispatch cleanup invariants and backend parity (deferred to follow-up).
+- [ ] JSONL path-collision hardening in legacy subprocess branch (deferred).
+- [ ] Worktree path collision hardening for repeated same-ticket selection (deferred).
 
 ### Suggestions (follow-up)
-- [ ] All 6 suggestions deferred to follow-up tickets (as per workflow spec)
+- [ ] Add `ralph cleanup` command for orphan/process/worktree recovery.
+- [ ] Refactor legacy subprocess parallel branch into a unified active-batch state machine.
+- [ ] Add stricter config validation for unknown execution backends.
 
 ## Summary Statistics
-- **Critical**: 2 fixed, 3 deferred
-- **Major**: 0 fixed, 5 deferred
-- **Minor**: 1 fixed, 4 deferred
-- **Warnings**: 0 fixed (intentionally deferred)
-- **Suggestions**: 0 fixed (intentionally deferred)
+- **Critical**: 4
+- **Major**: 2
+- **Minor**: 1
+- **Warnings**: 0
+- **Suggestions**: 0
 
 ## Verification
-
-### Syntax Check
-```bash
-python -m py_compile tf/ralph.py
-```
-Result: PASSED
-
-### Unit Tests
-```bash
-python -m pytest tests/test_ralph_state.py tests/test_ralph_pi_invocation.py -v --tb=short
-```
-Result: 12 passed, 2 failed (pre-existing failures unrelated to changes)
-
-### Changes Made
-- `tf/ralph.py` - File handle leak fix (try/finally), batch cleanup fix (process all before return), dead config removal
-
-## Recommended Follow-up Tickets
-
-1. **Parallel timeout support** - Allow parallel mode with timeout settings (architectural change)
-2. **Dispatch backend for parallel mode** - Honor `--dispatch` flag in parallel branch
-3. **Signal handler for orphaned processes** - Propagate SIGTERM/SIGINT to child processes
-4. **Batch accounting fix** - Correct iteration increment on partial worktree failures
-5. **Worktree state management** - Clean up dirty worktrees on merge conflicts
+- `python -m py_compile tf/ralph.py` ✅
+- `python -c "import tf.ralph"` ✅
+- `pytest -q tests/test_ralph_state.py tests/test_ralph_pi_invocation.py` ➜ 12 passed, 2 failed (known test harness/mocking failures in `test_ralph_pi_invocation.py`; no new syntax/import regressions).
+- Updated `files_changed.txt` atomically with: `tf/ralph.py`.

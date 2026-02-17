@@ -2,10 +2,11 @@
 name: fixer
 description: Fixes issues identified in code reviews
 tools: read, edit, write, bash
-model: zai/glm-4.7:high
+model: zai/glm-5
 output: fixes.md
 defaultReads: review.md
 defaultProgress: false
+thinking: high
 ---
 
 # Fixer Agent (GLM 4.7)

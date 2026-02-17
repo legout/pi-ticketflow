@@ -1,7 +1,7 @@
 ---
 description: Revise an implementation plan based on feedback [tf-planning +codex-mini]
-model: openai-codex/gpt-5.1-codex-mini
-thinking: medium
+model: kimi-coding/k2p5
+thinking: high
 skill: tf-planning
 ---
 

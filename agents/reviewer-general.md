@@ -2,10 +2,11 @@
 name: reviewer-general
 description: General fresh-eyes code review
 tools: read, bash, write
-model: openai-codex/gpt-5.1-codex-mini:high
+model: openai-codex/gpt-5.3-codex
 skill: tf-review
 output: review-general.md
 defaultProgress: false
+thinking: high
 ---
 
 # Reviewer Agent (General)

@@ -4,37 +4,23 @@
 **CLOSED**
 
 ## Summary
-Added a dedicated `metaModels.fixer` entry to `.tf/config/settings.json` and updated `agents.fixer` to reference it, enabling a configurable fixer model independent of the general model.
+Successfully added a dedicated `metaModels.fixer` entry to `.tf/config/settings.json` and updated `agents.fixer` to use it. The fix step now has its own configurable meta-model, independent of the general model.
 
-## Changes Committed
-- **Commit**: `a9a1723` - pt-g2tu: Add metaModels.fixer and map agents.fixer to it
-- Modified files:
-  - `.tf/config/settings.json`: Added `metaModels.fixer` and changed `agents.fixer` to `"fixer"`
-  - `config/settings.json`: Propagated the same changes to the template for fresh installs
+## Changes Made
+- `.tf/config/settings.json`: Added `metaModels.fixer` with GLM-4.7-Flash and updated `agents.fixer` to `"fixer"`
+- `docs/configuration.md`: Updated configuration example and Model Strategy table to reflect the new fixer meta-model
 
-## Review Results
-- **reviewer-spec-audit**: No issues (0 Critical, 0 Major)
-- **reviewer-general**: Identified missing template updates (1 Major). Fixed in this iteration.
-- **Quality Gate**: PASSED (post-fix counts: Critical=0, Major=0, Minor=0)
+## Commit
+- `5d8e05c` pt-g2tu: Add metaModels.fixer and map agents.fixer to it
 
-## Verification
-- JSON config validation: ✓
-- metaModels.fixer exists: ✓
-- agents.fixer points to "fixer": ✓
-- Existing keys unchanged: ✓
-- Post-Fix Verification: PASSED
+## Review Outcome
+- Pre-fix: 0 Critical, 1 Major, 1 Minor
+- Post-fix: 0 Critical, 0 Major, 0 Minor
+- Quality Gate: PASSED
 
 ## Artifacts
-- `implementation.md`: Implementation details and retry context
-- `review.md`: Consolidated review (pre-fix)
-- `review-spec.md`: Spec audit
-- `review-general.md`: General review (identified Major)
-- `fixes.md`: Applied fix for Major issue
-- `post-fix-verification.md` & `.json`: Quality gate results
-- `files_changed.txt`: List of changed files
-- `ticket_id.txt`
-
-## Notes
-- Backward compatibility: The `resolve_meta_model` function provides a fallback if metaModels.fixer is missing in older configs.
-- Agent files should be synced via `tf sync` to pick up the new fixer model in `.pi/agents/fixer.md`.
-- Minor documentation issue deferred to pt-lpw2.
+- `.tf/knowledge/tickets/pt-g2tu/implementation.md`
+- `.tf/knowledge/tickets/pt-g2tu/review.md`
+- `.tf/knowledge/tickets/pt-g2tu/fixes.md`
+- `.tf/knowledge/tickets/pt-g2tu/post-fix-verification.md`
+- `.tf/knowledge/tickets/pt-g2tu/close-summary.md`

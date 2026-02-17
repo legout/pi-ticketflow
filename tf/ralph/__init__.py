@@ -33,11 +33,14 @@ _ralph_module = _load_ralph_module()
 # Re-export main Ralph module items for backward compatibility
 # Core classes and functions
 DEFAULTS: dict[str, Any] = _ralph_module.DEFAULTS
+VALID_EXECUTION_BACKENDS = _ralph_module.VALID_EXECUTION_BACKENDS
 ProgressDisplay = _ralph_module.ProgressDisplay
 _validate_pi_output = _ralph_module._validate_pi_output
 parse_run_args = _ralph_module.parse_run_args
 parse_start_args = _ralph_module.parse_start_args
 run_ticket = _ralph_module.run_ticket
+run_ticket_dispatch = _ralph_module.run_ticket_dispatch
+DispatchResult = _ralph_module.DispatchResult
 
 # Expose functions that tests may need to patch
 usage = _ralph_module.usage
@@ -63,6 +66,7 @@ parse_bool = _ralph_module.parse_bool
 resolve_log_level = _ralph_module.resolve_log_level
 log_level_to_flag = _ralph_module.log_level_to_flag
 resolve_attempt_timeout_ms = _ralph_module.resolve_attempt_timeout_ms
+resolve_execution_backend = _ralph_module.resolve_execution_backend
 resolve_max_restarts = _ralph_module.resolve_max_restarts
 resolve_timeout_backoff_enabled = _ralph_module.resolve_timeout_backoff_enabled
 resolve_timeout_backoff_increment_ms = _ralph_module.resolve_timeout_backoff_increment_ms
@@ -82,15 +86,16 @@ extract_issue_counts = _ralph_module.extract_issue_counts
 extract_lesson_block = _ralph_module.extract_lesson_block
 update_state = _ralph_module.update_state
 
+# Per-ticket worktree functions (pt-0v53)
+create_worktree_for_ticket = _ralph_module.create_worktree_for_ticket
+merge_and_close_worktree = _ralph_module.merge_and_close_worktree
+cleanup_worktree = _ralph_module.cleanup_worktree
+
 # Retry state management functions
 load_retry_state = _ralph_module.load_retry_state
 is_ticket_blocked_by_retries = _ralph_module.is_ticket_blocked_by_retries
 resolve_max_retries_from_settings = _ralph_module.resolve_max_retries_from_settings
 resolve_escalation_enabled = _ralph_module.resolve_escalation_enabled
-
-# Dispatch functions from ralph.py
-DispatchResult = _ralph_module.DispatchResult
-run_ticket_dispatch = _ralph_module.run_ticket_dispatch
 
 # Expose main entry point functions
 ralph_start = _ralph_module.ralph_start
@@ -127,13 +132,15 @@ __all__ = [
     "_validate_pi_output",
     "parse_run_args",
     "parse_start_args",
+    "resolve_execution_backend",
+    "VALID_EXECUTION_BACKENDS",
     "run_ticket",
+    "run_ticket_dispatch",
+    "DispatchResult",
     "ralph_start",
     "ralph_run",
     "main",
     # Completion handling
-    "DispatchResult",
-    "run_ticket_dispatch",
     "DispatchCompletionResult",
     "DispatchCompletionStatus",
     "poll_dispatch_status",

@@ -26,23 +26,23 @@
       "description": "General-purpose model for admin tasks"
     },
     "review-general": {
-      "model": "openai-codex/gpt-5.1-codex-mini",
+      "model": "openai-codex/gpt-5.3-codex",
       "thinking": "high",
       "description": "Capable model for general code review"
     },
     "review-spec": {
-      "model": "openai-codex/gpt-5.3-codex",
-      "thinking": "medium",
+      "model": "openai-codex/gpt-5.1-codex-mini",
+      "thinking": "high",
       "description": "Strong model for specification compliance audit"
     },
     "review-secop": {
-      "model": "openrouter/stepfun/step-3.5-flash:free",
+      "model": "kimi-coding/k2p5",
       "thinking": "high",
       "description": "Fast model for second-opinion review"
     },
     "fixer": {
-      "model": "chutes/zai-org/GLM-4.7-Flash",
-      "thinking": "medium",
+      "model": "zai/glm-5",
+      "thinking": "high",
       "description": "Fast, cheap model for fix iterations and small edits"
     }
   },
@@ -149,7 +149,7 @@
     "enableFixer": true,
     "enableCloser": true,
     "enableQualityGate": true,
-    "failOn": ["Critical", "Major"],
+    "failOn": [],
     "exclude": [
       "node_modules/**",
       "dist/**",

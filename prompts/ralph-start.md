@@ -2,6 +2,8 @@
 description: Start autonomous ticket processing loop [ralph]
 skill: ralph
 restore: false
+model: kimi-coding/k2p5
+thinking: medium
 ---
 
 # /ralph-start

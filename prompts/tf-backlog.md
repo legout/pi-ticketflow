@@ -1,6 +1,6 @@
 ---
 description: Create tickets from seed, baseline, or plan artifacts [tf-planning +codex-mini]
-model: openai-codex/gpt-5.1-codex-mini
+model: openai-codex/gpt-5.3-codex
 thinking: medium
 skill: tf-planning
 ---

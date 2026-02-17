@@ -1,6 +1,6 @@
 ---
 description: Print the next open and ready ticket id
-model: zai/glm-4.7
+model: kimi-coding/k2p5
 thinking: medium
 ---
 

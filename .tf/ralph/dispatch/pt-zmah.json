@@ -1,0 +1,13 @@
+{
+  "ticket": "pt-zmah",
+  "session_id": "571e807e-e5d4-410a-9260-fadd851b12fa",
+  "pid": 2034553,
+  "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+  "repo_root": "/home/volker/coding/pi-ticketflow",
+  "launched_at": "2026-02-14T03:27:48.134369",
+  "status": "completed",
+  "completed_at": "2026-02-14T10:51:44Z",
+  "return_code": 0,
+  "duration_ms": 157021.56019210815,
+  "termination_method": "natural"
+}

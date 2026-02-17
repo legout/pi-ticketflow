@@ -1,7 +1,7 @@
 ---
 description: Native dispatch-mode Ralph loop (experimental)
 restore: false
-model: kimi-coding/k2p5
+model: ralph-loop
 thinking: medium
 ---
 

@@ -2,9 +2,10 @@
 name: researcher
 description: Gathers research for a ticket or topic
 tools: read, write, bash
-model: openai-codex/gpt-5.1-codex-mini:medium
+model: kimi-coding/k2p5
 output: research.md
 defaultProgress: false
+thinking: medium
 ---
 
 # Researcher Agent

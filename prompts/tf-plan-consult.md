@@ -1,7 +1,7 @@
 ---
 description: Consult an implementation plan for gaps and ambiguities [tf-planning +codex-mini]
-model: openai-codex/gpt-5.1-codex-mini
-thinking: medium
+model: minimax/MiniMax-M2.5
+thinking: high
 skill: tf-planning
 ---
 

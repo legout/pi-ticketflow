@@ -2,10 +2,11 @@
 name: closer
 description: Adds summary comment and closes tickets
 tools: read, write, bash
-model: zai/glm-4.7:low
+model: chutes/zai-org/GLM-4.7-Flash
 output: close-summary.md
 defaultReads: implementation.md, review.md, ticket_id.txt, files_changed.txt
 defaultProgress: false
+thinking: medium
 ---
 
 # Closer Agent (GLM 4.7)

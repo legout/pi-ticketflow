@@ -1,6 +1,6 @@
 ---
 description: Sync ticket dependencies from parent links [tf-tickets]
-model: openai-codex/gpt-5.2-codex
+model: openai-codex/gpt-5.3-codex
 thinking: medium
 skill: tf-tickets
 ---

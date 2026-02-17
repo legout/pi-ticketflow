@@ -1,0 +1,9 @@
+{
+  "ticket": "abc-123",
+  "session_id": "3b6f1c75-fb8f-4338-bbf3-c4b17cd2dda7",
+  "pid": 1976857,
+  "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/abc-123",
+  "repo_root": "/home/volker/coding/pi-ticketflow",
+  "launched_at": "2026-02-14T01:54:37.095464",
+  "status": "DISPATCHED"
+}

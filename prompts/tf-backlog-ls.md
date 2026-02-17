@@ -1,6 +1,6 @@
 ---
 description: List backlog status and tickets [tf-planning +codex-mini]
-model: openai-codex/gpt-5.1-codex-mini
+model: chutes/zai-org/GLM-4.7-Flash
 thinking: medium
 skill: tf-planning
 ---

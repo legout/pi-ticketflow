@@ -1,4 +1,4 @@
 {
-  "attemptTimeoutMs": 450000,
-  "maxRestarts": 1
+  "attemptTimeoutMs": 600000,
+  "maxRestarts": 2
 }

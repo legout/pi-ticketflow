@@ -2,7 +2,7 @@
   "topics": [
     {
       "id": "plan-auto-planning-sessions-linkage",
-      "title": "Automatic planning sessions for seed\u2194spike\u2194plan\u2194backlog linkage",
+      "title": "Automatic planning sessions for seed↔spike↔plan↔backlog linkage",
       "keywords": [
         "planning-session",
         "auto-linking",
@@ -78,7 +78,7 @@
     },
     {
       "id": "seed-automatic-planning-sessions-linkage",
-      "title": "Automatic planning sessions for seed\u2194spike\u2194plan\u2194backlog linkage",
+      "title": "Automatic planning sessions for seed↔spike↔plan↔backlog linkage",
       "keywords": [
         "planning-session",
         "auto-linking",
@@ -126,7 +126,7 @@
     },
     {
       "id": "seed-pi-command-reclassify-priorities",
-      "title": "Add a Pi command to reclassify ticket priorities (P0\u2013P4)",
+      "title": "Add a Pi command to reclassify ticket priorities (P0–P4)",
       "keywords": [
         "priorities",
         "triage",
@@ -546,7 +546,7 @@
     },
     {
       "id": "plan-refactor-tf-cli-to-tf",
-      "title": "Refactor Python package namespace from tf_cli \u2192 tf",
+      "title": "Refactor Python package namespace from tf_cli → tf",
       "keywords": [
         "refactor",
         "python",
@@ -560,7 +560,221 @@
       "sources": "topics/plan-refactor-tf-cli-to-tf/sources.md",
       "plan": "topics/plan-refactor-tf-cli-to-tf/plan.md",
       "backlog": "topics/plan-refactor-tf-cli-to-tf/backlog.md"
+    },
+    {
+      "id": "seed-show-ready-and-blocked-ticket-count",
+      "title": "Show ready/blocked ticket counts in Ralph progress + logs",
+      "keywords": [
+        "ralph",
+        "progressbar",
+        "logging",
+        "ready",
+        "blocked",
+        "ticket-counts",
+        "observability"
+      ],
+      "overview": "topics/seed-show-ready-and-blocked-ticket-count/overview.md",
+      "sources": "topics/seed-show-ready-and-blocked-ticket-count/sources.md",
+      "backlog": "topics/seed-show-ready-and-blocked-ticket-count/backlog.md"
+    },
+    {
+      "id": "plan-ready-blocked-counts-ralph",
+      "title": "Show ready/blocked ticket counts in Ralph progress + logs",
+      "keywords": [
+        "ralph",
+        "progressbar",
+        "logging",
+        "ready",
+        "blocked",
+        "ticket-counts",
+        "observability"
+      ],
+      "plan": "topics/plan-ready-blocked-counts-ralph/plan.md",
+      "sources": "topics/plan-ready-blocked-counts-ralph/sources.md"
+    },
+    {
+      "id": "seed-add-retry-logic-on-failed-tickets",
+      "title": "Retry logic on quality-gate blocked tickets (model escalation)",
+      "keywords": [
+        "ralph",
+        "retries",
+        "quality-gate",
+        "failon",
+        "escalation",
+        "model-selection",
+        "workflow",
+        "automation"
+      ],
+      "overview": "topics/seed-add-retry-logic-on-failed-tickets/overview.md",
+      "sources": "topics/seed-add-retry-logic-on-failed-tickets/sources.md",
+      "backlog": "topics/seed-add-retry-logic-on-failed-tickets/backlog.md"
+    },
+    {
+      "id": "plan-retry-logic-quality-gate-blocked",
+      "title": "Retry logic for quality-gate blocked tickets (model escalation)",
+      "keywords": [
+        "ralph",
+        "retries",
+        "quality-gate",
+        "failOn",
+        "escalation",
+        "model-selection",
+        "workflow",
+        "automation"
+      ],
+      "plan": "topics/plan-retry-logic-quality-gate-blocked/plan.md",
+      "sources": "topics/plan-retry-logic-quality-gate-blocked/sources.md"
+    },
+    {
+      "id": "seed-increase-timeout-on-each-iteration-defau",
+      "title": "Increase timeout on each iteration (default +150000 ms)",
+      "keywords": [
+        "timeout",
+        "backoff",
+        "retries",
+        "iteration",
+        "watchdog",
+        "robustness"
+      ],
+      "overview": "topics/seed-increase-timeout-on-each-iteration-defau/overview.md",
+      "sources": "topics/seed-increase-timeout-on-each-iteration-defau/sources.md",
+      "backlog": "topics/seed-increase-timeout-on-each-iteration-defau/backlog.md"
+    },
+    {
+      "id": "plan-increase-timeout-on-each-iteration-defau",
+      "title": "Increase timeout on each iteration (default +150000 ms)",
+      "keywords": [
+        "timeout",
+        "backoff",
+        "retries",
+        "iteration",
+        "watchdog",
+        "robustness"
+      ],
+      "plan": "topics/plan-increase-timeout-on-each-iteration-defau/plan.md",
+      "sources": "topics/plan-increase-timeout-on-each-iteration-defau/sources.md"
+    },
+    {
+      "id": "seed-add-a-fixer-model-to-the-metamodels-in-t",
+      "title": "Add a fixer model to the metamodels in the settings",
+      "keywords": [
+        "metaModels",
+        "fixer",
+        "settings.json",
+        "model-selection",
+        "workflow"
+      ],
+      "overview": "topics/seed-add-a-fixer-model-to-the-metamodels-in-t/overview.md",
+      "sources": "topics/seed-add-a-fixer-model-to-the-metamodels-in-t/sources.md"
+    },
+    {
+      "id": "seed-replace-pi-model-switch-extension-by",
+      "title": "Replace pi-model-switch with /chain-prompts in pi-prompt-template-model",
+      "keywords": [
+        "pi",
+        "extensions",
+        "pi-prompt-template-model",
+        "chain-prompts",
+        "pi-model-switch",
+        "tf-workflow",
+        "model-switching",
+        "prompt-chaining"
+      ],
+      "overview": "topics/seed-replace-pi-model-switch-extension-by/overview.md",
+      "sources": "topics/seed-replace-pi-model-switch-extension-by/sources.md"
+    },
+    {
+      "id": "spike-chain-prompts-prompt-template",
+      "title": "How /chain-prompts works in pi-prompt-template-model (latest)",
+      "keywords": [
+        "pi",
+        "pi-prompt-template-model",
+        "chain-prompts",
+        "prompt-chaining",
+        "model-switching",
+        "skill-injection",
+        "thinking"
+      ],
+      "overview": "topics/spike-chain-prompts-prompt-template/overview.md",
+      "sources": "topics/spike-chain-prompts-prompt-template/sources.md"
+    },
+    {
+      "id": "plan-replace-pi-model-switch-extension",
+      "title": "Replace pi-model-switch with /chain-prompts in pi-prompt-template-model",
+      "keywords": [
+        "pi",
+        "extensions",
+        "pi-prompt-template-model",
+        "chain-prompts",
+        "pi-model-switch",
+        "tf-workflow",
+        "model-switching",
+        "prompt-chaining",
+        "migration"
+      ],
+      "plan": "topics/plan-replace-pi-model-switch-extension/plan.md",
+      "backlog": "topics/plan-replace-pi-model-switch-extension/backlog.md"
+    },
+    {
+      "id": "seed-add-ralph-loop-background-interactive",
+      "title": "Ralph loop with background interactive shell + parallel ticket implementation",
+      "keywords": [
+        "ralph",
+        "interactive-shell",
+        "background-dispatch",
+        "parallel-execution",
+        "fresh-context",
+        "ticketflow",
+        "observability"
+      ],
+      "overview": "topics/seed-add-ralph-loop-background-interactive/overview.md",
+      "sources": "topics/seed-add-ralph-loop-background-interactive/sources.md",
+      "backlog": "topics/seed-add-ralph-loop-background-interactive/backlog.md"
+    },
+    {
+      "id": "spike-interactive-shell-execution",
+      "title": "Interactive shell execution for Ralph",
+      "keywords": [
+        "ralph",
+        "interactive-shell",
+        "background-dispatch",
+        "pi",
+        "subprocess",
+        "ticket-execution"
+      ],
+      "overview": "topics/spike-interactive-shell-execution/overview.md",
+      "sources": "topics/spike-interactive-shell-execution/sources.md"
+    },
+    {
+      "id": "plan-add-ralph-loop-that-runs-in-a-background",
+      "title": "Add Ralph loop with background interactive shell and parallel ticket implementation",
+      "keywords": [
+        "ralph",
+        "interactive-shell",
+        "background",
+        "parallel-execution",
+        "scheduler",
+        "component-tags",
+        "ticketflow"
+      ],
+      "overview": "topics/plan-add-ralph-loop-that-runs-in-a-background/plan.md",
+      "sources": "topics/plan-add-ralph-loop-that-runs-in-a-background/sources.md",
+      "plan": "topics/plan-add-ralph-loop-that-runs-in-a-background/plan.md"
+    },
+    {
+      "id": "plan-ralph-background-interactive-shell",
+      "title": "Ralph Loop with Background Interactive Shell Execution",
+      "keywords": [
+        "ralph",
+        "interactive-shell",
+        "background-dispatch",
+        "parallel-execution",
+        "fresh-context"
+      ],
+      "overview": "topics/plan-ralph-background-interactive-shell/plan.md",
+      "plan": "topics/plan-ralph-background-interactive-shell/plan.md",
+      "sources": "topics/plan-ralph-background-interactive-shell/plan.md"
     }
   ],
-  "updated": "2026-02-09T16:25:55.093469+00:00"
+  "updated": "2026-02-13T16:05:49.566420+00:00"
 }

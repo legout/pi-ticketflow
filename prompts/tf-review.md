@@ -1,7 +1,7 @@
 ---
 description: Review phase for TF workflow [tf-review-phase]
-model: openai-codex/gpt-5.3-codex
-thinking: high
+model: tf-review
+thinking: medium
 skill: tf-review-phase
 ---
 

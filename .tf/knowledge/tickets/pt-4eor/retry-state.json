@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "ticketId": "pt-4eor",
+  "attempts": [
+    {
+      "attemptNumber": 1,
+      "startedAt": "2026-02-14T03:02:58Z",
+      "status": "in_progress",
+      "trigger": "implementation"
+    }
+  ],
+  "lastAttemptAt": "2026-02-14T03:02:58Z",
+  "status": "active",
+  "retryCount": 0
+}

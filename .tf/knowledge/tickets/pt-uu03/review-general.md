@@ -1,35 +1,29 @@
 # Review: pt-uu03
-
 ## Overall Assessment
-This implementation artifact is honest about incomplete coverage, but it still contains several incorrect conclusions and over-claims that weaken the validation outcome. The biggest issue is that the documented “parallel dispatch feature gap” is inferred from dry-run output only and conflicts with the current parallel code path. As written, the ticket should remain open because required validation scenarios are still unexecuted.
+The ticket artifacts show that core validation work is still incomplete, yet the ticket is marked closed. In addition, the repository test suite is currently broken at collection time due to a test/import mismatch, so quality verification cannot complete successfully. As-is, this ticket should not be considered closure-ready.
 
 ## Critical (must fix)
-- No issues found.
+- `.tf/ralph/validation/pt-uu03-validation-log.md:11-14,113-117` - All required matrix scenarios are still unchecked/PENDING, so the primary deliverable (“execute and document manual validation scenarios”) was not completed.
+- `.tickets/pt-uu03.md:3,23-26,41` - Ticket is marked `status: closed` while every acceptance criterion remains unchecked and notes explicitly say required validation is still incomplete; this is a release/process-integrity failure.
+- `tests/test_post_fix_verification.py:14` and `tf/post_fix_verification.py:149` - Tests import `_count_bullet_with_compound_fixes`, but the module only defines `_extract_fix_count_from_text`; this causes pytest collection to fail and blocks validation.
 
 ## Major (should fix)
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:58` and `.tf/knowledge/tickets/pt-uu03/implementation.md:114` - The report concludes parallel dispatch is not wired, but `tf/ralph.py:3006` clearly contains a parallel dispatch execution path. The dry-run branch (`tf/ralph.py:2993-3004`) always logs a worktree `pi -p` command, so the observed dry-run output is not sufficient proof that runtime dispatch is missing. Impact: likely misdiagnosis and potentially wrong follow-up ticket scope.
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:88` - Fallback AC is marked done based on dry-run output only (`:42-49`). Ticket AC requires validation of the path, which should include at least one live execution result, not just command preview. Impact: AC is overstated.
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:99` - “Session tracking works” is stronger than the evidence. Current persisted state shows orphaned sessions with `return_code: null` (`.tf/ralph/dispatch-sessions.json:11-13` and `:22-24`) and per-ticket tracking still at `DISPATCHED` (`.tf/ralph/dispatch/pt-uu03.json:8`). Impact: lifecycle tracking validation is incomplete/ambiguous.
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:89` and `.tf/knowledge/tickets/pt-uu03/implementation.md:118` - Timeout/orphan recovery scenarios are explicitly pending, but these are required ACs (`.tickets/pt-uu03.md:26`). Impact: ticket is not closure-ready.
+- `.tf/knowledge/tickets/pt-uu03/implementation.md:22-41` - Implementation records failed tests but still advances to review phase; unresolved test-collection failures need explicit triage/scope acceptance before sign-off.
+- `.tf/knowledge/tickets/pt-uu03/implementation.md:11` and `.tf/ralph/validation/pt-uu03-validation-log.md:1` - Implementation says “No files changed,” but a ticket-specific validation artifact exists; artifact tracking is inconsistent and weakens auditability.
 
 ## Minor (nice to fix)
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:52` - Parallel dry-run command is listed without `--max-iterations 1`, which makes reproduction noisy/long in practice and less concise for contributors. Impact: weaker reproducibility against `.tickets/pt-uu03.md:29`.
+- `.tf/knowledge/tickets/pt-uu03/implementation.md:4` - Summary content is formatted as an H1 heading under `## Summary`, which makes the artifact structure inconsistent.
 
 ## Warnings (follow-up ticket)
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:145` - Circular dependency note (`pt-uu03` ↔ `pt-4eor`) should be resolved in ticket metadata/process. Impact: planning/execution deadlock risk.
+- `.tf/ralph/dispatch/pt-uu03.json:8` vs `.tf/ralph/progress.md:319,325` - Dispatch state remains `DISPATCHED` while progress shows terminal states (`COMPLETE` and later `FAILED`), indicating stale/contradictory state tracking.
 
 ## Suggestions (follow-up ticket)
-- `.tf/knowledge/tickets/pt-uu03/implementation.md:122` - For each remaining scenario, log exact command, timestamp, expected vs observed behavior, and final PASS/FAIL with artifact pointers (progress/session files).
-- `tf/ralph.py:2993` - Add backend-aware dry-run output in parallel mode (dispatch vs subprocess) to prevent false-negative validation conclusions.
-
-## Positive Notes
-- Clear statement that the task is validation-only and currently incomplete.
-- Good inclusion of concrete commands, session IDs, and explicit “manual validation still required” checklists.
-- Useful evidence pointers to `progress.md` and session tracking files.
+- `.tickets/pt-uu03.md:23-26` - Add an automated closure guard that blocks `status: closed` when acceptance checkboxes remain unchecked.
+- `tests/test_post_fix_verification.py:14` - Add a lightweight CI import/collection smoke check (e.g., `pytest --collect-only` on critical test modules) to catch API/test drift earlier.
 
 ## Summary Statistics
-- Critical: 0
-- Major: 4
+- Critical: 3
+- Major: 2
 - Minor: 1
 - Warnings: 1
 - Suggestions: 2

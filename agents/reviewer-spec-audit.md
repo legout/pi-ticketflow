@@ -2,10 +2,11 @@
 name: reviewer-spec-audit
 description: Spec audit review for ticket/plan compliance
 tools: read, bash, write
-model: github-copilot/gpt-5.2-codex:high
+model: openai-codex/gpt-5.1-codex-mini
 skill: tf-review
 output: review-spec.md
 defaultProgress: false
+thinking: high
 ---
 
 # Reviewer Agent (Spec Audit)

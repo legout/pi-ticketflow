@@ -38,7 +38,12 @@ class DispatchCompletionResult:
         return_code: Exit code of the process (if completed normally)
         pid: Process ID that was monitored
         duration_ms: Total time waited in milliseconds
-        termination_method: How the process was terminated ("natural", "eof", "kill")
+        termination_method: How the process was terminated:
+            - "natural": Process exited on its own
+            - "sigterm": Process terminated by SIGTERM
+            - "sigkill": Process killed by SIGKILL
+            - "not_running": Process was already stopped
+            - "failed": Termination attempt failed
         error: Error message if something went wrong
     """
     ticket_id: str
@@ -54,6 +59,10 @@ class DispatchCompletionResult:
 def poll_dispatch_status(pid: int) -> tuple[bool, Optional[int]]:
     """Poll the status of a dispatch process.
     
+    Uses waitpid with WNOHANG to check status without blocking. This avoids
+    race conditions by using a single syscall for both existence check and
+    status retrieval.
+    
     Args:
         pid: Process ID to check
         
@@ -63,27 +72,28 @@ def poll_dispatch_status(pid: int) -> tuple[bool, Optional[int]]:
         - return_code: Exit code if process has completed, None if still running
     """
     try:
-        # Check if process exists by sending signal 0
-        os.kill(pid, 0)
-        # Process exists, check if it has exited
         # Use waitpid with WNOHANG to check without blocking
-        _, status = os.waitpid(pid, os.WNOHANG)
-        if status == 0:
+        # This returns (ret_pid, status) where:
+        # - ret_pid == 0 means process is still running
+        # - ret_pid == pid means process has exited and we have its status
+        ret_pid, status = os.waitpid(pid, os.WNOHANG)
+        
+        if ret_pid == 0:
             # Process still running (no status change)
             return True, None
         else:
-            # Process has exited
+            # Process has exited (ret_pid == pid)
             if os.WIFEXITED(status):
                 return False, os.WEXITSTATUS(status)
             elif os.WIFSIGNALED(status):
                 return False, -os.WTERMSIG(status)
             else:
                 return False, None
-    except ProcessLookupError:
-        # Process does not exist (already exited)
+    except ChildProcessError:
+        # Process does not exist (already exited and reaped, or not our child)
         return False, None
     except Exception:
-        # On error, assume process has exited
+        # On other errors, assume process has exited
         return False, None
 
 
@@ -91,25 +101,31 @@ def graceful_terminate_dispatch(
     pid: int,
     session_id: Optional[str] = None,
     logger: Optional[RalphLogger] = None,
-    eof_wait_ms: float = 5000.0,
     kill_wait_ms: float = 5000.0,
+    use_process_group: bool = True,
 ) -> tuple[bool, str]:
     """Gracefully terminate a dispatch process.
     
-    First sends EOF (Ctrl+D) to allow graceful shutdown, then waits.
-    If process is still running after wait, sends SIGTERM, then SIGKILL if needed.
+    Sends SIGTERM for graceful shutdown, then SIGKILL if the process
+    does not terminate within the wait period.
+    
+    Note: EOF (Ctrl+D) signaling is not implemented for subprocess processes
+    that have already been launched. The termination sequence goes directly
+    from SIGTERM to SIGKILL.
     
     Args:
         pid: Process ID to terminate
         session_id: Optional session ID for logging
         logger: Optional logger instance
-        eof_wait_ms: Milliseconds to wait after EOF before forcing termination
         kill_wait_ms: Milliseconds to wait after SIGTERM before SIGKILL
+        use_process_group: If True, send signals to the process group (-pid) to
+            ensure child processes are also terminated. Should be True when the
+            dispatch was started with start_new_session=True.
         
     Returns:
         Tuple of (success, method_used)
         - success: True if process was terminated
-        - method_used: "eof", "sigterm", "sigkill", or "not_running"
+        - method_used: "sigterm", "sigkill", "not_running", or "failed"
     """
     log = logger or create_logger(level=LogLevel.NORMAL)
     
@@ -120,29 +136,42 @@ def graceful_terminate_dispatch(
             logger.debug(f"Process {pid} already exited")
         return True, "not_running"
     
-    # Step 1: Try graceful EOF (Ctrl+D)
-    # Send EOF by closing stdin - we simulate this by sending SIGUSR1 if supported,
-    # or rely on the process to detect EOF when we don't forcibly kill it yet
-    # Actually, for subprocess.Popen processes, we can't easily send EOF after the fact
-    # So we skip EOF and go directly to SIGTERM with a wait period
-    
     # Log the graceful termination attempt
     if session_id:
         log.info(f"Attempting graceful termination for session {session_id} (PID: {pid})")
     else:
         log.info(f"Attempting graceful termination for PID: {pid}")
     
-    # Step 2: Send SIGTERM for graceful shutdown
+    # Determine target for signals: process group (-pid) or single process (pid)
+    # Using -pid sends the signal to the entire process group
+    target = -pid if use_process_group else pid
+    target_desc = f"process group {pid}" if use_process_group else f"PID {pid}"
+    
+    # Step 1: Send SIGTERM for graceful shutdown
     try:
-        os.kill(pid, signal.SIGTERM)
+        if use_process_group:
+            os.killpg(target, signal.SIGTERM)
+        else:
+            os.kill(target, signal.SIGTERM)
         if logger:
-            logger.debug(f"Sent SIGTERM to PID {pid}")
+            logger.debug(f"Sent SIGTERM to {target_desc}")
     except ProcessLookupError:
         # Process already exited
         return True, "not_running"
-    except Exception as e:
+    except OSError as e:
+        # Process group may not exist (process not in a group or already dead)
         if logger:
-            logger.warning(f"Failed to send SIGTERM to {pid}: {e}")
+            logger.warning(f"Failed to send SIGTERM to {target_desc}: {e}")
+        # Fall back to single process
+        try:
+            os.kill(pid, signal.SIGTERM)
+            if logger:
+                logger.debug(f"Sent SIGTERM to PID {pid} (fallback)")
+        except ProcessLookupError:
+            return True, "not_running"
+        except Exception as e2:
+            if logger:
+                logger.warning(f"Failed to send SIGTERM to PID {pid}: {e2}")
     
     # Wait for graceful shutdown
     wait_start = time.time()
@@ -157,20 +186,35 @@ def graceful_terminate_dispatch(
             return True, "sigterm"
         time.sleep(0.1)  # 100ms polling interval
     
-    # Step 3: Process still running, send SIGKILL
+    # Step 2: Process still running, send SIGKILL
     if logger:
         logger.warning(f"Process {pid} did not terminate after {kill_wait_ms}ms, sending SIGKILL")
     
     try:
-        os.kill(pid, signal.SIGKILL)
+        if use_process_group:
+            os.killpg(target, signal.SIGKILL)
+        else:
+            os.kill(target, signal.SIGKILL)
         if logger:
-            logger.debug(f"Sent SIGKILL to PID {pid}")
+            logger.debug(f"Sent SIGKILL to {target_desc}")
     except ProcessLookupError:
         # Process exited between poll and kill
         return True, "sigterm"
+    except OSError:
+        # Fall back to single process
+        try:
+            os.kill(pid, signal.SIGKILL)
+            if logger:
+                logger.debug(f"Sent SIGKILL to PID {pid} (fallback)")
+        except ProcessLookupError:
+            return True, "sigterm"
+        except Exception as e:
+            if logger:
+                logger.error(f"Failed to send SIGKILL to PID {pid}: {e}")
+            return False, "failed"
     except Exception as e:
         if logger:
-            logger.error(f"Failed to send SIGKILL to {pid}: {e}")
+            logger.error(f"Failed to send SIGKILL to {target_desc}: {e}")
         return False, "failed"
     
     # Wait for process to be reaped after SIGKILL
@@ -183,9 +227,9 @@ def graceful_terminate_dispatch(
             return True, "sigkill"
         time.sleep(0.05)  # 50ms polling after SIGKILL
     
-    # Process still exists after SIGKILL - this is unusual
+    # Process still exists after SIGKILL - this is unusual (possibly D-state)
     if logger:
-        logger.error(f"Process {pid} still exists after SIGKILL")
+        logger.error(f"Process {pid} still exists after SIGKILL (may be in uninterruptible sleep)")
     return False, "failed"
 
 
@@ -200,7 +244,7 @@ def wait_for_dispatch_completion(
     """Wait for a dispatch session to complete with timeout and graceful termination.
     
     This function monitors a dispatch session until it completes, times out, or
-    is terminated. It provides graceful shutdown semantics (EOF/SIGTERM before SIGKILL).
+    is terminated. It provides graceful shutdown semantics (SIGTERM before SIGKILL).
     
     Args:
         dispatch_result: The DispatchResult from run_ticket_dispatch

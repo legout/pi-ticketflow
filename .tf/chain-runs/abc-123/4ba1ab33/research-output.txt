@@ -1,0 +1,32 @@
+# Research: abc-123
+
+## Status
+Research completed. Using existing research artifact.
+
+## Rationale
+- Ticket is a straightforward demo task for creating a hello-world utility
+- Implementation is internal to the project with no external dependencies
+- Standard Python patterns and project conventions are well-established
+- Research artifact already exists at .tf/knowledge/tickets/abc-123/research.md
+
+## Context Reviewed
+- `tk show abc-123` - Ticket requirements
+- AGENTS.md - Project conventions and lessons learned
+- .tf/ralph/AGENTS.md - Ralph-specific patterns and gotchas
+- Existing research.md artifact
+
+## Ticket Summary
+- **ID**: abc-123
+- **Status**: closed
+- **Type**: task
+- **Title**: Demo: Create hello-world utility for workflow testing
+- **Acceptance Criteria**:
+  - Create a hello-world utility in `demo/hello.py`
+  - Function should accept a name parameter with default "World"
+  - Include basic docstring
+  - Add a simple test
+
+## Sources
+- .tf/knowledge/tickets/abc-123/research.md (existing artifact)
+- tk show abc-123 (ticket details)
+- Project AGENTS.md files

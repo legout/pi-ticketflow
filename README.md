@@ -38,9 +38,19 @@ See detailed capabilities in [`docs/features.md`](docs/features.md).
 
 ### 2. Install CLI
 
+**From GitHub (users):**
 ```bash
 uvx --from git+https://github.com/legout/pi-ticketflow tf install --global
 ```
+
+**From local clone (developers):**
+```bash
+git clone https://github.com/legout/pi-ticketflow.git
+cd pi-ticketflow
+uvx --from . tf install --global
+```
+
+See [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) for detailed options.
 
 ### 3. Set Up Global Pi Environment
 
@@ -56,7 +66,27 @@ tf init
 tf sync
 ```
 
-### 5. Run First Workflow
+### 5. Configure (Optional)
+
+Configure models and workflow settings interactively:
+
+```bash
+tf config              # Interactive wizard
+tf config --list       # Show current config
+tf config --set metaModels.worker.model=kimi-coding/k2p5
+```
+
+### 6. Update
+
+Update the CLI and workflow assets:
+
+```bash
+tf self-update         # Update CLI to latest version
+tf update              # Update project workflow assets
+tf sync                # Re-sync after changes
+```
+
+### 7. Run First Workflow
 
 ```bash
 /tf-seed "Build a CLI tool for managing migrations"
@@ -76,6 +106,8 @@ For full setup and practical walkthroughs, see [`docs/getting-started.md`](docs/
 
 - [`docs/README.md`](docs/README.md): documentation index
 - [`docs/getting-started.md`](docs/getting-started.md): installation and first workflow
+- [`INSTALLATION_GUIDE.md`](INSTALLATION_GUIDE.md): detailed installation (GitHub vs local)
+- [`NEW_COMMANDS.md`](NEW_COMMANDS.md): `tf self-update` and `tf config` guide
 - [`docs/features.md`](docs/features.md): feature details and capabilities
 - [`docs/commands.md`](docs/commands.md): command reference
 - [`docs/workflows.md`](docs/workflows.md): end-to-end workflow guides

@@ -1,7 +1,7 @@
 ---
 description: Reclassify ticket priorities using P0-P4 rubric
-model: kimi-coding/k2p5
-thinking: medium
+model: minimax/MiniMax-M2.5
+thinking: high
 ---
 
 # /tf-priority-reclassify

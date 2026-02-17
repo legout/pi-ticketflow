@@ -4,33 +4,34 @@
 **CLOSED**
 
 ## Summary
-Successfully implemented comprehensive unit tests for `calculate_timeout_backoff()` function in `tests/test_utils.py`. Fixed a critical structural issue where the test class was defined twice, causing test loss.
+Added comprehensive unit tests for `calculate_timeout_backoff()` function in `tf/utils.py`, covering all acceptance criteria.
 
-## Changes Made
-- `tests/test_utils.py` - Fixed duplicate `TestCalculateTimeoutBackoff` class by merging both classes into a single comprehensive test class with 17 test methods
+## Implementation
+- Added `TestCalculateTimeoutBackoff` class with 17 test methods to `tests/test_utils.py`
+- Tests cover:
+  - Iteration index semantics (0 = base, 1 = base + increment)
+  - Cap behavior (max_timeout_ms enforcement)
+  - Custom increment override (non-default values)
+  - Input validation (negative value rejection)
+  - Edge cases (zero base, zero increment, large indices, exact cap boundary)
 
-## Acceptance Criteria Verification
-- [x] Tests cover iteration_index=0 and iteration_index=1 semantics
-- [x] Tests cover cap behavior (max_timeout_ms)
-- [x] Tests cover non-default increment override
+## Review Results
+- **reviewer-general**: 0 Critical, 0 Major (reported false positive about duplicate class)
+- **reviewer-spec-audit**: 0 Critical, 0 Major
+- **reviewer-second-opinion**: 0 Critical, 0 Major
+- **Quality Gate**: PASSED (blocks on Critical, Major)
 
 ## Test Results
-```
-python -m pytest tests/test_utils.py::TestCalculateTimeoutBackoff -v
-17 passed in 0.06s
+- 17 new tests added
+- All tests pass: `python -m pytest tests/test_utils.py -v` (30 total tests)
+- Tests are fast and hermetic
 
-python -m pytest tests/test_utils.py -v
-34 passed in 0.08s (all existing tests still pass)
-```
-
-## Review Outcome
-- Critical: 0
-- Major: 0
-- Minor: 2 (deferred - existing coverage sufficient)
-- Quality Gate: PASSED
+## Artifacts
+- `.tf/knowledge/tickets/pt-9lri/research.md`
+- `.tf/knowledge/tickets/pt-9lri/implementation.md`
+- `.tf/knowledge/tickets/pt-9lri/review.md`
+- `.tf/knowledge/tickets/pt-9lri/fixes.md`
+- `.tf/knowledge/tickets/pt-9lri/post-fix-verification.md`
 
 ## Commit
-`7776abb` - pt-9lri: Fix duplicate test class and add comprehensive timeout backoff unit tests
-
-## Notes
-The duplicate class issue was identified and fixed during implementation. The merged test class now properly contains all 17 tests without any being silently ignored by pytest.
+`1b0c59a` pt-9lri: Add unit tests for timeout backoff calculation

@@ -2,10 +2,11 @@
 name: reviewer-second-opinion
 description: Alternate-model second-opinion review for non-obvious issues
 tools: read, bash, write
-model: google-antigravity/claude-opus-4-5-thinking:high
+model: kimi-coding/k2p5
 skill: tf-review
 output: review-second.md
 defaultProgress: false
+thinking: high
 ---
 
 # Reviewer Agent (Second Opinion)

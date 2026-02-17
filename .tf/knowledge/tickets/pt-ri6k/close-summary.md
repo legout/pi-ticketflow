@@ -36,4 +36,4 @@ All 73 tests pass:
   - [x] Non-TTY mode emits readable (non-animated) output (verified with `\r` and `\x1b` assertions)
 
 ## Commit
-tbd
+bdc5498

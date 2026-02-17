@@ -227,3 +227,215 @@
   - Issues: Critical(0)/Major(0)/Minor(0)
   - Retry: Attempt 1, Count 0
   - Status: COMPLETE
+- pt-74hd: COMPLETE (2026-02-13T15:51:37Z)
+  - Summary: Add phase prompts for TF workflow (research/implement/review/fix/close)
+  - Issues: Critical(3)/Major(5)/Minor(3)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+  - Commit: 2002afcc55e6562f3c803c42e7740c3e9c6d4b42
+- pt-mdl0: COMPLETE (2026-02-13T16:04:51Z)
+  - Summary: Implement /tf as a /chain-prompts wrapper (keep /tf contract)
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+  - Commit: pending
+- pt-pcd9: COMPLETE (2026-02-13T16:06:28Z)
+  - Summary: Update docs/setup to drop pi-model-switch as required extension
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-6d99: COMPLETE (2026-02-13T21:08:26Z)
+  - Summary: Define dispatch-default Ralph execution contract
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-0v53: FAILED (2026-02-13T21:38:32Z)
+  - Summary: Add per-ticket worktree lifecycle for dispatch runs
+  - Issues: Critical(3)/Major(3)/Minor(4)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: Ticket failed after 3 attempt(s) due to timeout (last threshold: 600000ms)
+- pt-9yjn: FAILED (2026-02-13T23:52:02Z)
+  - Summary: result.return_code = 0
+  - Issues: Critical(4)/Major(5)/Minor(3)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: worktree merge failed
+- pt-9yjn: FAILED (2026-02-13T23:52:02Z)
+  - Summary: result.return_code = 0
+  - Issues: Critical(4)/Major(5)/Minor(3)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: pi -p failed (exit 1)
+- pt-7jzy: COMPLETE (2026-02-13T23:57:31Z)
+  - Summary: Handle dispatch completion and graceful session termination
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-7jzy: FAILED (2026-02-14T00:27:37Z)
+  - Summary: Handle result
+  - Issues: Critical(4)/Major(5)/Minor(4)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: Ticket failed after 3 attempt(s) due to timeout (last threshold: 600000ms)
+- pt-699h: FAILED (2026-02-14T00:57:38Z)
+  - Summary: Implement parallel dispatch scheduling with component safety
+  - Issues: Critical(5)/Major(5)/Minor(4)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: Ticket failed after 3 attempt(s) due to timeout (last threshold: 600000ms)
+- pt-8qk8: DISPATCHED (2026-02-14T01:19:20Z)
+  - Summary: Implement orphaned session recovery and TTL cleanup
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=8435b2a0-24a4-4461-837d-28a8e5220424
+- pt-8qk8: FAILED (2026-02-14T01:27:39Z)
+  - Summary: Implement orphaned session recovery and TTL cleanup
+  - Issues: Critical(2)/Major(5)/Minor(8)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: Ticket failed after 3 attempt(s) due to timeout (last threshold: 600000ms)
+- pt-8qk8: CLOSED (2026-02-14T01:46:03Z)
+- pt-8qk8: COMPLETE (2026-02-14T01:50:26Z)
+  - Summary: Implement orphaned session recovery and TTL cleanup
+  - Issues: Critical(2)/Major(5)/Minor(5)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- abc-123: DISPATCHED (2026-02-14T01:54:37Z)
+  - Summary: Demo: Create hello-world utility for workflow testing
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 5, Retry Count: 0
+  - Status: DISPATCHED
+  - Commit: 44de1f4c
+  - Error: session_id=3b6f1c75-fb8f-4338-bbf3-c4b17cd2dda7
+- pt-uu03: DISPATCHED (2026-02-14T02:10:44Z)
+  - Summary: Run manual validation matrix for dispatch Ralph mode
+  - Issues: Critical(3)/Major(3)/Minor(2)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Commit: none (documentation-only task)
+  - Error: session_id=9d582586-24a6-4506-a03c-7136f54e4f45
+- pt-uu03: COMPLETE (2026-02-14T02:10:47Z)
+  - Summary: Run manual validation matrix for dispatch Ralph mode
+  - Issues: Critical(3)/Major(3)/Minor(2)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+  - Commit: none (documentation-only task)
+- pt-uu03: FAILED (2026-02-14T02:44:15Z)
+  - Summary: Run manual validation matrix for dispatch Ralph mode
+  - Issues: Critical(3)/Major(5)/Minor(2)
+  - Attempt: 1, Retry Count: 0
+  - Status: FAILED
+  - Error: Ticket failed after 3 attempt(s) due to timeout (last threshold: 600000ms)
+- pt-4eor: COMPLETE (2026-02-14T02:44:28Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-4eor: COMPLETE (2026-02-14T02:44:46Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-4eor: DISPATCHED (2026-02-14T03:07:09Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Attempt: 1, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=c5f1c3de-d85a-4b02-a6b6-b18e00b04236
+- pt-4eor: COMPLETE (2026-02-14T03:07:47Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Attempt: 1, Retry Count: 0
+  - Status: COMPLETE
+- pt-4eor: DISPATCHED (2026-02-14T03:08:22Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Attempt: 1, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=e0486384-4923-4498-b0b4-4e2251f06b07
+- pt-4eor: COMPLETE (2026-02-14T03:08:54Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Attempt: 1, Retry Count: 0
+  - Status: COMPLETE
+- pt-4eor: COMPLETE (2026-02-14T03:16:42Z)
+  - Summary: Integrate dispatch backend into serial Ralph loop state updates
+  - Issues: Critical(1)/Major(2)/Minor(3)
+  - Attempt: 1, Retry Count: 0
+  - Status: COMPLETE
+- pt-zmah: DISPATCHED (2026-02-14T03:17:09Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=5a19a763-f0c2-49cd-85af-740101b43881
+- pt-zmah: COMPLETE (2026-02-14T03:17:52Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-zmah: DISPATCHED (2026-02-14T03:25:39Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=b7aae983-8774-4d80-aea9-6d8eab5ee09f
+- pt-zmah: COMPLETE (2026-02-14T03:25:42Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-zmah: DISPATCHED (2026-02-14T03:26:39Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=e4fda059-779e-438d-8223-774c8ed6aa65
+- pt-zmah: COMPLETE (2026-02-14T03:26:42Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-zmah: DISPATCHED (2026-02-14T03:27:13Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=5e992e86-8ab2-4457-a26e-412d308a2cf5
+- pt-zmah: DISPATCHED (2026-02-14T03:27:48Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=571e807e-e5d4-410a-9260-fadd851b12fa
+- pt-gydg: DISPATCHED (2026-02-14T04:04:35Z)
+  - Summary: Sample ticket for workflow testing
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: DISPATCHED
+  - Error: session_id=5b4c8463-866f-438f-92af-7bf7797cbdc1
+- pt-gydg: FAILED (2026-02-14T04:08:27Z)
+  - Summary: Sample ticket for workflow testing
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: pi -p failed (exit 1)
+- pt-gydg: COMPLETE (2026-02-14T04:12:36Z)
+  - Summary: Sample ticket for workflow testing
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: COMPLETE
+- pt-zmah: FAILED (2026-02-14T10:51:44Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: worktree merge failed
+- pt-zmah: FAILED (2026-02-14T10:51:44Z)
+  - Summary: Add dispatch session observability and attach hints
+  - Issues: Critical(0)/Major(0)/Minor(0)
+  - Attempt: 0, Retry Count: 0
+  - Status: FAILED
+  - Error: pi -p failed (exit 1)

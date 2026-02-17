@@ -81,3 +81,21 @@ Then use `python -m package` (without the module name) to avoid the warning.
 **Apply when**: Creating CLI tools that can be run as modules. Always provide a `__main__.py` entry point for packages that expose CLI functionality.
 
 **Pattern**: Keep `if __name__ == "__main__"` blocks in individual modules for backward compatibility, but prefer `python -m package` usage to avoid warnings.
+
+## Lesson from pt-oa8n (2026-02-10T12:30:36Z)
+
+(None extracted - straightforward implementation)
+
+## Lesson from pt-te9b (2026-02-10T12:44:00Z)
+
+**Context**: Design tickets for specification work require the same review rigor as code implementations. Reviewers identified regex pattern issues that would have caused bugs in the implementation phase.
+
+**Lesson**: Specification documents benefit from concrete examples and pattern testing. The detection algorithm regex patterns were validated against actual artifact files (pt-d9rg, pt-l6yb, pt-7i3q) to ensure they match real-world formats including bold markers and parenthetical text.
+
+**Apply when**: Writing specification documents that include parsing logic. Always:
+1. Test patterns against real artifact examples
+2. Include type definitions for complex structures
+3. Document edge cases explicitly
+4. Show the mapping from plan to spec (e.g., escalation curve)
+
+**Pattern**: For design tickets, include "Spec Coverage" sections that trace requirements from plan → spec → implementation ticket. This ensures nothing is lost in translation.

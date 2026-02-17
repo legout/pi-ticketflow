@@ -336,11 +336,17 @@ Usage:
   tf init [--project <path>]
   tf sync [--project <path>]
   tf doctor [--project <path>] [--fix]
-  tf update
+  tf update [--project <path>]
+  tf self-update [--force]
+  tf config [--list | --get <key> | --set <key=value>]
   tf next
   tf backlog-ls [topic-id-or-path]
   tf track <path>
   tf irf <ticket-id> [flags]
+  tf research <ticket-id> [--no-research] [--with-research]
+  tf implement <ticket-id> [--retry-reset]
+  tf review <ticket-id>
+  tf fix <ticket-id>
   tf priority-reclassify [--apply] [--ids ...] [--ready] [--status ...] [--tag ...]
   tf post-fix-verify <ticket-id> [--write] [--counts-only] [--json]
   tf ralph <subcommand> ...
@@ -356,11 +362,17 @@ Commands:
   init              Initialize a project for Ticketflow
   sync              Sync tickets with external service
   doctor            Diagnose and fix common issues
-  update            Update the CLI to latest version
+  update            Update project workflow assets
+  self-update       Update the tf CLI to latest version
+  config            Configure tf settings interactively
   next              Show next recommended ticket to work on
   backlog-ls        List tickets in backlog by topic
   track             Track file changes for a ticket
   irf               Run deterministic /chain-prompts IRF workflow
+  research          Execute the Research phase for a ticket
+  implement         Execute the Implementation phase for a ticket
+  review            Execute the Review phase for a ticket
+  fix               Execute the Fix phase for a ticket
   priority-reclassify  Reclassify ticket priorities
   post-fix-verify   Run post-fix verification for quality gate
   ralph             Ralph loop management commands
@@ -410,6 +422,14 @@ Run 'tf <command> --help' for more information on a command.
         from tf import update
         return update.main(rest)
 
+    if command == "self-update":
+        from tf import self_update
+        return self_update.main(rest)
+
+    if command == "config":
+        from tf import config_cmd
+        return config_cmd.main(rest)
+
     if command == "doctor":
         from tf import doctor
         return doctor.main(rest)
@@ -429,6 +449,26 @@ Run 'tf <command> --help' for more information on a command.
     if command == "irf":
         from tf import irf
         return irf.main(rest)
+
+    if command == "research":
+        from tf import research
+        return research.main(rest)
+
+    if command == "implement":
+        from tf import implement
+        return implement.main(rest)
+
+    if command == "review":
+        from tf import review
+        return review.main(rest)
+
+    if command == "fix":
+        from tf import fix
+        return fix.main(rest)
+
+    if command == "close":
+        from tf import close
+        return close.main(rest)
 
     if command == "priority-reclassify":
         from tf import priority_reclassify

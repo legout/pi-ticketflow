@@ -2,10 +2,11 @@
 name: review-merge
 description: Merge parallel reviews into a single consolidated review
 tools: read, write, bash
-model: openai-codex/gpt-5.1-codex-mini:medium
+model: kimi-coding/k2p5
 output: review.md
 defaultReads: review-general.md, review-spec.md, review-second.md
 defaultProgress: false
+thinking: medium
 ---
 
 # Review Merge Agent

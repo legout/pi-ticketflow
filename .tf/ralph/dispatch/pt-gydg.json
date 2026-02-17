@@ -1,0 +1,13 @@
+{
+  "ticket": "pt-gydg",
+  "session_id": "5b4c8463-866f-438f-92af-7bf7797cbdc1",
+  "pid": 2044862,
+  "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-gydg",
+  "repo_root": "/home/volker/coding/pi-ticketflow",
+  "launched_at": "2026-02-14T04:04:35.342574",
+  "status": "completed",
+  "completed_at": "2026-02-14T04:12:36Z",
+  "return_code": 0,
+  "duration_ms": 343041.17250442505,
+  "termination_method": "natural"
+}

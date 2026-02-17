@@ -1,7 +1,7 @@
 # Review: pt-699h
 
 ## Overall Assessment
-Parallel dispatch scheduling now caps each iteration with `batch_size = min(use_parallel, remaining)` before invoking `select_parallel_tickets`, so the loop launches no more than the configured worker count even when multiple ready tickets exist (tf/ralph.py:2811-2857). Component safety continues to be enforced by the existing `select_parallel_tickets`/`extract_components` helper, so the batch only includes tickets whose component tag sets do not overlap (tf/ralph.py:929-942, 2811-2845). Tickets are sourced from `tk ready` before selection, meaning only prerequisites-satisfied tickets are handed to the scheduler and dependent work waits for completion (tf/ralph.py:375-394).
+After running `tk show pt-699h` to confirm the spec, the new dispatch path (tf/ralph.py:2811‑3021) satisfies every bullet: it batches up to `batch_size = min(use_parallel, remaining)` tickets per iteration so the loop never starts more workers than configured, it still uses `select_parallel_tickets`/`extract_components` for component-tag diversity (tf/ralph.py:929‑945), and it sources tickets directly from `tk ready` before scheduling so dependencies are naturally enforced (`ticket_list_query`/`list_ready_tickets`, tf/ralph.py:374‑394).
 
 ## Critical (must fix)
 - No issues found
@@ -19,8 +19,9 @@ Parallel dispatch scheduling now caps each iteration with `batch_size = min(use_
 - None.
 
 ## Positive Notes
-- `tf/ralph.py:2811-2857` wires the parallel loop together with worktree creation, logging scaffolding, and `select_parallel_tickets`, delivering the requested worker throttling and component awareness within the dispatch branch.
-- `tf/ralph.py:375-394` keeps depending tickets blocked until `tk ready` reports them, so the scheduler naturally enforces prerequisite completion without an extra dependency graph remap.
+- The parallel dispatch loop (tf/ralph.py:2811‑3021) wires together batching, worktree lifecycle, and logging so each iteration launches at most `use_parallel` sessions while still honouring the requested component/diversity guards.
+- Component safety continues to reuse `select_parallel_tickets` and `extract_components` (tf/ralph.py:929‑945), matching the behaviour already exercised by parallel worktrees and discouraging overlapping components in the same batch.
+- Dependencies remain blocked until `tk ready` acknowledges the prerequisites, which is why `ticket_list_query` + `list_ready_tickets` (tf/ralph.py:374‑394) still provide the queue snapshot consumed by the dispatch scheduler.
 
 ## Summary Statistics
 - Critical: 0

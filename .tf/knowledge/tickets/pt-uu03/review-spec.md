@@ -1,24 +1,26 @@
-# Review Spec: pt-uu03 (spec-audit)
+# Review: pt-uu03
+## Overall Assessment
+Manual validations required by the ticket and the background-interactive-shell plan were never exercised—every scenario in the validation matrix still shows `PENDING` with no outcomes recorded, so the spec is effectively unverified. The test suite aborts immediately because `tests/test_post_fix_verification.py` imports a function that no longer exists, which blocks this review until the import error is fixed and the matrix evidence is captured.
 
-## Context
-- `tk show pt-uu03` (ticket metadata, acceptance criteria, blockers, links).
-- Implementation log: `.tf/knowledge/tickets/pt-uu03/implementation.md` (manual validation notes from the fixer loop).
+## Critical (must fix)
+- `tickets/pt-uu03.md:22-26` - The ticket’s acceptance criteria (serial, parallel, fallback, timeout/orphan paths) and the plan’s acceptance block (`.tf/knowledge/topics/plan-ralph-background-interactive-shell/plan.md:111-120`) require documented scenarios, yet the validation matrix summary at `.tf/ralph/validation/pt-uu03-validation-log.md:9-118` still shows all tests as `PENDING` with no results, so none of the spec requirements have been satisfied.
+- `tests/test_post_fix_verification.py:10-84` - The test module still imports `_count_bullet_with_compound_fixes`, but `tf/post_fix_verification.py:149-174` only exposes `_extract_fix_count_from_text`; the mismatch causes `pytest -v` to abort (see `.tf/knowledge/tickets/pt-uu03/implementation.md:21-36`) and no test results are available for reviewers.
 
-## Acceptance Criteria Evaluation
-1. **Serial dispatch run validated end-to-end on at least one ticket**
-   - **Status**: ✅ Satisfied. Evidence in implementation.md shows `tf ralph run pt-uu03 --dispatch` transitioned the ticket from DISPATCHED to COMPLETE with session tracking and worktree creation.
-2. **Parallel dispatch run validated with non-overlapping component tags**
-   - **Status**: ❌ Not satisfied (feature gap). Dry-run output shows `tf ralph start --dry-run --parallel 2 --dispatch` still invoking the worktree backend (`pi -p`) because the parallel code path ignores `--dispatch`. Parallel dispatch cannot be validated until the backend wiring is implemented.
-   - **Recommendation**: Create/track an implementation ticket (e.g., wire dispatch backend into parallel mode) before re-running this validation scenario.
-3. **Fallback `--no-interactive-shell` path validated**
-   - **Status**: ✅ Satisfied (dry-run only). `tf ralph run abc-123 --dry-run --no-interactive-shell` confirmed the legacy subprocess backend (`pi -p`) is selected.
-4. **Timeout/orphan recovery scenarios validated and logged**
-   - **Status**: ⚠️ Incomplete. Implementation notes list manual steps for timeout handling and orphan recovery but no evidence of execution. These scenarios need explicit validation logs (timeout kill, failed status, orphan cleanup) before marking the acceptance criterion as satisfied.
+## Major (should fix)
+- `.tf/ralph/validation/pt-uu03-validation-log.md:43-105` - Each test section is left with the `_To be filled during testing_` placeholder, so there is no recorded command/observation for serial, parallel, fallback, timeout, or orphan scenarios; without concrete steps and outcomes the manual validation matrix cannot be reproduced or audited.
 
-## Critical
-- None (spec context was available via `tk show`).
+## Minor (nice to fix)
+- `tf/post_fix_verification.py:129-147` - `_canonicalize_severity` only maps plural strings (`warnings`, `suggestions`) and falls back to `str.capitalize()`, so inputs like `warning`/`suggestion` return `Warning`/`Suggestion` instead of the canonical forms expected by `tests/test_post_fix_verification.py:44-48`; adding the singular mappings would make the helper match its own tests.
 
-## Findings & Next Steps
-- **Parallel dispatch gap**: The test uncovered a feature omission rather than a validation failure; dispatch cannot be asserted in parallel mode until the code path is extended.
-- **Timeout/orphan recovery validation outstanding**: Manual validation steps are documented but not executed; please run the listed scenarios and capture logs/status updates.
-- **Spec compliance summary**: 2/4 acceptance criteria currently marked satisfied; 1 feature gap and 1 pending manual validation remain.
+## Warnings (follow-up ticket)
+- `tf/ralph/dispatch/pt-uu03.json:1-9` vs `tf/ralph/progress.md:312-324` - The dispatch artifact still reports `status: DISPATCHED` while `progress.md` records the ticket as `COMPLETE` (and even `FAILED` later in the same file); this stale/inconsistent state makes it hard to trace which dispatch sessions actually completed and whether the validation matrix artifacts are tied to the same run.
+
+## Suggestions (follow-up ticket)
+- `.tf/ralph/validation/pt-uu03-validation-log.md:43-105` - Replace every `_To be filled during testing_` placeholder with the actual commands run, tool outputs, and observed results so future contributors can verify exactly what was exercised for each scenario.
+
+## Summary Statistics
+- Critical: 2
+- Major: 1
+- Minor: 1
+- Warnings: 1
+- Suggestions: 1

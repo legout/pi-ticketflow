@@ -1,31 +1,18 @@
-# Review: pt-7jzy
+# Spec Audit Review — pt-7jzy
 
-## Overall Assessment
-Spec audit could not be completed because there is no specification or implementation artifact to compare against, and the ticket metadata could not be retrieved.
-
-## Critical (must fix)
-- `No spec found` - There is no spec artifact in `{knowledgeDir}/tickets/pt-7jzy`; without requirements we cannot assess compliance.
-- `pt-7jzy` - `tk show pt-7jzy` returned `Error: ticket 'pt-7jzy' not found`, so the requirements could not be validated.
-- `.tf/knowledge/tickets/pt-7jzy/implementation.md` - Required implementation artifact is missing, so no behavior can be inspected or tested.
-
-## Major (should fix)
+## Critical
 - None.
 
-## Minor (nice to fix)
+## Major
+- The acceptance criterion that idle sessions must receive a graceful EOF (`Ctrl+D`) before forced termination is not satisfied. In `tf/ralph_completion.py`, `graceful_terminate_dispatch` acknowledges that sending EOF is not possible and immediately proceeds to SIGTERM/SIGKILL. There is no attempt to close the dispatch session’s stdin, send a `SIGINT`, or otherwise deliver a `Ctrl+D` handshake, so the implementation never fulfills the “EOF before kill” requirement. Please add a concrete EOF delivery (e.g., close the session’s stdin or inject the control sequence via the dispatch subprocess/Pty) before escalating to SIGTERM/KILL.
+
+## Minor
 - None.
 
-## Warnings (follow-up ticket)
+## Warnings
 - None.
 
-## Suggestions (follow-up ticket)
-- Provide a spec implementation artifact and ensure the ticket exists before rerunning the spec audit so the requirements can actually be verified.
-
-## Positive Notes
-- Failure conditions were surfaced clearly so follow-up work can unblock this review.
-
-## Summary Statistics
-- Critical: 3
-- Major: 0
-- Minor: 0
-- Warnings: 0
-- Suggestions: 1
+## Sections
+- **Acceptance Criterion 1 (Completion detection from dispatch/session state):** Verified in `tf/ralph_completion.py` via `poll_dispatch_status` using `os.waitpid(os.WNOHANG)` and the polling loop in `wait_for_dispatch_completion` that stops when the PID exits.
+- **Acceptance Criterion 2 (Graceful EOF before forced kill):** Not implemented; see Major comment above.
+- **Acceptance Criterion 3 (Timeout and forced termination reporting):** Satisfied by `wait_for_dispatch_completion`, which logs timeout warnings and returns a `DispatchCompletionResult` recording `termination_method`, `duration_ms`, and any errors.

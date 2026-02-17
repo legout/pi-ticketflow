@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "sessions": [
+    {
+      "session_id": "3b6f1c75-fb8f-4338-bbf3-c4b17cd2dda7",
+      "ticket_id": "abc-123",
+      "pid": 1976857,
+      "process_start_time": null,
+      "started_at": "2026-02-14T01:54:37Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/abc-123",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T02:14:15Z",
+      "return_code": null
+    },
+    {
+      "session_id": "9d582586-24a6-4506-a03c-7136f54e4f45",
+      "ticket_id": "pt-uu03",
+      "pid": 1988135,
+      "process_start_time": 298901995,
+      "started_at": "2026-02-14T02:10:44Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-uu03",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T02:14:15Z",
+      "return_code": null
+    },
+    {
+      "session_id": "5fc07209-b220-4e84-b2b3-2f2111a2e16c",
+      "ticket_id": "pt-4eor",
+      "pid": 2019829,
+      "process_start_time": 299208828,
+      "started_at": "2026-02-14T03:01:52Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-4eor",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:07:52Z",
+      "return_code": null
+    },
+    {
+      "session_id": "c5f1c3de-d85a-4b02-a6b6-b18e00b04236",
+      "ticket_id": "pt-4eor",
+      "pid": 2023637,
+      "process_start_time": 299240468,
+      "started_at": "2026-02-14T03:07:09Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-4eor",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:07:53Z",
+      "return_code": null
+    },
+    {
+      "session_id": "e0486384-4923-4498-b0b4-4e2251f06b07",
+      "ticket_id": "pt-4eor",
+      "pid": 2024741,
+      "process_start_time": 299247814,
+      "started_at": "2026-02-14T03:08:22Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-4eor",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:08:59Z",
+      "return_code": null
+    },
+    {
+      "session_id": "5a19a763-f0c2-49cd-85af-740101b43881",
+      "ticket_id": "pt-zmah",
+      "pid": 2031333,
+      "process_start_time": 299300461,
+      "started_at": "2026-02-14T03:17:08Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:25:10Z",
+      "return_code": null
+    },
+    {
+      "session_id": "92c883ce-f365-4793-babf-d48b6bf26f84",
+      "ticket_id": "pt-zmah",
+      "pid": 2033717,
+      "process_start_time": 299348613,
+      "started_at": "2026-02-14T03:25:10Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:25:47Z",
+      "return_code": null
+    },
+    {
+      "session_id": "b7aae983-8774-4d80-aea9-6d8eab5ee09f",
+      "ticket_id": "pt-zmah",
+      "pid": 2033824,
+      "process_start_time": 299351480,
+      "started_at": "2026-02-14T03:25:39Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:25:48Z",
+      "return_code": null
+    },
+    {
+      "session_id": "ba12680b-4d60-4503-a652-3aebd6f2c65a",
+      "ticket_id": "pt-zmah",
+      "pid": 2033945,
+      "process_start_time": 299352406,
+      "started_at": "2026-02-14T03:25:48Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:26:47Z",
+      "return_code": null
+    },
+    {
+      "session_id": "e4fda059-779e-438d-8223-774c8ed6aa65",
+      "ticket_id": "pt-zmah",
+      "pid": 2034070,
+      "process_start_time": 299357469,
+      "started_at": "2026-02-14T03:26:39Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:26:48Z",
+      "return_code": null
+    },
+    {
+      "session_id": "31fa86ed-6760-4584-b108-4a03b6ac9942",
+      "ticket_id": "pt-zmah",
+      "pid": 2034192,
+      "process_start_time": 299358405,
+      "started_at": "2026-02-14T03:26:48Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:36:49Z",
+      "return_code": null
+    },
+    {
+      "session_id": "5e992e86-8ab2-4457-a26e-412d308a2cf5",
+      "ticket_id": "pt-zmah",
+      "pid": 2034319,
+      "process_start_time": 299360933,
+      "started_at": "2026-02-14T03:27:13Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:36:49Z",
+      "return_code": null
+    },
+    {
+      "session_id": "571e807e-e5d4-410a-9260-fadd851b12fa",
+      "ticket_id": "pt-zmah",
+      "pid": 2034553,
+      "process_start_time": 299364375,
+      "started_at": "2026-02-14T03:27:48Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:36:50Z",
+      "return_code": null
+    },
+    {
+      "session_id": "7c6a0c1b-0d2f-43cc-b1e2-4844bf89e815",
+      "ticket_id": "pt-zmah",
+      "pid": 2038650,
+      "process_start_time": 299418603,
+      "started_at": "2026-02-14T03:36:50Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:46:51Z",
+      "return_code": null
+    },
+    {
+      "session_id": "898fe381-2daa-4d51-9560-7f1130db3162",
+      "ticket_id": "pt-gydg",
+      "pid": 2042130,
+      "process_start_time": 299478699,
+      "started_at": "2026-02-14T03:46:51Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-gydg",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T03:56:52Z",
+      "return_code": null
+    },
+    {
+      "session_id": "af66f9af-086f-4ee9-826c-53b1d1296760",
+      "ticket_id": "pt-gydg",
+      "pid": 2043822,
+      "process_start_time": 299538790,
+      "started_at": "2026-02-14T03:56:52Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-gydg",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T04:06:52Z",
+      "return_code": null
+    },
+    {
+      "session_id": "5b4c8463-866f-438f-92af-7bf7797cbdc1",
+      "ticket_id": "pt-gydg",
+      "pid": 2044862,
+      "process_start_time": 299585096,
+      "started_at": "2026-02-14T04:04:35Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-gydg",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T04:06:53Z",
+      "return_code": null
+    },
+    {
+      "session_id": "49acebba-468a-4c74-8940-3148cb42fe00",
+      "ticket_id": "pt-gydg",
+      "pid": 2045799,
+      "process_start_time": 299598931,
+      "started_at": "2026-02-14T04:06:53Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-gydg",
+      "status": "orphaned",
+      "completed_at": "2026-02-14T10:49:07Z",
+      "return_code": null
+    },
+    {
+      "session_id": "0668a6e3-2a64-4277-a8a0-ac6384dc476e",
+      "ticket_id": "pt-zmah",
+      "pid": 2071068,
+      "process_start_time": 302012315,
+      "started_at": "2026-02-14T10:49:07Z",
+      "worktree_path": "/home/volker/coding/pi-ticketflow/.tf/ralph/worktrees/pt-zmah",
+      "status": "completed",
+      "completed_at": "2026-02-14T10:51:44Z",
+      "return_code": 0
+    }
+  ],
+  "last_updated": "2026-02-14T10:51:44Z"
+}

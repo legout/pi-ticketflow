@@ -720,6 +720,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         show_full_description: reactive[bool] = reactive(False)
         DESCRIPTION_LIMIT: int = 2500
         
+        # Implementation docs state
+        implementation_docs: reactive[dict[str, Path]] = reactive({})
+        
         def compose(self) -> ComposeResult:
             """Compose the ticket board layout."""
             with Horizontal():
@@ -772,6 +775,44 @@ def main(argv: Optional[list[str]] = None) -> int:
                 self.update_detail_counts()
             except Exception as e:
                 self._show_error(f"Error loading tickets: {e}")
+        
+        def load_implementation_docs(self, ticket_id: str) -> dict[str, Path]:
+            """Load implementation docs for a ticket from .tf/knowledge/tickets/.
+            
+            Args:
+                ticket_id: The ticket ID to load docs for
+                
+            Returns:
+                Dict mapping doc type to Path of the doc file
+            """
+            # Find repo root
+            repo_root = _find_repo_root()
+            if not repo_root:
+                return {}
+            
+            knowledge_tickets_dir = repo_root / ".tf" / "knowledge" / "tickets" / ticket_id
+            
+            if not knowledge_tickets_dir.is_dir():
+                return {}
+            
+            # Map of doc types to filenames
+            doc_types = {
+                "implementation": "implementation.md",
+                "research": "research.md",
+                "review": "review.md",
+                "fixes": "fixes.md",
+                "close-summary": "close-summary.md",
+                "chain-summary": "chain-summary.md",
+                "post-fix-verification": "post-fix-verification.md",
+            }
+            
+            docs = {}
+            for doc_type, filename in doc_types.items():
+                doc_path = knowledge_tickets_dir / filename
+                if doc_path.exists():
+                    docs[doc_type] = doc_path
+            
+            return docs
         
         def _show_error(self, message: str) -> None:
             """Display an error message in all columns."""
@@ -988,12 +1029,117 @@ def main(argv: Optional[list[str]] = None) -> int:
                     body += "\n\n[i](truncated... press 'e' to expand)[/i]"
             lines.append(body)
             
+            # Load and display implementation docs
+            impl_docs = self.load_implementation_docs(ticket.id)
+            if impl_docs:
+                lines.append("")
+                lines.append("[b]Implementation Docs:[/b] [dim](Press key to open)[/dim]")
+                
+                # Map doc types to key bindings
+                key_map = {
+                    "implementation": "[1]",
+                    "research": "[2]",
+                    "review": "[3]",
+                    "fixes": "[4]",
+                    "close-summary": "[5]",
+                    "chain-summary": "[6]",
+                    "post-fix-verification": "[7]",
+                }
+                
+                for doc_type, doc_path in impl_docs.items():
+                    key_hint = key_map.get(doc_type, "")
+                    lines.append(f"  {key_hint} {doc_type}: {doc_path.name}")
+            else:
+                lines.append("")
+                lines.append("[dim]No implementation docs found (run IRF workflow to generate)[/dim]")
+            
             content.update("\n".join(lines))
         
         def action_toggle_description(self) -> None:
             """Toggle between truncated and full description view."""
             self.show_full_description = not self.show_full_description
             self.update_detail_view()
+        
+        def _open_implementation_doc(self, doc_type: str) -> None:
+            """Open an implementation doc by type.
+            
+            Args:
+                doc_type: Type of doc to open (implementation, research, review, etc.)
+            """
+            if not self.selected_ticket:
+                self.notify("No ticket selected", severity="warning")
+                return
+            
+            ticket_id = self.selected_ticket.ticket.id
+            docs = self.load_implementation_docs(ticket_id)
+            
+            if doc_type not in docs:
+                self.notify(f"No {doc_type} doc found for {ticket_id}", severity="warning")
+                return
+            
+            doc_path = docs[doc_type]
+            
+            # Determine command to use
+            pager = os.environ.get("PAGER", "").strip()
+            editor = os.environ.get("EDITOR", "").strip()
+            
+            cmd = None
+            if pager:
+                cmd = f'{pager} "{doc_path}"'
+            elif editor:
+                cmd = f'{editor} "{doc_path}"'
+            else:
+                # Fallback to common pagers
+                for fallback in ["less", "more", "cat"]:
+                    result = os.system(f"which {fallback} > /dev/null 2>&1")
+                    if result == 0:
+                        cmd = f'{fallback} "{doc_path}"'
+                        break
+            
+            if not cmd:
+                self.notify("No pager or editor found. Set $PAGER or $EDITOR.", severity="error")
+                return
+            
+            # Run the command with terminal suspend for external pagers/editors
+            try:
+                with self.app.suspend():
+                    exit_code = os.system(cmd)
+            except Exception as e:
+                self.notify(f"Failed to suspend terminal: {e}", severity="error")
+                return
+            
+            if exit_code != 0:
+                self.notify(f"Failed to open document (exit code: {exit_code})", severity="error")
+            else:
+                self.notify(f"Opened {doc_type}: {doc_path.name}")
+        
+        def action_open_implementation(self) -> None:
+            """Open implementation doc."""
+            self._open_implementation_doc("implementation")
+        
+        def action_open_research(self) -> None:
+            """Open research doc."""
+            self._open_implementation_doc("research")
+        
+        def action_open_review(self) -> None:
+            """Open review doc."""
+            self._open_implementation_doc("review")
+        
+        def action_open_fixes(self) -> None:
+            """Open fixes doc."""
+            self._open_implementation_doc("fixes")
+        
+        def action_open_close_summary(self) -> None:
+            """Open close-summary doc."""
+            self._open_implementation_doc("close-summary")
+        
+        def action_open_chain_summary(self) -> None:
+            """Open chain-summary doc."""
+            self._open_implementation_doc("chain-summary")
+        
+        def action_open_post_fix_verification(self) -> None:
+            """Open post-fix-verification doc."""
+            self._open_implementation_doc("post-fix-verification")
     
     class TicketflowApp(App):
         """Textual app for Ticketflow."""
@@ -1131,10 +1277,14 @@ def main(argv: Optional[list[str]] = None) -> int:
             Binding("r", "refresh", "Refresh"),
             Binding("o", "open_doc", "Open Doc"),
             Binding("e", "expand_desc", "Expand Desc"),
-            Binding("1", "open_overview", "Overview"),
-            Binding("2", "open_sources", "Sources"),
-            Binding("3", "open_plan", "Plan"),
-            Binding("4", "open_backlog", "Backlog"),
+            Binding("1", "open_overview", "Overview/Impl"),
+            Binding("2", "open_sources", "Sources/Research"),
+            Binding("3", "open_plan", "Plan/Review"),
+            Binding("4", "open_backlog", "Backlog/Fixes"),
+            # Additional ticket doc bindings (only for Tickets tab)
+            Binding("5", "ticket_close", "Close Summary"),
+            Binding("6", "ticket_chain", "Chain Summary"),
+            Binding("7", "ticket_pfv", "Post-Fix Verif"),
         ]
         
         def compose(self) -> ComposeResult:
@@ -1164,34 +1314,104 @@ def main(argv: Optional[list[str]] = None) -> int:
                 ticket_board.load_tickets()
         
         def action_open_doc(self) -> None:
-            """Open the first available document (delegates to TopicBrowser)."""
-            topic_browser = self.query_one(TopicBrowser)
-            topic_browser.action_open_doc()
+            """Open the first available document (delegates to appropriate widget)."""
+            tabbed = self.query_one(TabbedContent)
+            active_pane = tabbed.active_pane
+            
+            if active_pane and active_pane.id == "tab-topics":
+                topic_browser = self.query_one(TopicBrowser)
+                topic_browser.action_open_doc()
+            elif active_pane and active_pane.id == "tab-tickets":
+                ticket_board = self.query_one(TicketBoard)
+                ticket_board.action_open_implementation()
         
         def action_open_overview(self) -> None:
-            """Open overview document (delegates to TopicBrowser)."""
-            topic_browser = self.query_one(TopicBrowser)
-            topic_browser.action_open_overview()
+            """Open overview document (Topics tab) or implementation doc (Tickets tab)."""
+            tabbed = self.query_one(TabbedContent)
+            active_pane = tabbed.active_pane
+            
+            if active_pane and active_pane.id == "tab-topics":
+                topic_browser = self.query_one(TopicBrowser)
+                topic_browser.action_open_overview()
+            elif active_pane and active_pane.id == "tab-tickets":
+                ticket_board = self.query_one(TicketBoard)
+                ticket_board.action_open_implementation()
         
         def action_open_sources(self) -> None:
-            """Open sources document (delegates to TopicBrowser)."""
-            topic_browser = self.query_one(TopicBrowser)
-            topic_browser.action_open_sources()
+            """Open sources document (Topics tab) or research doc (Tickets tab)."""
+            tabbed = self.query_one(TabbedContent)
+            active_pane = tabbed.active_pane
+            
+            if active_pane and active_pane.id == "tab-topics":
+                topic_browser = self.query_one(TopicBrowser)
+                topic_browser.action_open_sources()
+            elif active_pane and active_pane.id == "tab-tickets":
+                ticket_board = self.query_one(TicketBoard)
+                ticket_board.action_open_research()
         
         def action_open_plan(self) -> None:
-            """Open plan document (delegates to TopicBrowser)."""
-            topic_browser = self.query_one(TopicBrowser)
-            topic_browser.action_open_plan()
+            """Open plan document (Topics tab) or review doc (Tickets tab)."""
+            tabbed = self.query_one(TabbedContent)
+            active_pane = tabbed.active_pane
+            
+            if active_pane and active_pane.id == "tab-topics":
+                topic_browser = self.query_one(TopicBrowser)
+                topic_browser.action_open_plan()
+            elif active_pane and active_pane.id == "tab-tickets":
+                ticket_board = self.query_one(TicketBoard)
+                ticket_board.action_open_review()
         
         def action_open_backlog(self) -> None:
-            """Open backlog document (delegates to TopicBrowser)."""
-            topic_browser = self.query_one(TopicBrowser)
-            topic_browser.action_open_backlog()
+            """Open backlog document (Topics tab) or fixes doc (Tickets tab)."""
+            tabbed = self.query_one(TabbedContent)
+            active_pane = tabbed.active_pane
+            
+            if active_pane and active_pane.id == "tab-topics":
+                topic_browser = self.query_one(TopicBrowser)
+                topic_browser.action_open_backlog()
+            elif active_pane and active_pane.id == "tab-tickets":
+                ticket_board = self.query_one(TicketBoard)
+                ticket_board.action_open_fixes()
         
         def action_expand_desc(self) -> None:
             """Toggle full description view (delegates to TicketBoard)."""
             ticket_board = self.query_one(TicketBoard)
             ticket_board.action_toggle_description()
+        
+        def action_ticket_impl(self) -> None:
+            """Open implementation doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_implementation()
+        
+        def action_ticket_research(self) -> None:
+            """Open research doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_research()
+        
+        def action_ticket_review(self) -> None:
+            """Open review doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_review()
+        
+        def action_ticket_fixes(self) -> None:
+            """Open fixes doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_fixes()
+        
+        def action_ticket_close(self) -> None:
+            """Open close-summary doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_close_summary()
+        
+        def action_ticket_chain(self) -> None:
+            """Open chain-summary doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_chain_summary()
+        
+        def action_ticket_pfv(self) -> None:
+            """Open post-fix-verification doc (delegates to TicketBoard)."""
+            ticket_board = self.query_one(TicketBoard)
+            ticket_board.action_open_post_fix_verification()
     
     app = TicketflowApp()
     app.run()

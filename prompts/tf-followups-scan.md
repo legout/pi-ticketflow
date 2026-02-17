@@ -1,6 +1,6 @@
 ---
 description: Scan ticket artifacts for missing followups.md and create follow-up tickets [tf-planning]
-model: openai-codex/gpt-5.2
+model: tf-followups-scan
 thinking: medium
 skill: tf-planning
 ---

@@ -1,7 +1,7 @@
 ---
 description: Implement ticket with deterministic IRF workflow wrapper [tf-workflow]
-model: kimi-coding/k2p5
-thinking: medium
+model: minimax/MiniMax-M2.5
+thinking: high
 skill: tf-workflow
 ---
 

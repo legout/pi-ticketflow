@@ -2,9 +2,10 @@
 name: researcher-fetch
 description: Fetch focused research for a single topic slice
 tools: read, write, bash
-model: openai-codex/gpt-5.1-codex-mini:medium
+model: kimi-coding/k2p5
 output: research-fetch.md
 defaultProgress: false
+thinking: medium
 ---
 
 # Researcher Fetch Agent

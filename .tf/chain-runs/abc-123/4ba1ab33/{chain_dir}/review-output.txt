@@ -1,0 +1,22 @@
+Done. I completed the review phase for `abc-123` and wrote consolidated output to:
+`.tf/knowledge/tickets/abc-123/review.md`
+
+Summary:
+- Loaded workflow config and ticket context (`tk show abc-123`)
+- Used reviewers configured in `.tf/config/settings.json`
+- Updated reviewer artifacts:
+  - `.tf/knowledge/tickets/abc-123/review-general.md`
+  - `.tf/knowledge/tickets/abc-123/review-spec.md`
+  - `.tf/knowledge/tickets/abc-123/review-second.md`
+- Merged into consolidated review:
+  - `.tf/knowledge/tickets/abc-123/review.md`
+
+Merged review counts:
+- Critical: 0
+- Major: 0
+- Minor: 0
+- Warnings: 0
+- Suggestions: 1
+
+Key note:
+- Suggestion to add an explicit CLI BrokenPipeError test in `tests/test_demo_hello.py`.

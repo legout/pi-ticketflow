@@ -1,6 +1,6 @@
 ---
 description: Sync TF configuration [tf-config]
-model: zai/glm-4.7
+model: kimi-coding/k2p5
 thinking: medium
 skill: tf-config
 ---

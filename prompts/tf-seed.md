@@ -1,6 +1,6 @@
 ---
 description: Capture greenfield idea into seed artifacts with automatic session activation [tf-planning +codex-mini]
-model: openai-codex/gpt-5.1-codex-mini
+model: openai-codex/gpt-5.3-codex
 thinking: medium
 skill: tf-planning
 ---

@@ -1,7 +1,7 @@
 ---
 description: Review an implementation plan with high-accuracy validation [tf-planning +codex-mini]
-model: openai-codex/gpt-5.1-codex-mini
-thinking: medium
+model: openai-codex/gpt-5.3-codex
+thinking: high
 skill: tf-planning
 ---
 

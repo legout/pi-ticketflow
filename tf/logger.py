@@ -273,6 +273,7 @@ class RalphLogger:
         mode: str = "serial",
         iteration: Optional[int] = None,
         ticket_title: Optional[str] = None,
+        queue_state: Optional[Any] = None,
     ) -> None:
         """Log the start of ticket processing."""
         extra: Dict[str, Any] = {"ticket": ticket_id, "mode": mode}
@@ -280,7 +281,11 @@ class RalphLogger:
             extra["iteration"] = iteration
         if ticket_title:
             extra["ticket_title"] = ticket_title
-        self.info(f"Starting ticket processing: {ticket_id}", **extra)
+        if queue_state is not None:
+            extra["queue_state"] = str(queue_state)
+            self.info(f"Starting ticket processing: {ticket_id} [{queue_state.to_log_format()}]", **extra)
+        else:
+            self.info(f"Starting ticket processing: {ticket_id}", **extra)
 
     def log_ticket_complete(
         self,
@@ -289,6 +294,7 @@ class RalphLogger:
         mode: str = "serial",
         iteration: Optional[int] = None,
         ticket_title: Optional[str] = None,
+        queue_state: Optional[Any] = None,
     ) -> None:
         """Log the completion of ticket processing."""
         extra: Dict[str, Any] = {"ticket": ticket_id, "status": status, "mode": mode}
@@ -296,8 +302,13 @@ class RalphLogger:
             extra["iteration"] = iteration
         if ticket_title:
             extra["ticket_title"] = ticket_title
+        if queue_state is not None:
+            extra["queue_state"] = str(queue_state)
         level = LogLevel.INFO if status == "COMPLETE" else LogLevel.ERROR
-        self._log(level, f"Ticket processing {status.lower()}: {ticket_id}", extra)
+        if queue_state is not None:
+            self._log(level, f"Ticket processing {status.lower()}: {ticket_id} [{queue_state.to_log_format()}]", extra)
+        else:
+            self._log(level, f"Ticket processing {status.lower()}: {ticket_id}", extra)
 
     def log_phase_transition(
         self,

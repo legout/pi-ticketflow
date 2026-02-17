@@ -1,7 +1,7 @@
 ---
 description: Fix phase for TF workflow [tf-fix]
-model: zai/glm-5
-thinking: high
+model: tf-fix
+thinking: medium
 skill: tf-fix
 ---
 
