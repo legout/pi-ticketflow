@@ -20,6 +20,14 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 # Import required tools
 from tf.utils import find_project_root
 
+# Import worktree lifecycle functions (pt-2rjt)
+from tf.ralph import (
+    create_worktree_for_ticket,
+    merge_and_close_worktree,
+    cleanup_worktree,
+    git_repo_root,
+)
+
 # Constants
 STATE_FILE = "dispatch-loop-state.json"
 LOCK_FILE = "dispatch-loop.lock"
@@ -35,6 +43,8 @@ _lock_path_for_cleanup: Optional[Path] = None
 _current_run_id: Optional[str] = None  # For ownership verification in signal handler
 _current_lock_pid: Optional[int] = None
 _in_signal_handler = False  # Re-entrancy protection
+_active_worktrees: Dict[str, Path] = {}  # session_id -> worktree_path for cleanup on signal (pt-2rjt)
+_repo_root_for_cleanup: Optional[Path] = None  # repo root for worktree cleanup (pt-2rjt)
 
 
 class RalphLoopError(Exception):
@@ -57,6 +67,37 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _cleanup_worktrees_on_signal() -> None:
+    """Clean up active worktrees on signal (pt-2rjt).
+    
+    Called by signal handler to ensure worktrees don't get orphaned
+    when the loop is interrupted.
+    """
+    global _active_worktrees, _repo_root_for_cleanup
+    
+    if not _active_worktrees or not _repo_root_for_cleanup:
+        return
+    
+    print(f"INFO: Cleaning up {len(_active_worktrees)} active worktrees...", file=sys.stderr)
+    for session_id, worktree_path in list(_active_worktrees.items()):
+        try:
+            # Use git worktree remove for clean removal
+            result = subprocess.run(
+                ["git", "-C", str(_repo_root_for_cleanup), "worktree", "remove", "-f", str(worktree_path)],
+                capture_output=True,
+                timeout=10,
+            )
+            if result.returncode == 0:
+                print(f"INFO: Cleaned up worktree for {session_id}", file=sys.stderr)
+            else:
+                # Fallback: try direct removal
+                import shutil
+                shutil.rmtree(worktree_path, ignore_errors=True)
+                print(f"WARN: Forced worktree removal for {session_id}", file=sys.stderr)
+        except Exception as e:
+            print(f"WARN: Failed to clean up worktree {worktree_path}: {e}", file=sys.stderr)
+
+
 def _release_lock_on_signal(signum: int, _frame: Any) -> None:
     """Signal handler to release lock and exit cleanly on SIGINT/SIGTERM.
     
@@ -72,6 +113,9 @@ def _release_lock_on_signal(signum: int, _frame: Any) -> None:
     _in_signal_handler = True
     
     try:
+        # Clean up active worktrees first (pt-2rjt)
+        _cleanup_worktrees_on_signal()
+        
         if _lock_path_for_cleanup is not None:
             try:
                 # Verify ownership before unlinking
@@ -592,8 +636,14 @@ def query_session_status(session_id: str) -> Dict[str, Any]:
 def launch_dispatch(
     ticket_id: str,
     dry_run: bool = False,
+    cwd: Optional[Path] = None,
 ) -> Tuple[bool, Optional[str], Optional[str]]:
     """Launch a ticket in dispatch mode using interactive_shell.
+    
+    Args:
+        ticket_id: The ticket to process
+        dry_run: If True, don't actually launch
+        cwd: Working directory for the subprocess (worktree path)
     
     Returns:
         Tuple of (success, session_id, error_message)
@@ -611,6 +661,7 @@ def launch_dispatch(
             text=True,
             check=False,
             start_new_session=True,  # Detach from parent process group
+            cwd=cwd,  # Run in worktree directory (pt-2rjt)
         )
         
         if result.returncode != 0:
@@ -811,7 +862,7 @@ This is an experimental orchestrator. The stable production runner is:
             for ticket in new_tickets:
                 if planned_count >= parsed.max_iterations:
                     break
-                print(f"Would dispatch: {ticket}")
+                print(f"Would create worktree and dispatch: {ticket}")
                 planned_count += 1
                 planned_tickets.add(ticket)
         
@@ -862,17 +913,68 @@ This is an experimental orchestrator. The stable production runner is:
             return 1
         lock_acquired = True
         
-        # Reconcile active sessions
+        # Get git repo root for worktree operations (pt-2rjt)
+        repo_root = git_repo_root()
+        if repo_root is None:
+            print("ERROR: Not in a git repository. Worktree lifecycle requires git.", file=sys.stderr)
+            return 1
+        
+        # Store repo root for signal handler cleanup (pt-2rjt)
+        global _repo_root_for_cleanup
+        _repo_root_for_cleanup = repo_root
+        
+        # Use configured worktrees dir or default (pt-2rjt)
+        config = load_config(ralph_dir)
+        worktrees_dir = Path(config.get("parallelWorktreesDir", ".tf/ralph/worktrees"))
+        if not worktrees_dir.is_absolute():
+            worktrees_dir = project_root / worktrees_dir
+        
+        # Reconcile active sessions with worktree lifecycle (pt-2rjt)
         sessions_to_remove: List[str] = []
         for session_id, session_info in list(state["active"].items()):
             status = query_session_status(session_id)
             
             if status["finished"]:
                 ticket = session_info.get("ticket", "unknown")
+                worktree_path_str = session_info.get("worktree_path")
+                
+                # Validate worktree path before use (pt-2rjt)
+                worktree_path: Optional[Path] = None
+                if worktree_path_str and repo_root:
+                    try:
+                        worktree_path = Path(worktree_path_str)
+                        # Ensure path is under worktrees_dir (security check)
+                        worktree_path.resolve().relative_to(worktrees_dir.resolve())
+                    except (ValueError, RuntimeError):
+                        # Path is outside worktrees_dir or invalid
+                        print(f"ERROR: Invalid worktree path for {ticket}: {worktree_path_str}", file=sys.stderr)
+                        worktree_path = None
+                
                 if status["success"]:
+                    # Success: merge and close worktree (pt-2rjt)
+                    if worktree_path and repo_root:
+                        merge_ok = merge_and_close_worktree(
+                            repo_root, worktree_path, ticket
+                        )
+                        if not merge_ok:
+                            # Merge failed: preserve worktree, mark ticket failed with worktree path
+                            state["failed"].append({
+                                "ticket": ticket,
+                                "reason": f"merge failed - worktree preserved at {worktree_path} for manual resolution",
+                                "worktree_path": str(worktree_path),
+                            })
+                            print(f"ERROR: Session {session_id} for {ticket} merge failed, worktree preserved at {worktree_path}", file=sys.stderr)
+                            sessions_to_remove.append(session_id)
+                            continue
                     state["completed"].append(ticket)
                     print(f"INFO: Session {session_id} for {ticket} completed", file=sys.stderr)
                 else:
+                    # Failure: cleanup worktree without merging (pt-2rjt)
+                    if worktree_path and repo_root:
+                        try:
+                            cleanup_worktree(repo_root, worktree_path, ticket)
+                        except Exception as e:
+                            print(f"WARN: Cleanup failed for {ticket}: {e}", file=sys.stderr)
                     state["failed"].append({
                         "ticket": ticket,
                         "reason": "session failed or was killed",
@@ -882,6 +984,8 @@ This is an experimental orchestrator. The stable production runner is:
         
         for session_id in sessions_to_remove:
             del state["active"][session_id]
+            # Also remove from global signal handler tracking (pt-2rjt)
+            _active_worktrees.pop(session_id, None)
         
         # Fill capacity
         while (
@@ -925,16 +1029,40 @@ This is an experimental orchestrator. The stable production runner is:
             if not tickets:
                 break
             
-            # Launch tickets up to capacity
+            # Launch tickets up to capacity with worktree lifecycle (pt-2rjt)
             for ticket in tickets:
                 if state["startedCount"] >= state["maxIterations"]:
                     break
                 if len(state["active"]) >= state["parallel"]:
                     break
                 
-                success, session_id, error = launch_dispatch(ticket, parsed.dry_run)
+                # Create worktree for ticket (pt-2rjt)
+                worktree_path: Optional[Path] = None
+                if repo_root and not parsed.dry_run:
+                    worktree_path = create_worktree_for_ticket(
+                        repo_root, worktrees_dir, ticket
+                    )
+                    if worktree_path is None:
+                        state["failed"].append({
+                            "ticket": ticket,
+                            "reason": "failed to create worktree",
+                        })
+                        state["startedCount"] += 1
+                        print(f"ERROR: Failed to create worktree for {ticket}", file=sys.stderr)
+                        continue
+                    print(f"INFO: Created worktree for {ticket}: {worktree_path}", file=sys.stderr)
+                
+                # Launch dispatch with worktree as cwd (pt-2rjt)
+                success, session_id, error = launch_dispatch(
+                    ticket, 
+                    dry_run=parsed.dry_run,
+                    cwd=worktree_path,  # Run in worktree directory
+                )
                 
                 if not success or session_id is None:
+                    # Launch failed: cleanup worktree if created (pt-2rjt)
+                    if worktree_path and repo_root and not parsed.dry_run:
+                        cleanup_worktree(repo_root, worktree_path, ticket)
                     state["failed"].append({
                         "ticket": ticket,
                         "reason": error or "launch failed",
@@ -943,11 +1071,16 @@ This is an experimental orchestrator. The stable production runner is:
                     print(f"ERROR: Failed to launch {ticket}: {error}", file=sys.stderr)
                     continue
                 
-                # Record the session
-                state["active"][session_id] = {
+                # Record the session with worktree path (pt-2rjt)
+                session_info: Dict[str, Any] = {
                     "ticket": ticket,
                     "startedAt": utc_now(),
                 }
+                if worktree_path:
+                    session_info["worktree_path"] = str(worktree_path)
+                    # Also track in global for signal handler cleanup (pt-2rjt)
+                    _active_worktrees[session_id] = worktree_path
+                state["active"][session_id] = session_info
                 state["startedCount"] += 1
                 
                 print(f"INFO: Launched {ticket} with session {session_id}", file=sys.stderr)
