@@ -19,6 +19,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [1.0.0] - 2026-02-17
+
+### Added
+
+- **`/ralph-loop` prompt** - Native dispatch-mode ticket processing for Ralph
+  - Background session management with PID-reuse protection
+  - Locked state persistence for session recovery
+  - Session observability and attach hints
+- **Dispatch session observability** - Enhanced visibility into background ticket processing
+  - Session status tracking in `.tf/ralph/dispatch-sessions.json`
+  - Attach hints for reconnecting to running sessions
+  - TTL cleanup and orphaned session recovery
+
+### Changed
+
+- **Production Ready** - 1.0.0 signifies API stability and production readiness
+  - Deterministic workflow orchestration (`tf irf`)
+  - Project-root asset layout (agents/, prompts/, skills/)
+  - Phase-based architecture with dedicated skills
+
+### Migration Notes
+
+This is a major release with no breaking changes from 0.5.x. The version bump signifies:
+- API stability commitment
+- Production-ready status
+- Complete deterministic workflow implementation
+
 ## [0.5.1] - 2026-02-14
 
 ### Fixed
