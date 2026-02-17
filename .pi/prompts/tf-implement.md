@@ -1,7 +1,7 @@
 ---
 description: Implementation phase for TF workflow [tf-implement]
-model: tf-implement
-thinking: medium
+model: minimax/MiniMax-M2.5
+thinking: high
 skill: tf-implement
 ---
 

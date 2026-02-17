@@ -1,35 +1,34 @@
 # Review: pt-9hgu
 
 ## Overall Assessment
-The lock lifecycle work improves reliability (signal cleanup + safer `finally` state handling), but there are still correctness gaps that can break mutual exclusion in real contention scenarios. The largest risk is that lock acquisition is still non-atomic, so two concurrent loop starts can both proceed as owners.
+The lock-file schema and stale-lock detection logic are thoughtfully implemented, especially around atomic create and PID/start-time checks. However, the surrounding dispatch/session tracking has a correctness gap that can mark work as successful without evidence, which undermines loop correctness and lock lifecycle guarantees in real runs. There is also a lock-release race window that can remove another process’s lock.
 
 ## Critical (must fix)
-- `tf/ralph_loop.py:196-201` and `tf/ralph_loop.py:222-223` - Lock acquisition/replacement is a read-then-write sequence (`read_lock` → `write_lock`) without atomic create semantics. Two processes can race and both believe they acquired the lock, which violates the core single-owner guarantee.
-- `tf/ralph_loop.py:140-141`, `tf/ralph_loop.py:204`, `tf/ralph_loop.py:210` - JSON lock contents are not schema-validated before keyed access. A malformed lock (missing keys or non-int `pid`) raises `KeyError`/`TypeError` and crashes reconciliation instead of recovering cleanly, potentially leaving the loop unusable until manual intervention.
+- `tf/ralph_loop.py:620-623`, `tf/ralph_loop.py:580-583` - `launch_dispatch()` stores a synthetic UUID fragment instead of the real session id, and `query_session_status()` treats “id not found” as completion/success. This can produce false completions and success reporting for tickets that are still running or failed, which can prematurely drain `active` and allow terminal cleanup paths to run incorrectly.
 
 ## Major (should fix)
-- `tf/ralph_loop.py:56-64` - Signal cleanup unconditionally unlinks the lock path without verifying ownership (`runId`/`pid`). In edge cases, this can delete a lock written by another process and allow overlap.
-- `tf/ralph_loop.py:813-818` - Exception path always calls `remove_lock(ralph_dir)` when `lock_acquired`, even if active sessions are still running. That can allow a new loop instance to start while prior dispatches are in flight.
-- `tests/test_bundle_manifest.py:12-29` - Current tests only verify prompt/config wiring; there is no automated coverage for `reconcile_lock`, stale-lock replacement, malformed lock recovery, or signal-triggered cleanup. Regressions in lock behavior are likely to go undetected.
+- `tf/ralph_loop.py:965-977`, `tf/ralph_loop.py:1005-1007`, `tf/ralph_loop.py:274-281` - lock removal is done in completion branches and again in `finally`, and `remove_lock()` does not verify ownership. A second process can acquire the lock between those two removals, after which the first process may unlink the new owner’s lock.
+- `tf/ralph_loop.py:587-589` - on any exception while checking background status, code returns `{"finished": True, "success": True}`. Operational failures in status checks are silently converted into success, hiding real errors and skewing state (`completed` vs `failed`).
 
 ## Minor (nice to fix)
-- `tf/ralph_loop.py:75-79` - `_install_signal_handlers()` returns early once installed and does not refresh `_lock_path_for_cleanup`. The re-entrant install calls are therefore misleading in long-lived in-process usage.
+- `tf/ralph_loop.py:36` - `_current_lock_pid` is defined but unused, which adds dead state and makes lock-ownership intent less clear.
+- `tf/ralph_loop.py:437-448` - `backup_corrupt_state()` is currently unused. This increases maintenance surface and suggests intended corruption handling is incomplete.
 
 ## Warnings (follow-up ticket)
-- `tf/ralph_loop.py:178-184` and `tf/ralph_loop.py:210` - PID liveness check uses only `os.kill(pid, 0)`. PID reuse can misclassify an unrelated process as the lock owner, causing false blocking.
+- `tf/ralph_loop.py:202-402`, `tf/ralph_loop.py:558-627`, `tf/ralph_loop.py:860-1007`, `tests/test_ralph_state.py:1` - there is no direct automated coverage for `ralph_loop` lock/session lifecycle (existing referenced tests target `tf.ralph.update_state`). Regression risk is high for race-sensitive behavior and failure-mode handling.
 
 ## Suggestions (follow-up ticket)
-- `tf/ralph_loop.py:156-165` and `tf/ralph_loop.py:187-225` - Use atomic lock creation (`os.open(..., O_CREAT|O_EXCL)`) and atomic stale-lock handoff logic to remove TOCTOU windows.
-- `tf/ralph_loop.py:127-153` and `tf/ralph_loop.py:187-225` - Add strict lock schema validation (`runId: str`, `pid: int`, `startedAt: str`) and fallback behavior for corrupted lock files (e.g., quarantine + replace).
+- `tf/ralph_loop.py:592-627` - plumb and persist the actual dispatch/background session id from `pi` output (or switch to a machine-readable output mode) and make `query_session_status()` authoritative against that id.
+- `tf/ralph_loop.py:274-281`, `tf/ralph_loop.py:1000-1007` - add ownership-checked unlock (`runId` + `pid` + optional `processStartTime`) and clear `lock_acquired` after explicit unlock to avoid double-unlink races.
 
 ## Positive Notes
-- Good move to initialize `state` as optional and guard `finally` access.
-- Lock metadata format (`runId`/`pid`/`startedAt`) is clear and extensible.
-- Logging around stale-lock cleanup and lifecycle events is readable and operationally useful.
+- `tf/ralph_loop.py:242-271` uses atomic lock creation (`O_CREAT | O_EXCL`), which is the right primitive for cross-process coordination.
+- `tf/ralph_loop.py:304-334` includes PID reuse protection via process start-time validation, reducing stale-PID false positives.
+- `tf/ralph_loop.py:60-95` signal handler attempts ownership verification before cleanup, a solid safety-oriented design choice.
 
 ## Summary Statistics
-- Critical: 2
-- Major: 3
-- Minor: 1
+- Critical: 1
+- Major: 2
+- Minor: 2
 - Warnings: 1
 - Suggestions: 2

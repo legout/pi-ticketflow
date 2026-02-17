@@ -1,27 +1,26 @@
 # Review: pt-9hgu
 
 ## Overall Assessment
-After running `tk show pt-9hgu` and walking tf/ralph_loop.py, this spec-audit finds the implementation satisfies the ticket’s acceptance criteria: the lock file now captures runId/pid/startedAt, re-entrant turns reuse the runId, live runs are blocked, stale locks are replaced, and both normal/exceptional terminal paths (including SIGINT/SIGTERM) remove the lock so future dispatcher invocations can proceed.
+Ran `tk show pt-9hgu` and compared the implementation against the ticket requirements. The lock lifecycle code in `tf/ralph_loop.py` already satisfies the acceptance criteria—atomic lock creation, runId-aware re-entry, PID liveness checks for stale locks, and cleanup on terminal states—so there are no outstanding spec issues.
 
 ## Critical (must fix)
-- No issues found.
+- `No issues found`
 
 ## Major (should fix)
-- None.
+- `None`
 
 ## Minor (nice to fix)
-- None.
+- `None`
 
 ## Warnings (follow-up ticket)
-- None.
+- `None`
 
 ## Suggestions (follow-up ticket)
-- None.
+- `None`
 
 ## Positive Notes
-- `tf/ralph_loop.py:56-86` installs SIGINT/SIGTERM handlers that unlink the lock file and exit cleanly, ensuring signal-triggered terminations are covered.
-- `tf/ralph_loop.py:156-225` writes the lock file in JSON with runId/pid/startedAt, re-installs handlers for re-entrant runs, blocks when another live PID owns the lock, and replaces stale locks so dead runs don't block progress.
-- `tf/ralph_loop.py:642-827` tracks `lock_acquired`, removes the lock when loops terminate because of completion or failure, and includes a finally clause that reiterates that only empty active session sets allow lock removal.
+- `tf/ralph_loop.py:242-402` implements the lock schema, atomic creation (`O_CREAT|O_EXCL`), PID/start-time metadata, re-entrant handling when the same runId returns, stale lock cleanup, and live-run blocking, covering every acceptance criterion from the ticket.
+- `tf/ralph_loop.py:995-1007` guarantees lock cleanup (and signal-safety via `_install_signal_handlers`) so terminal state/exception paths release the lock whenever no active sessions remain.
 
 ## Summary Statistics
 - Critical: 0

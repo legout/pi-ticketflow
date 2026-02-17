@@ -2,7 +2,7 @@
   "metaModels": {
     "planning": {
       "model": "openai-codex/gpt-5.3-codex",
-      "thinking": "medium",
+      "thinking": "high",
       "description": "Fast, capable model for planning and specification"
     },
     "worker": {
@@ -57,7 +57,12 @@
     "researcher-fetch": "research"
   },
   "prompts": {
-    "tf": "worker",
+    "tf": "general",
+    "tf-research": "research",
+    "tf-implement": "worker",
+    "tf-review": "review-general",
+    "tf-fix": "fixer",
+    "tf-close": "fast",
     "tf-next": "general",
     "tf-plan": "planning",
     "tf-plan-chain": "planning",
@@ -76,7 +81,8 @@
     "tf-backlog-from-openspec": "planning",
     "tf-sync": "general",
     "tf-priority-reclassify": "worker",
-    "ralph-start": "general"
+    "ralph-start": "general",
+    "ralph-loop": "general"
   },
   "checkers": {
     "python": {
