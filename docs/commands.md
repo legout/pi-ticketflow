@@ -691,6 +691,165 @@ Updates `model:` frontmatter in all agent and prompt files based on `config/sett
 
 ---
 
+## Self-Update Command
+
+### `tf self-update`
+
+Updates the global tf CLI to the latest version using uvx.
+
+#### Usage
+
+```bash
+# Interactive update (prompts for confirmation)
+tf self-update
+
+# Skip confirmation
+/tf self-update --yes
+tf self-update -y
+
+# Force update (clears uvx cache)
+tf self-update --force
+
+# Update from custom source
+tf self-update --source git+https://github.com/user/fork
+```
+
+#### What It Does
+
+1. Checks current installed version
+2. Clears uvx cache (if --force)
+3. Re-installs tf via uvx from the configured source
+4. Updates the CLI shim source reference
+5. Verifies the new installation
+
+#### Difference: `tf update` vs `tf self-update`
+
+| Command | Scope | Updates |
+|---------|-------|---------|
+| `tf update` | Project | Workflow assets (`.pi/agents/`, `.pi/prompts/`, `.pi/skills/`, `.tf/config/`) |
+| `tf self-update` | Global | The tf CLI itself |
+
+**Use `tf self-update` when:**
+- New version of tf is released
+- You want bug fixes or new features in the CLI
+
+**Use `tf update` when:**
+- Workflow templates have been updated
+- New agent/prompt files are available
+- You want to sync with upstream workflow changes
+
+**Typical Update Flow:**
+```bash
+# 1. Update the CLI itself
+tf self-update
+
+# 2. Update project workflow assets
+tf update
+
+# 3. Sync any model changes
+tf sync
+```
+
+---
+
+## Config Command
+
+### `tf config`
+
+Interactive configuration wizard for tf settings. No more manual JSON editing!
+
+#### Usage
+
+```bash
+# Interactive wizard (recommended)
+tf config
+
+# Show current configuration
+tf config --list
+tf config -l
+
+# Get specific value
+tf config --get metaModels.worker.model
+
+# Set specific value
+tf config --set metaModels.worker.model=kimi-coding/k2p5
+tf config --set workflow.enableResearcher=false
+
+# Configure different project
+tf config --project /path/to/project
+```
+
+#### Interactive Wizard
+
+Run `tf config` to start the interactive wizard:
+
+```
+==================================================
+TF Configuration Wizard
+==================================================
+
+This wizard helps you configure tf settings.
+Press Ctrl+C at any time to cancel without saving.
+
+Options:
+  1. Configure all meta-models (recommended)
+  2. Configure specific meta-model
+  3. Configure reviewers
+  4. Configure workflow settings
+  5. Show current config
+  6. Save and exit
+  7. Exit without saving
+
+Select:
+```
+
+#### Quick Settings Examples
+
+**Change worker model:**
+```bash
+tf config --set metaModels.worker.model=minimax/MiniMax-M2.5
+tf config --set metaModels.worker.thinking=high
+```
+
+**Disable researcher:**
+```bash
+tf config --set workflow.enableResearcher=false
+```
+
+**Change parallel research agents:**
+```bash
+tf config --set workflow.researchParallelAgents=5
+```
+
+**Enable quality gate:**
+```bash
+tf config --set workflow.enableQualityGate=true
+```
+
+#### Available Keys
+
+**Meta-models:**
+- `metaModels.worker.model` - Implementation model
+- `metaModels.worker.thinking` - low/medium/high
+- `metaModels.research.model` - Research model
+- `metaModels.fast.model` - Fast tasks model
+- `metaModels.general.model` - General orchestration model
+- `metaModels.review-general.model` - General reviewer model
+- `metaModels.review-spec.model` - Spec audit reviewer model
+- `metaModels.review-secop.model` - Second-opinion reviewer model
+- `metaModels.fixer.model` - Fixer model
+- `metaModels.planning.model` - Planning model
+
+**Workflow settings:**
+- `workflow.enableResearcher` - true/false
+- `workflow.researchParallelAgents` - number (1-10)
+- `workflow.enableFixer` - true/false
+- `workflow.enableCloser` - true/false
+- `workflow.enableQualityGate` - true/false
+- `workflow.enableReviewers` - JSON array of reviewer IDs
+
+---
+
 ## CLI Reference
 
 The `tf` CLI is a small Python shim that provides utilities for workflow management.
@@ -717,6 +876,17 @@ tf sync                           # Sync models from config
 
 # Update
 tf update                         # Download latest agents/skills/prompts
+
+# Self-update (update CLI itself)
+tf self-update                    # Update tf CLI to latest version
+tf self-update --yes              # Skip confirmation
+tf self-update --force            # Clear uvx cache and reinstall
+
+# Config
+tf config                         # Interactive configuration wizard
+tf config --list                  # Show current configuration
+tf config --get metaModels.worker.model
+tf config --set metaModels.worker.model=kimi-coding/k2p5
 
 # Diagnostics
 tf doctor                         # Preflight checks
@@ -776,7 +946,7 @@ Use this directly for orchestration debugging; `/tf` calls this internally.
 
 ### Project Initialization (Workflow Files)
 
-The `tf` CLI is installed globally. To install TF workflow files (agents/prompts/skills) into a project:
+The `tf` CLI is installed globally. To install TF workflow files into a project:
 
 ```bash
 cd /path/to/project
@@ -785,3 +955,5 @@ tf init
 # After editing .tf/config/settings.json
 tf sync
 ```
+
+Workflow files are installed to `.pi/` (agents, prompts, skills) and `.tf/` (config, knowledge, ralph).

@@ -213,8 +213,8 @@ def classify_asset(
 
     Returns None if the entry should be skipped (e.g., bin/tf).
 
-    For the pi-ticketflow repo itself (when project_root == repo_root),
-    assets go to .pi/ so Pi can use them during workflow development.
+    Workflow assets (agents/, prompts/, skills/) go to .pi/ folder so Pi
+    loads them on startup. Config files go to .tf/.
     """
     # Skip CLI shim - projects don't install the CLI
     if rel_path == "bin/tf":
@@ -228,19 +228,14 @@ def classify_asset(
     repo_root = repo_root or find_repo_root()
     is_workflow_repo = repo_root and project_root.resolve() == repo_root.resolve()
 
-    # Determine base directory: .pi/ for workflow repo, project root for others
-    if is_workflow_repo:
-        pi_base = project_root / ".pi"
-        # Ensure .pi directory exists for the workflow repo
-        pi_base.mkdir(parents=True, exist_ok=True)
-    else:
-        pi_base = None
+    # All workflow assets go to .pi/ folder so Pi loads them on startup
+    pi_base = project_root / ".pi"
+    # Ensure .pi directory exists
+    pi_base.mkdir(parents=True, exist_ok=True)
 
-    # Workflow assets go to .pi/ in the workflow repo, project root otherwise.
+    # Workflow assets (agents, prompts, skills) go to .pi/
     if rel_path.startswith(("agents/", "prompts/", "skills/")):
-        if pi_base:
-            return (pi_base / rel_path, False)
-        return (project_root / rel_path, False)
+        return (pi_base / rel_path, False)
 
     # Config files go to .tf/
     if rel_path == "config/settings.json":
