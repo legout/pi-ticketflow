@@ -1,7 +1,7 @@
 ---
 description: Capture brownfield project status quo [tf-planning +codex-mini]
 model: openai-codex/gpt-5.3-codex
-thinking: medium
+thinking: high
 skill: tf-planning
 ---
 

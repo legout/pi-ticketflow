@@ -31,24 +31,60 @@ def sync_models(project_root: Path, config: dict) -> dict:
     """Sync models from config to all agents and prompts in the project.
 
     Canonical locations are project-root `agents/` and `prompts/`.
-    Legacy `.pi/{agents,prompts}` are still supported as fallback.
+    `.pi/{agents,prompts}` are also synced since that's where Pi loads from.
     """
+    results = {"agents": [], "prompts": [], "errors": []}
+
+    # Sync canonical locations
     agents_dir = project_root / "agents"
     prompts_dir = project_root / "prompts"
 
     if not agents_dir.exists():
-        legacy_agents = project_root / ".pi" / "agents"
-        agents_dir = legacy_agents if legacy_agents.exists() else agents_dir
+        agents_dir = project_root / ".pi" / "agents"
 
     if not prompts_dir.exists():
-        legacy_prompts = project_root / ".pi" / "prompts"
-        prompts_dir = legacy_prompts if legacy_prompts.exists() else prompts_dir
+        prompts_dir = project_root / ".pi" / "prompts"
 
-    return sync_models_to_files(
+    canonical_results = sync_models_to_files(
         config,
         agents_dir if agents_dir.exists() else None,
         prompts_dir if prompts_dir.exists() else None,
     )
+    results["agents"].extend(canonical_results["agents"])
+    results["prompts"].extend(canonical_results["prompts"])
+    results["errors"].extend(canonical_results["errors"])
+
+    # Also sync to .pi/ locations if they exist and are different from canonical
+    pi_agents_dir = project_root / ".pi" / "agents"
+    pi_prompts_dir = project_root / ".pi" / "prompts"
+
+    if pi_agents_dir.exists() and pi_agents_dir != agents_dir:
+        pi_agent_results = sync_models_to_files(
+            config,
+            pi_agents_dir,
+            None,
+        )
+        # Only add agents that weren't already updated in canonical location
+        updated_in_canonical = set(canonical_results["agents"])
+        for agent in pi_agent_results["agents"]:
+            if agent not in updated_in_canonical:
+                results["agents"].append(f"{agent} (in .pi/)")
+        results["errors"].extend(pi_agent_results["errors"])
+
+    if pi_prompts_dir.exists() and pi_prompts_dir != prompts_dir:
+        pi_prompt_results = sync_models_to_files(
+            config,
+            None,
+            pi_prompts_dir,
+        )
+        # Only add prompts that weren't already updated in canonical location
+        updated_in_canonical = set(canonical_results["prompts"])
+        for prompt in pi_prompt_results["prompts"]:
+            if prompt not in updated_in_canonical:
+                results["prompts"].append(f"{prompt} (in .pi/)")
+        results["errors"].extend(pi_prompt_results["errors"])
+
+    return results
 
 
 def run_sync(args: argparse.Namespace) -> int:

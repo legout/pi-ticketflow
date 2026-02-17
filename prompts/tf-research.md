@@ -1,6 +1,6 @@
 ---
 description: Research phase for TF workflow [tf-research]
-model: tf-research
+model: kimi-coding/k2p5
 thinking: medium
 skill: tf-research
 ---

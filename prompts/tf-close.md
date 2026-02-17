@@ -1,6 +1,6 @@
 ---
 description: Close phase for TF workflow [tf-close]
-model: tf-close
+model: chutes/zai-org/GLM-4.7-Flash
 thinking: medium
 skill: tf-close
 ---

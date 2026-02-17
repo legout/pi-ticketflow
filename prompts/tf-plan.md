@@ -1,7 +1,7 @@
 ---
 description: Create an implementation plan document with optional session attachment [tf-planning +codex-mini]
 model: openai-codex/gpt-5.3-codex
-thinking: medium
+thinking: high
 skill: tf-planning
 ---
 
