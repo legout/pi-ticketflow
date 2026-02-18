@@ -1,6 +1,6 @@
 ---
 id: pt-vajd
-status: open
+status: closed
 deps: [pt-pdjd, pt-rmix]
 links: []
 created: 2026-02-17T14:36:52Z
