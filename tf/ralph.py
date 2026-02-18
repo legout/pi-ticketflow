@@ -592,6 +592,66 @@ def prompt_exists(project_root: Path, logger: Optional[RalphLogger] = None) -> b
     return False
 
 
+def ensure_worktree_prompt(
+    project_root: Path,
+    worktree_path: Path,
+    logger: Optional[RalphLogger] = None,
+    ticket: Optional[str] = None,
+) -> bool:
+    """Ensure /tf prompt is available in a worktree.
+
+    Worktrees only contain tracked files at HEAD. If prompt assets were installed
+    locally but not committed yet, a newly created worktree may miss `prompts/tf.md`.
+    This helper copies prompt files from the launch root into the worktree as a
+    best-effort compatibility step.
+    """
+    # Already available in worktree (or globally)
+    if prompt_exists(worktree_path, logger=None):
+        return True
+
+    candidates = [
+        Path("prompts/tf.md"),
+        Path(".pi/prompts/tf.md"),
+    ]
+
+    copied_any = False
+    for rel in candidates:
+        src = project_root / rel
+        dst = worktree_path / rel
+        if src.is_file() and not dst.is_file():
+            try:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                copied_any = True
+                if logger:
+                    logger.info(
+                        f"Copied missing prompt into worktree: {rel}",
+                        ticket=ticket,
+                    )
+            except Exception as exc:
+                if logger:
+                    logger.warn(
+                        f"Failed to copy prompt into worktree ({rel}): {exc}",
+                        ticket=ticket,
+                    )
+
+    if copied_any and prompt_exists(worktree_path, logger=None):
+        return True
+
+    # Global prompt may still satisfy execution
+    global_prompt = Path.home() / ".pi/agent/prompts/tf.md"
+    if global_prompt.is_file():
+        return True
+
+    if logger:
+        logger.error(
+            "Missing /tf prompt in worktree. Run 'tf init' and commit prompt assets, "
+            "or install a global /tf prompt.",
+            ticket=ticket,
+        )
+    return False
+
+
 def build_cmd(workflow: str, ticket: str, flags: str) -> str:
     """Build a workflow command string.
 
@@ -2550,6 +2610,17 @@ def ralph_run(args: List[str]) -> int:
 
             worktree_cwd = worktree_path
 
+            if not ensure_worktree_prompt(project_root, worktree_path, logger=logger, ticket=ticket):
+                error_msg = f"Prompt not found for worktree {ticket}"
+                update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                cleanup_worktree(
+                    repo_root=project_root,
+                    worktree_path=worktree_path,
+                    ticket=ticket,
+                    logger=logger,
+                )
+                return 1
+
         # Use dispatch backend if enabled (pt-9yjn)
         if execution_backend == "dispatch":
             # Launch dispatch session
@@ -3008,6 +3079,18 @@ def ralph_start(args: List[str]) -> int:
 
                         worktree_cwd = worktree_path
 
+                        if not ensure_worktree_prompt(project_root, worktree_path, logger=ticket_logger, ticket=ticket):
+                            error_msg = f"Prompt not found for worktree {ticket}"
+                            ticket_logger.error(error_msg, ticket=ticket)
+                            update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                            cleanup_worktree(
+                                repo_root=project_root,
+                                worktree_path=worktree_path,
+                                ticket=ticket,
+                                logger=ticket_logger,
+                            )
+                            return 1
+
                     cmd = build_cmd(workflow, ticket, workflow_flags)
 
                     # Use dispatch backend if configured (pt-4eor)
@@ -3336,6 +3419,15 @@ def ralph_start(args: List[str]) -> int:
                         error_msg = "worktree create failed"
                         logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
                         update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                        failed_tickets.append(ticket)
+                        processed_count += 1
+                        continue
+
+                    if not ensure_worktree_prompt(project_root, worktree_path, logger=logger, ticket=ticket):
+                        error_msg = "prompt not found in worktree"
+                        logger.log_error_summary(ticket, error_msg, iteration=iteration, ticket_title=ticket_title)
+                        update_state(ralph_dir, project_root, ticket, "FAILED", error_msg)
+                        cleanup_worktree(project_root, worktree_path, ticket, logger)
                         failed_tickets.append(ticket)
                         processed_count += 1
                         continue
