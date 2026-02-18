@@ -5,21 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
+## [1.1.2] - 2026-02-18
 
 ### Changed
 
-### Deprecated
+- **`tf ralph` execution backend** - Added `--interactive-session` / `executionBackend=interactive`
+  - Runs each ticket via scripted interactive Pi session (`/tf <ticket> ...` then `/exit`)
+  - Auto-closes the ticket session after flow completion
+  - Serial mode only (parallel requires `dispatch`/`subprocess` backends)
 
-### Removed
+## [1.1.1] - 2026-02-17
+
+### Added
+
+- **`/ralph-loop` worktree lifecycle** - Per-ticket worktree management for dispatch runs
+  - Create worktree before launch (configurable via `parallelWorktreesDir`)
+  - Run dispatch with worktree as cwd
+  - Merge and close worktree on success
+  - Cleanup worktree on failure without merging
+  - Preserve worktree on merge failure for manual resolution
+  - Signal handler cleanup for orphaned worktrees
+  - Persisted worktree path validation for security
+
+### Changed
+
+- **TF workflow model upgrades** - Updated prompt models across all TF phases
+  - `implement`, `review`, `fix`, `close` phases upgraded to newer variants
+  - Increased thinking level to `high` for critical phases (implement, fix, review)
+- **`/ralph-loop` prompt refresh** - Simplified prompt with improved logic
+- **`tf sync` improvements** - Better synchronization logic for workflow assets
 
 ### Fixed
 
-### Security
+- **`/tf` command clarification** - Explicitly documented that `/chain-prompts` is a Pi slash command (in-session), not bash
+  - Warning against wrapping in bash code blocks or running via bash tool
+  - Replaced ambiguous 'Pi UI' phrasing with 'Pi slash command'
+- **Path resolution in tf_config.py** - Fixed project root detection for asset installation
+- **Lock file lifecycle** - Atomic acquisition and ownership verification for `/ralph-loop` orchestrator
 
-## [1.1.0] - 2026-02-17
+## [Unreleased]
 
 ### Added
 

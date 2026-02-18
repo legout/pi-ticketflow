@@ -233,7 +233,7 @@ DEFAULTS: Dict[str, Any] = {
     "timeoutBackoffIncrementMs": 150000,  # Default increment per attempt (150s = 2.5min)
     "timeoutBackoffMaxMs": 0,  # Max cap (0 = no cap, use attemptTimeoutMs as base)
     # Execution backend settings (pt-6d99)
-    "executionBackend": "dispatch",  # "dispatch" (default) or "subprocess"
+    "executionBackend": "dispatch",  # "dispatch" (default), "subprocess", or "interactive"
     "interactiveShell": {
         "enabled": True,  # Use interactive_shell tool when True
         # Note: "mode" is reserved for future use (e.g., "dispatch" vs "hands-free")
@@ -244,7 +244,7 @@ DEFAULTS: Dict[str, Any] = {
 }
 
 # Valid execution backend values
-VALID_EXECUTION_BACKENDS = ("dispatch", "subprocess")
+VALID_EXECUTION_BACKENDS = ("dispatch", "subprocess", "interactive")
 
 
 def resolve_execution_backend(
@@ -258,12 +258,13 @@ def resolve_execution_backend(
     Priority: CLI flag > Environment variable > Config > Default
 
     Args:
-        cli_execution_backend: Value from CLI flag (--dispatch or --no-interactive-shell)
+        cli_execution_backend: Value from CLI flag (--dispatch, --no-interactive-shell,
+                              or --interactive-session)
         config: Ralph config dictionary
         logger: Logger instance for warnings
 
     Returns:
-        "dispatch" or "subprocess"
+        "dispatch", "subprocess", or "interactive"
     """
     # Start with default
     execution_backend: str = DEFAULTS["executionBackend"]
@@ -292,7 +293,7 @@ def resolve_execution_backend(
                 # Invalid config value - log warning and use default
                 logger.warning(
                     f"Invalid executionBackend '{config_backend}' in config, "
-                    f"expected 'dispatch' or 'subprocess', using default"
+                    f"expected one of {VALID_EXECUTION_BACKENDS}, using default"
                 )
         else:
             # Key doesn't exist - check interactiveShell.enabled for backward compatibility
@@ -320,10 +321,10 @@ def usage() -> None:
 Usage:
   tf ralph run [ticket-id] [--dry-run] [--verbose|--debug|--quiet] [--capture-json] [--flags '...']
                             [--progress] [--pi-output MODE] [--pi-output-file PATH]
-                            [--dispatch] [--no-interactive-shell]
+                            [--dispatch] [--no-interactive-shell] [--interactive-session]
   tf ralph start [--max-iterations N] [--parallel N] [--no-parallel] [--dry-run] [--verbose|--debug|--quiet]
                  [--capture-json] [--flags '...'] [--progress] [--pi-output MODE] [--pi-output-file PATH]
-                 [--dispatch] [--no-interactive-shell]
+                 [--dispatch] [--no-interactive-shell] [--interactive-session]
 
 Execution Backend Options (pt-6d99):
   --dispatch            Use interactive_shell dispatch mode for headless background
@@ -332,6 +333,10 @@ Execution Backend Options (pt-6d99):
                         Use legacy subprocess backend (pi -p via subprocess.Popen).
                         This provides backward compatibility for environments where
                         interactive_shell execution is not desired.
+  --interactive-session
+                        Run each ticket in a scripted interactive Pi session and
+                        auto-close it by sending /exit after /tf completes.
+                        Currently supported in serial mode only.
   (default)             When neither flag is specified, --dispatch is assumed.
 
 Verbosity Options:
@@ -386,9 +391,12 @@ Session Storage:
     - Add {"sessionDir": ".tf/ralph/sessions"} to .tf/ralph/config.json
 
 Configuration (in .tf/ralph/config.json):
-  executionBackend      Execution backend to use: "dispatch" (default) or "subprocess".
-                        "dispatch" uses interactive_shell tool for headless background execution.
+  executionBackend      Execution backend to use: "dispatch" (default), "subprocess",
+                        or "interactive".
+                        "dispatch" uses interactive_shell-style detached execution.
                         "subprocess" uses legacy pi -p via subprocess.Popen.
+                        "interactive" runs /tf in a scripted interactive Pi session
+                        and closes the session via /exit after completion.
   interactiveShell      Configuration for interactive shell execution:
                         - enabled: true (default) to use interactive_shell tool
                         - mode: "dispatch" (default) for headless execution
@@ -615,6 +623,7 @@ def _run_with_timeout(
     timeout_secs: Optional[float] = None,
     stdout=None,
     stderr=None,
+    input_text: Optional[str] = None,
 ) -> Tuple[int, bool]:
     """Run a subprocess with timeout and safe termination.
 
@@ -624,21 +633,30 @@ def _run_with_timeout(
         timeout_secs: Timeout in seconds (None = no timeout)
         stdout: File object for stdout redirection
         stderr: File object for stderr redirection
+        input_text: Optional stdin text to send before waiting
 
     Returns:
         Tuple of (return_code, timed_out)
         - return_code: Exit code of the process (or -1 if timed out)
         - timed_out: True if the process was terminated due to timeout
     """
+    use_stdin_pipe = input_text is not None
+
     # Start the process
     proc = subprocess.Popen(
         args,
         cwd=cwd,
         stdout=stdout,
         stderr=stderr,
+        stdin=subprocess.PIPE if use_stdin_pipe else None,
+        text=use_stdin_pipe,
     )
 
     try:
+        if use_stdin_pipe:
+            proc.communicate(input=input_text, timeout=timeout_secs)
+            return (proc.returncode if proc.returncode is not None else 0), False
+
         # Wait for process to complete with timeout
         return_code = proc.wait(timeout=timeout_secs)
         return return_code, False
@@ -696,9 +714,11 @@ def run_ticket(
     # Log execution backend selection (pt-6d99)
     if execution_backend == "dispatch":
         # Dispatch backend uses run_ticket_dispatch() for isolated Pi sessions (pt-9yjn)
-        log.info(f"Execution backend: dispatch")
+        log.info("Execution backend: dispatch")
+    elif execution_backend == "interactive":
+        log.info("Execution backend: interactive session")
     else:
-        log.info(f"Execution backend: subprocess (legacy)")
+        log.info("Execution backend: subprocess (legacy)")
     cmd = build_cmd(workflow, ticket, flags)
 
     # Determine JSON capture path if enabled
@@ -716,6 +736,20 @@ def run_ticket(
         else:
             # Fallback to default logs location
             pi_log_path = Path(".tf/ralph/logs") / f"{ticket}.log"
+
+    if execution_backend == "interactive":
+        return run_ticket_interactive(
+            ticket=ticket,
+            cmd=cmd,
+            dry_run=dry_run,
+            cwd=cwd,
+            logger=log,
+            capture_json=capture_json,
+            logs_dir=logs_dir,
+            pi_output=pi_output,
+            pi_output_file=pi_output_file,
+            timeout_ms=timeout_ms,
+        )
 
     if dry_run:
         prefix = " (worktree)" if cwd else ""
@@ -794,6 +828,127 @@ def run_ticket(
         return -1  # Special return code to indicate timeout for restart handling
 
     # On failure with file capture, print exit code + log path
+    if return_code != 0 and pi_output == "file" and pi_log_path:
+        log.error(f"Command failed with exit code {return_code}. Output log: {pi_log_path}", ticket=ticket)
+
+    return return_code
+
+
+def run_ticket_interactive(
+    ticket: str,
+    cmd: str,
+    dry_run: bool,
+    cwd: Optional[Path],
+    logger: RalphLogger,
+    capture_json: bool,
+    logs_dir: Optional[Path],
+    pi_output: str,
+    pi_output_file: Optional[str],
+    timeout_ms: int,
+) -> int:
+    """Run a ticket in a scripted interactive Pi session.
+
+    Sends two turns to Pi via stdin:
+      1) /tf <ticket> ...
+      2) /exit
+
+    This keeps execution in the interactive command path while ensuring
+    the session closes automatically when the ticket flow completes.
+    """
+    log = logger
+
+    # Determine output paths
+    jsonl_path: Optional[Path] = None
+    if capture_json and logs_dir:
+        jsonl_path = logs_dir / f"{ticket}.jsonl"
+
+    pi_log_path: Optional[Path] = None
+    if pi_output == "file":
+        if pi_output_file:
+            pi_log_path = Path(pi_output_file).expanduser()
+        elif logs_dir:
+            pi_log_path = logs_dir / f"{ticket}.log"
+        else:
+            pi_log_path = Path(".tf/ralph/logs") / f"{ticket}.log"
+
+    if dry_run:
+        prefix = " (worktree)" if cwd else ""
+        json_flag = " --mode json" if capture_json else ""
+        output_note = ""
+        if pi_output == "file":
+            output_note = f" (output to {pi_log_path})"
+        elif pi_output == "discard":
+            output_note = " (output discarded)"
+        log.info(
+            f"Dry run: printf '<cmd>\\n/exit\\n' | pi{json_flag}{prefix}{output_note} (cmd: {cmd})",
+            ticket=ticket,
+        )
+        return 0
+
+    args = ["pi"]
+    if capture_json:
+        args.extend(["--mode", "json"])
+
+    timeout_secs: Optional[float] = timeout_ms / 1000.0 if timeout_ms > 0 else None
+    if timeout_secs:
+        log.info(f"Attempt timeout: {timeout_ms}ms ({timeout_secs}s)", ticket=ticket)
+
+    script_input = f"{cmd}\\n/exit\\n"
+    log.info(f"Running interactive session: pi \"{cmd}\" then /exit", ticket=ticket)
+
+    timed_out = False
+    return_code = 0
+
+    # capture_json takes precedence for output file target
+    if jsonl_path and pi_output == "file":
+        log.warn("interactive backend: both --capture-json and --pi-output=file set; writing JSON output only")
+
+    if jsonl_path:
+        jsonl_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(jsonl_path, "w", encoding="utf-8") as jsonl_file:
+            return_code, timed_out = _run_with_timeout(
+                args,
+                cwd=cwd,
+                stdout=jsonl_file,
+                stderr=subprocess.STDOUT,
+                timeout_secs=timeout_secs,
+                input_text=script_input,
+            )
+        log.info(f"JSONL trace written to: {jsonl_path}", ticket=ticket, jsonl_path=str(jsonl_path))
+    elif pi_output == "file" and pi_log_path:
+        pi_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(pi_log_path, "w", encoding="utf-8") as pi_log_file:
+            return_code, timed_out = _run_with_timeout(
+                args,
+                cwd=cwd,
+                stdout=pi_log_file,
+                stderr=subprocess.STDOUT,
+                timeout_secs=timeout_secs,
+                input_text=script_input,
+            )
+        log.info(f"Pi output written to: {pi_log_path}", ticket=ticket, pi_log_path=str(pi_log_path))
+    elif pi_output == "discard":
+        with open(os.devnull, "w") as devnull:
+            return_code, timed_out = _run_with_timeout(
+                args,
+                cwd=cwd,
+                stdout=devnull,
+                stderr=subprocess.STDOUT,
+                timeout_secs=timeout_secs,
+                input_text=script_input,
+            )
+    else:
+        return_code, timed_out = _run_with_timeout(
+            args,
+            cwd=cwd,
+            timeout_secs=timeout_secs,
+            input_text=script_input,
+        )
+
+    if timed_out:
+        log.error(f"Attempt timed out after {timeout_ms}ms", ticket=ticket)
+        return -1
+
     if return_code != 0 and pi_output == "file" and pi_log_path:
         log.error(f"Command failed with exit code {return_code}. Output log: {pi_log_path}", ticket=ticket)
 
@@ -2041,7 +2196,7 @@ def parse_run_args(
     Returns:
         Tuple of (ticket_override, dry_run, flags_override, log_level, capture_json,
                   progress, pi_output, pi_output_file, execution_backend)
-        execution_backend is "dispatch" or "subprocess" or None (use default)
+        execution_backend is "dispatch", "subprocess", "interactive", or None (use default)
     """
     ticket_override: Optional[str] = None
     dry_run = False
@@ -2102,6 +2257,9 @@ def parse_run_args(
             idx += 1
         elif arg == "--no-interactive-shell":
             execution_backend = "subprocess"
+            idx += 1
+        elif arg == "--interactive-session":
+            execution_backend = "interactive"
             idx += 1
         elif arg in {"--help", "-h"}:
             usage()
@@ -2199,6 +2357,9 @@ def parse_start_args(args: List[str]) -> Dict[str, Any]:
             idx += 1
         elif arg == "--no-interactive-shell":
             options["execution_backend"] = "subprocess"
+            idx += 1
+        elif arg == "--interactive-session":
+            options["execution_backend"] = "interactive"
             idx += 1
         elif arg in {"--help", "-h"}:
             usage()
@@ -2363,7 +2524,7 @@ def ralph_run(args: List[str]) -> int:
         worktree_cwd: Optional[Path] = None
 
         # Determine if we should use worktree for this ticket
-        use_worktree = execution_backend == "dispatch" and not dry_run
+        use_worktree = execution_backend in ("dispatch", "interactive") and not dry_run
 
         if use_worktree:
             # Get worktrees directory from config
@@ -2619,6 +2780,13 @@ def ralph_start(args: List[str]) -> int:
             logger.warn("git repo not found; falling back to serial")
             use_parallel = 1
 
+    if execution_backend == "interactive" and use_parallel > 1:
+        logger.error(
+            "executionBackend=interactive is currently supported only in serial mode. "
+            "Use --parallel 1, --no-parallel, or switch to --dispatch."
+        )
+        return 1
+
     # Check if retry escalation is enabled and warn about parallel workers
     escalation_enabled = resolve_escalation_enabled(project_root)
     max_retries = resolve_max_retries_from_settings(project_root)
@@ -2814,7 +2982,7 @@ def ralph_start(args: List[str]) -> int:
                     dispatch_error_msg = None  # Reset dispatch error context
 
                     # Determine if we should use worktree for this ticket
-                    use_worktree = execution_backend == "dispatch" and not options["dry_run"]
+                    use_worktree = execution_backend in ("dispatch", "interactive") and not options["dry_run"]
 
                     if use_worktree:
                         # Get worktrees directory from config
