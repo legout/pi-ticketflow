@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10] - 2026-02-18
+
+### Fixed
+
+- **Serial Ralph no-op retries with missing worktree assets** - Serial mode now defaults to running tickets in the repo root (no per-ticket worktree isolation).
+  - Avoids missing `.tf` / `.pi` local assets in fresh worktrees
+  - Prevents repeated no-op iterations when `/tf` depends on local prompt/config assets
+  - New config knob: `serialUseWorktree` (default `false`) to opt back into serial worktrees if needed
+
 ## [1.1.9] - 2026-02-18
 
 ### Fixed

@@ -222,6 +222,7 @@ DEFAULTS: Dict[str, Any] = {
     "parallelWorkers": 1,
     "parallelWorktreesDir": ".tf/ralph/worktrees",
     "parallelAllowUntagged": False,
+    "serialUseWorktree": False,  # Serial mode defaults to repo-root execution (no worktree isolation)
     "componentTagPrefix": "component:",
     "parallelKeepWorktrees": False,
     "parallelDispatchTimeoutMs": 1800000,  # 30 min timeout for each dispatch ticket in parallel mode
@@ -401,6 +402,9 @@ Configuration (in .tf/ralph/config.json):
   interactiveShell      Configuration for interactive shell execution:
                         - enabled: true (default) to use interactive_shell tool
                         - mode: "dispatch" (default) for headless execution
+  serialUseWorktree     Use per-ticket git worktrees in serial mode (default: false).
+                        Leave disabled to run serial tickets in repo root, which avoids
+                        missing local .tf/.pi assets in newly created worktrees.
   attemptTimeoutMs      Per-ticket attempt timeout in milliseconds (default: 600000 = 10 min)
                         Set to 0 to disable timeout. Serial mode only.
   maxRestarts           Maximum restarts per ticket on timeout/failure (default: 0)
@@ -2620,8 +2624,16 @@ def ralph_run(args: List[str]) -> int:
         worktree_path: Optional[Path] = None
         worktree_cwd: Optional[Path] = None
 
-        # Determine if we should use worktree for this ticket
-        use_worktree = execution_backend in ("dispatch", "interactive") and not dry_run
+        # Determine if we should use worktree for this ticket (serial mode)
+        serial_use_worktree = parse_bool(
+            config.get("serialUseWorktree", DEFAULTS["serialUseWorktree"]),
+            DEFAULTS["serialUseWorktree"],
+        )
+        use_worktree = (
+            serial_use_worktree
+            and execution_backend in ("dispatch", "interactive")
+            and not dry_run
+        )
 
         if use_worktree:
             # Get worktrees directory from config
@@ -3112,8 +3124,16 @@ def ralph_start(args: List[str]) -> int:
                     worktree_cwd = None
                     dispatch_error_msg = None  # Reset dispatch error context
 
-                    # Determine if we should use worktree for this ticket
-                    use_worktree = execution_backend in ("dispatch", "interactive") and not options["dry_run"]
+                    # Determine if we should use worktree for this ticket (serial mode)
+                    serial_use_worktree = parse_bool(
+                        config.get("serialUseWorktree", DEFAULTS["serialUseWorktree"]),
+                        DEFAULTS["serialUseWorktree"],
+                    )
+                    use_worktree = (
+                        serial_use_worktree
+                        and execution_backend in ("dispatch", "interactive")
+                        and not options["dry_run"]
+                    )
 
                     if use_worktree:
                         # Get worktrees directory from config
