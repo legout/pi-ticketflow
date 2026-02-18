@@ -542,12 +542,19 @@ def _compute_queue_state_snapshot(
 
     blocked_ids are represented in dep_graph with a sentinel dependency marker so
     get_queue_state() consistently counts them as blocked.
+
+    Defensive note:
+    In real runs, tickets can briefly appear in multiple sets (e.g. a ticket marked
+    completed in-memory but still returned by `tk ready` after a no-op workflow run).
+    We self-heal overlaps here instead of crashing the loop.
     """
     pending = set(pending_ids)
     running = set(running_ids)
     completed = set(completed_ids)
 
     # Ensure disjoint state sets before computing queue state.
+    # Priority order: running > completed > pending.
+    completed -= running
     pending -= running
     pending -= completed
 
@@ -2973,14 +2980,37 @@ def ralph_start(args: List[str]) -> int:
                         continue
 
                 # Mark ticket as running and compute queue state from in-memory sets.
+                # Defensive healing: if a ticket reappears as ready after being marked completed
+                # (e.g. stale prompt behavior where workflow exited 0 without actually closing),
+                # remove it from completed set to avoid running/completed overlap crash.
+                if ticket in completed_tickets:
+                    logger.warn(
+                        f"Ticket {ticket} re-entered ready queue after completion mark; "
+                        "removing from completed set and retrying",
+                        ticket=ticket,
+                    )
+                    completed_tickets.discard(ticket)
+
                 running_ticket = ticket
                 pending_ids = ready_ids | blocked_ids
-                queue_state = _compute_queue_state_snapshot(
-                    pending_ids=pending_ids,
-                    blocked_ids=blocked_ids,
-                    running_ids={running_ticket},
-                    completed_ids=completed_tickets,
-                )
+                try:
+                    queue_state = _compute_queue_state_snapshot(
+                        pending_ids=pending_ids,
+                        blocked_ids=blocked_ids,
+                        running_ids={running_ticket},
+                        completed_ids=completed_tickets,
+                    )
+                except ValueError as exc:
+                    # Extra safety: self-heal any unexpected overlap and continue.
+                    logger.warn(f"Queue-state overlap detected; self-healing: {exc}", ticket=ticket)
+                    healed_completed = set(completed_tickets) - {running_ticket}
+                    queue_state = _compute_queue_state_snapshot(
+                        pending_ids=pending_ids,
+                        blocked_ids=blocked_ids,
+                        running_ids={running_ticket},
+                        completed_ids=healed_completed,
+                    )
+                    completed_tickets = healed_completed
 
                 # Update progress display at ticket start
                 if progress_display:
