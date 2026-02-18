@@ -13,6 +13,12 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+try:
+    from importlib.metadata import version as dist_version, PackageNotFoundError
+except Exception:  # pragma: no cover - ultra-defensive fallback
+    dist_version = None
+    PackageNotFoundError = Exception
+
 
 def _resolve_repo_root() -> Optional[Path]:
     """Find the repository root by looking for markers."""
@@ -64,6 +70,23 @@ def _get_git_tag_version(repo_root: Optional[Path] = None) -> Optional[str]:
     return None
 
 
+def _get_installed_package_version() -> Optional[str]:
+    """Get version from installed package metadata (wheel/sdist/uvx installs)."""
+    if dist_version is None:
+        return None
+
+    for name in ("pi-tk-workflow", "pi_ticketflow", "tf"):
+        try:
+            value = dist_version(name)
+            if value:
+                return value
+        except PackageNotFoundError:
+            continue
+        except Exception:
+            continue
+    return None
+
+
 def _read_version() -> str:
     """Read version from VERSION file, git tag, or return 'unknown'."""
     # Try repo root first (for git checkouts/development)
@@ -84,6 +107,11 @@ def _read_version() -> str:
         git_version = _get_git_tag_version(repo_root)
         if git_version:
             return git_version
+
+    # Final fallback for packaged installs (pip/uvx/wheels)
+    installed = _get_installed_package_version()
+    if installed:
+        return installed
 
     return "unknown"
 

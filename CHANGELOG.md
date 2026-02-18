@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-02-18
+
+### Fixed
+
+- **`tf self-update` version reporting** - `tf is now at version: unknown` no longer appears for packaged installs lacking a local `VERSION` file or git metadata.
+  - Added installed-package metadata fallback via `importlib.metadata` in `tf.get_version()`
+  - Works for `uvx`/wheel/sdist install layouts
+
 ## [1.1.3] - 2026-02-18
 
 ### Fixed
