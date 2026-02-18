@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import signal
+import shlex
 import subprocess
 import sys
 import time
@@ -684,6 +685,30 @@ def build_cmd(workflow: str, ticket: str, flags: str) -> str:
     return cmd
 
 
+def _convert_tf_cmd_to_irf_shell(cmd: str) -> str:
+    """Convert '/tf <ticket> [flags]' to a deterministic shell command.
+
+    Interactive Pi sessions can treat `/tf` as a prompt-template chat turn that merely
+    prints a `/chain-prompts ...` plan. To guarantee actual execution, run `tf irf`
+    from shell mode inside the interactive Pi session.
+    """
+    try:
+        parts = shlex.split(cmd)
+    except Exception:
+        return f"tf irf {cmd}"
+
+    if not parts:
+        return "tf irf"
+
+    if parts[0] == "/tf":
+        args = parts[1:]
+    else:
+        args = parts
+
+    quoted = " ".join(shlex.quote(a) for a in args)
+    return f"tf irf {quoted}".strip()
+
+
 def _run_with_timeout(
     args: List[str],
     cwd: Optional[Path] = None,
@@ -916,11 +941,11 @@ def run_ticket_interactive(
     """Run a ticket in a scripted interactive Pi session.
 
     Sends two turns to Pi via stdin:
-      1) /tf <ticket> ...
+      1) !tf irf <ticket> ...
       2) /exit
 
-    This keeps execution in the interactive command path while ensuring
-    the session closes automatically when the ticket flow completes.
+    We intentionally run `tf irf` in shell mode to avoid no-op behavior where
+    `/tf` prompt templates only print `/chain-prompts ...` instead of executing.
     """
     log = logger
 
@@ -938,6 +963,8 @@ def run_ticket_interactive(
         else:
             pi_log_path = Path(".tf/ralph/logs") / f"{ticket}.log"
 
+    shell_cmd = _convert_tf_cmd_to_irf_shell(cmd)
+
     if dry_run:
         prefix = " (worktree)" if cwd else ""
         json_flag = " --mode json" if capture_json else ""
@@ -947,7 +974,7 @@ def run_ticket_interactive(
         elif pi_output == "discard":
             output_note = " (output discarded)"
         log.info(
-            f"Dry run: printf '<cmd>\\n/exit\\n' | pi{json_flag}{prefix}{output_note} (cmd: {cmd})",
+            f"Dry run: printf '!{shell_cmd}\\n/exit\\n' | pi{json_flag}{prefix}{output_note}",
             ticket=ticket,
         )
         return 0
@@ -960,8 +987,11 @@ def run_ticket_interactive(
     if timeout_secs:
         log.info(f"Attempt timeout: {timeout_ms}ms ({timeout_secs}s)", ticket=ticket)
 
-    script_input = f"{cmd}\\n/exit\\n"
-    log.info(f"Running interactive session: pi \"{cmd}\" then /exit", ticket=ticket)
+    script_input = f"!{shell_cmd}\\n/exit\\n"
+    log.info(
+        f"Running interactive session: pi '!{shell_cmd}' then /exit",
+        ticket=ticket,
+    )
 
     timed_out = False
     return_code = 0
