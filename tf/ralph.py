@@ -22,7 +22,7 @@ from tf.logger import LogLevel, RalphLogger, RedactionHelper, create_logger
 from tf.utils import calculate_timeout_backoff, find_project_root
 
 # Import queue state for progress display
-from tf.ralph.queue_state import QueueStateSnapshot, get_queue_state
+from tf.queue_state import QueueStateSnapshot, get_queue_state
 
 # Dispatch monitoring helpers
 from tf.ralph_completion import (
@@ -35,7 +35,7 @@ from tf.ralph_completion import (
 )
 
 # Session recovery and TTL cleanup (pt-8qk8)
-from tf.ralph.session_recovery import (
+from tf.session_recovery import (
     DEFAULT_SESSION_TTL_MS,
     DispatchSessionState,
     get_process_start_time,
