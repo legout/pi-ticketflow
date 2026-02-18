@@ -50,11 +50,17 @@ Determine whether to include `tf-research`:
 
 To execute the chain, issue it directly as a Pi slash command in the current session. Do **not** run it via the bash tool and do **not** wrap it in a bash code block.
 
-**Correct behavior:**
-- Build the chain command from flags
-- Output the `/chain-prompts ...` command directly so Pi executes it
+**Output contract (strict):**
+- For normal execution, your response must be a **single line** containing only the `/chain-prompts ...` command.
+- **No prose, no tables, no code fences, no prefix/suffix text.**
+- The line must start with `/chain-prompts`.
+
+**Allowed exception:**
+- If `--plan` or `--dry-run` is present, print the planned command and stop (do not execute).
 
 **Wrong behavior:**
+- Explaining the plan before the command
+- Returning the command inside a code block
 - Running `/chain-prompts ...` in bash
 - Running `pi "/chain-prompts ..."`
 - Spawning subprocesses for chain execution

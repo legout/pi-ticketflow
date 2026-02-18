@@ -84,7 +84,14 @@ Then merges with `review-merge` agent.
 
 When the agent executes a chain, it must output `/chain-prompts ...` directly so Pi handles it as a slash command.
 
+**Strict output contract for `/tf`:**
+- For real execution (no `--plan`/`--dry-run`), return exactly one line:
+  `/chain-prompts ...`
+- No explanatory prose, tables, markdown, or code fences.
+- The response must begin with `/chain-prompts`.
+
 Do **not**:
+- explain what will happen before printing the command
 - run `/chain-prompts` via bash
 - wrap `/chain-prompts` in a bash code block
 - run `pi "/chain-prompts ..."`

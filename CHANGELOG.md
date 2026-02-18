@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2026-02-18
+
+### Fixed
+
+- **`/tf` prompt non-execution** - Fixed cases where `/tf <ticket>` printed a `/chain-prompts ...` command with explanatory text but did not execute.
+  - Updated `/tf` prompt + `tf-workflow` skill with a strict output contract
+  - For normal runs, response must be exactly one `/chain-prompts ...` line (no prose/tables/code fences)
+  - Keeps `--plan` / `--dry-run` behavior as planning-only output
+
 ## [1.1.6] - 2026-02-18
 
 ### Fixed
